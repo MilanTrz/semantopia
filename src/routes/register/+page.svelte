@@ -1,9 +1,9 @@
-<script lang="ts">
-	let pseudo = '';
-	let email = '';
-	let mdp = '';
-	let errors: { [key: string]: string } = {};
-	let formValidation = true;
+<script lang=ts>
+    let pseudo = "";
+    let email = "";
+    let mdp = "";
+    let errors: { [key: string]: string } = {};
+    let formValidation = true;
 
 	function verificationForm(): boolean {
 		errors = {};
