@@ -1,24 +1,31 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+
 	let email = '';
 	let mdp = '';
 	let errors: { [key: string]: string } = {};
-	let formValidation = true;
 	let seSouvenir = false;
+	let rep = -1;
+	let repbody: { [key: string]: string } = {};
 
-	function verificationForm(): boolean {
-		errors = {};
-		if ('') {
-			errors.email = "L'email est incorrecte";
-			formValidation = false;
-		} else if ('') {
-			errors.mdp = 'Le mdp est incorect';
-			formValidation = false;
-		}
-		return formValidation;
-	}
-	function sendForm() {
-		if (!verificationForm()) {
-			return;
+	async function  sendForm() {
+		const response = await fetch("/login/",{
+			method: "POST",
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify({
+				email,
+				mdp,
+			}),
+		});
+		repbody = await response.json();
+		if (response.status === 201){
+			rep = 0;
+			
+			window.setTimeout(() =>{
+				goto("/home");
+			})
+		}else{
+			rep = 1;
 		}
 	}
 </script>
@@ -42,6 +49,19 @@
 		</div>
 
 		<h2 class="mb-2 text-center text-2xl font-bold text-gray-800">Connexion à Sémantopia</h2>
+
+				 {#if rep === 0}
+            <p
+                class="bg-green-500 py-2 px-4 rounded text-white mb-4 text-center"
+            >
+                {repbody.message}
+            </p>
+        {:else if rep === 1}
+            <p class="bg-red-500 py-2 px-4 rounded text-white mb-4 text-center">
+                {repbody.message}
+            </p>
+        {/if}
+
 
 		<form on:submit|preventDefault={sendForm} class="w-full">
 			<div class="mb-5">

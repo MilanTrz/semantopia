@@ -1,45 +1,35 @@
-import bcrypt from "bcrypt";
 import pool from "$lib/server/db";
+import bcrypt from "bcrypt";
 import type { RowDataPacket } from "mysql2";
 import type { RequestEvent } from "./$types";
 import { sessionStore } from "$lib/store/sessionStore";
 export async function POST({request} : RequestEvent){
-    const now = new Date();
-    const userDate = now.toISOString().slice(0,19).replace('T',' ');
-    const { email, mdp, pseudo } =  await request.json();
+    const { email, mdp} =  await request.json();
     try{
          const [rows] = await pool.query<RowDataPacket[]>(
-      "SELECT * FROM USERS WHERE EMAIL = ?",
+      "SELECT PASSWORD FROM USERS WHERE EMAIL = ?",
       [email]
     );
-    if (rows.length > 0) {
+    if (rows.length == 0) {
       return new Response(
-        JSON.stringify({ message: "Cet email est déjà utilisé." }),
+        JSON.stringify({ message: "L'email n'existe pas" }),
         { status: 400 }
       );
     }
 
    
-    const [existingPseudo] = await pool.query<RowDataPacket[]>(
-      "SELECT PSEUDO FROM USERS WHERE LOWER(PSEUDO) = LOWER(?)",
-      [pseudo]
-    );
 
-    if (existingPseudo.length > 0) {
+    const {PASSWORD: hashedPasswordFromBD} = rows[0].PASSWORD;
+
+     if (!(await bcrypt.compare(mdp, hashedPasswordFromBD))) {
       return new Response(
-        JSON.stringify({ message: "Pseudo already exists" }),
+        JSON.stringify({ message: "Le mdp n'est pas lié au compte" }),
         { status: 400 }
       );
-    }
+     }
 
     
-    const hashedPassword = await bcrypt.hash(mdp, 10);
 
-    
-    await pool.query(
-      "INSERT INTO USERS (EMAIL, PASSWORD, PSEUDO,CREATION_DATE,AVATAR) VALUES (?, ?, ?, ?, ?)",
-      [email, hashedPassword, pseudo, userDate,'testlien']
-    );
 
    const [rows_id] = await pool.query(
         "SELECT ID FROM USERS WHERE EMAIL = ? ",
@@ -50,7 +40,7 @@ export async function POST({request} : RequestEvent){
     sessionStore.set({userId});
     return new Response(
       JSON.stringify({
-        message: "Utilisateur créé avec succès. Redirection...",
+        message: "Connexion établie. Redirection...",
       }),
       { status: 201 }
     );
