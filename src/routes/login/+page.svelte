@@ -1,94 +1,101 @@
-<script lang=ts>
-    let email = "";
-    let mdp = "";
-    let errors: { [key: string]: string } = {};
-    let formValidation = true;
-    let seSouvenir = false;
+<script lang="ts">
+	let email = '';
+	let mdp = '';
+	let errors: { [key: string]: string } = {};
+	let formValidation = true;
+	let seSouvenir = false;
 
-    function verificationForm() : boolean{
-        errors = {};
-        if (""){
-            errors.email = "L'email est incorrecte";
-            formValidation = false;
-        }else if(""){
-            errors.mdp = "Le mdp est incorect";
-            formValidation = false;
-        }
-        return formValidation;
-    }
-    function sendForm(){
-        if (!verificationForm()){
-            return;
-        }
-    }
+	function verificationForm(): boolean {
+		errors = {};
+		if ('') {
+			errors.email = "L'email est incorrecte";
+			formValidation = false;
+		} else if ('') {
+			errors.mdp = 'Le mdp est incorect';
+			formValidation = false;
+		}
+		return formValidation;
+	}
+	function sendForm() {
+		if (!verificationForm()) {
+			return;
+		}
+	}
 </script>
-<div style="background: linear-gradient(135deg, #6B7FED 0%, #8B7BC7 100%); min-height: 100vh;" class="flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center" style="width: 450px; height: 653px;">
 
-        <div class="bg-indigo-500 rounded-full p-4 mb-6">
-            <img src="/src/lib/assets/logo.png" alt="Logo du site web" width="40" height="40" class="brightness-0 invert">
-        </div>
-        
-        <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Connexion à Sémantopia</h2>
-        
-        <form on:submit|preventDefault={sendForm} class="w-full">
-            
-            <div class="mb-5">
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                    Adresse email
-                </label>
-                <input 
-                    id="email" 
-                    type="email" 
-                    bind:value={email} 
-                    placeholder="votre@email.com"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition"
-                />
-                {#if errors.email}
-                    <p class="text-red-500 text-sm mt-1">{errors.email}</p>
-                {/if}
-            </div>
-            <div class="mb-5">
-                <label for="mdp" class="block text-sm font-medium text-gray-700 mb-2">
-                    Mot de passe
-                </label>
-                <div class="relative">
-                    <input 
-                        id="mdp" 
-                        type="password" 
-                        bind:value={mdp} 
-                        placeholder="••••••••"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition pr-10"
-                    />
-                     {#if errors.mdp}
-                        <p class="text-red-500 text-sm mt-1">{errors.mdp}</p>
-                    {/if}
-                </div>
-            </div>
-            <div class="mb-6">
-                <label class="flex items-center cursor-pointer">
-                    <input
-                        type="checkbox"
-                        bind:checked={seSouvenir}
-                        class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                    <span class="ml-2 text-sm text-gray-700">
-                        Se souvenir de moi
-                    </span>
-                </label>
-            </div>
-            <button 
-                type="submit"
-                class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-md mb-6"
-            >
-                Se connecter
-            </button>
-        </form>
-        <p class="text-sm text-gray-600 text-center mt-auto">
-            Vous n'avez pas de compte ? 
-            <a href="/register" class="text-indigo-600 font-semibold hover:underline">
-                Créer un compte
-            </a>
-        </p>
-    </div>
+<div
+	style="background: linear-gradient(135deg, #6B7FED 0%, #8B7BC7 100%); min-height: 100vh;"
+	class="flex items-center justify-center p-4"
+>
+	<div
+		class="flex flex-col items-center rounded-2xl bg-white p-10 shadow-2xl"
+		style="width: 450px; height: 653px;"
+	>
+		<div class="mb-6 rounded-full bg-indigo-500 p-4">
+			<img
+				src="/src/lib/assets/logo.png"
+				alt="Logo du site web"
+				width="40"
+				height="40"
+				class="brightness-0 invert"
+			/>
+		</div>
+
+		<h2 class="mb-2 text-center text-2xl font-bold text-gray-800">Connexion à Sémantopia</h2>
+
+		<form on:submit|preventDefault={sendForm} class="w-full">
+			<div class="mb-5">
+				<label for="email" class="mb-2 block text-sm font-medium text-gray-700">
+					Adresse email
+				</label>
+				<input
+					id="email"
+					type="email"
+					bind:value={email}
+					placeholder="votre@email.com"
+					class="w-full rounded-lg border border-gray-300 px-4 py-3 transition outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+				/>
+				{#if errors.email}
+					<p class="mt-1 text-sm text-red-500">{errors.email}</p>
+				{/if}
+			</div>
+			<div class="mb-5">
+				<label for="mdp" class="mb-2 block text-sm font-medium text-gray-700"> Mot de passe </label>
+				<div class="relative">
+					<input
+						id="mdp"
+						type="password"
+						bind:value={mdp}
+						placeholder="••••••••"
+						class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 transition outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+					/>
+					{#if errors.mdp}
+						<p class="mt-1 text-sm text-red-500">{errors.mdp}</p>
+					{/if}
+				</div>
+			</div>
+			<div class="mb-6">
+				<label class="flex cursor-pointer items-center">
+					<input
+						type="checkbox"
+						bind:checked={seSouvenir}
+						class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+					/>
+					<span class="ml-2 text-sm text-gray-700"> Se souvenir de moi </span>
+				</label>
+			</div>
+			<button
+				type="submit"
+				class="mb-6 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white shadow-md transition hover:bg-indigo-700"
+			>
+				Se connecter
+			</button>
+		</form>
+		<p class="mt-auto text-center text-sm text-gray-600">
+			Vous n'avez pas de compte ?
+			<a href="/register" class="font-semibold text-indigo-600 hover:underline">
+				Créer un compte
+			</a>
+		</p>
+	</div>
 </div>
