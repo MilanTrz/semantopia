@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { sessionStore } from "$lib/store/sessionStore";
 
-	
+	console.log(sessionStore.get());
 	let isconnected: boolean = false;
 	function verifierConnexion(): boolean {
 		//to-do faire la logique pour vérifier si la personne est connecter

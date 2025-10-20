@@ -2,7 +2,6 @@ import pool from "$lib/server/db";
 import bcrypt from "bcrypt";
 import type { RowDataPacket } from "mysql2";
 import type { RequestEvent } from "./$types";
-import { sessionStore } from "$lib/store/sessionStore";
 export async function POST({request} : RequestEvent){
     const { email, mdp} =  await request.json();
     try{
@@ -19,7 +18,7 @@ export async function POST({request} : RequestEvent){
 
    
 
-    const {PASSWORD: hashedPasswordFromBD} = rows[0].PASSWORD;
+    const hashedPasswordFromBD = rows[0].PASSWORD;
 
      if (!(await bcrypt.compare(mdp, hashedPasswordFromBD))) {
       return new Response(
@@ -37,10 +36,10 @@ export async function POST({request} : RequestEvent){
     ) as [Array<{ ID: number; }>, unknown];
 
     const userId = rows_id[0].ID;
-    sessionStore.set({userId});
     return new Response(
       JSON.stringify({
         message: "Connexion établie. Redirection...",
+        userId
       }),
       { status: 201 }
     );

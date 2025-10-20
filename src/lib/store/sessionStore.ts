@@ -1,27 +1,27 @@
-import { writable } from "svelte/store";
+import { writable, get as getStoreValue } from "svelte/store";
 type SessionData = {
-  userId: number | null;
+  userId: number ;
 };
-
 function createSessionStore(){
     const isBrowser = typeof window !== 'undefined';
     const stored = isBrowser? sessionStorage.getItem('sessionData') : null;
     const data = stored ? JSON.parse(stored) : null;
 
-    const {subscribe, set} = writable<SessionData | null>(data);
+    const store = writable<SessionData >(data);
 
     return {
-    subscribe,
-    set: (value: SessionData) => {
-      if(isBrowser) sessionStorage.setItem('sessionData', JSON.stringify(value));
-      set(value);
-    },
-    clear: () => {
-      sessionStorage.removeItem('sessionData');
-      set(null);
-    },
-    
-  };
+        subscribe: store.subscribe,
+        set: (value: SessionData) => {
+          if(isBrowser) sessionStorage.setItem('sessionData', JSON.stringify(value));
+          store.set(value);
+        },
+        clear: () => {
+          if(isBrowser) sessionStorage.removeItem('sessionData');
+        },
+        get: () => {
+          return getStoreValue(store);
+        }
+    };
 }
 
 export const sessionStore = createSessionStore();

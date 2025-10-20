@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { sessionStore } from "$lib/store/sessionStore";
 
 	let email = '';
 	let mdp = '';
 	let errors: { [key: string]: string } = {};
 	let seSouvenir = false;
 	let rep = -1;
-	let repbody: { [key: string]: string } = {};
+	let repbody: {
+	message: string;
+	userId: number;
+	};
 
 	async function  sendForm() {
 		const response = await fetch("/login/",{
@@ -20,7 +24,8 @@
 		repbody = await response.json();
 		if (response.status === 201){
 			rep = 0;
-			
+			const userId = repbody.userId;
+			sessionStore.set({ userId });
 			window.setTimeout(() =>{
 				goto("/home");
 			})
