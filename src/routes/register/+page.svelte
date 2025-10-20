@@ -4,7 +4,6 @@
     let mdp = "";
     let errors: { [key: string]: string } = {};
     let formValidation = true;
-    let seSouvenir = false;
 
     function verificationForm() : boolean{
         errors = {};
