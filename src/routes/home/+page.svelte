@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
-	const id = sessionStore.get();
+	const id = sessionStore.get().id;
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
@@ -39,7 +39,6 @@
 	</div>
 	<div>
 		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Jouer</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 
@@ -134,7 +133,7 @@
 			</div>
 		</a>
 		<a
-			href="/jeux/pedantix"
+			href="/game/pedantix"
 			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
 		>
 			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">

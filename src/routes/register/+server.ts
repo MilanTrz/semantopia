@@ -3,6 +3,7 @@ import pool from '$lib/server/db';
 import type { RowDataPacket } from 'mysql2';
 import type { RequestEvent } from './$types';
 import { sessionStore } from '$lib/store/sessionStore';
+import type { sessionData } from '$lib/store/sessionStore';
 export async function POST({ request }: RequestEvent) {
 	const now = new Date();
 	const userDate = now.toISOString().slice(0, 19).replace('T', ' ');
@@ -33,13 +34,15 @@ export async function POST({ request }: RequestEvent) {
 			[email, hashedPassword, pseudo, userDate, 'testlien']
 		);
 
-		const [rows_id] = (await pool.query('SELECT ID FROM USERS WHERE EMAIL = ? ', [email])) as [
-			Array<{ ID: number }>,
+		const [rows_id] = (await pool.query('SELECT ID,PSEUDO FROM USERS WHERE EMAIL = ? ', [email])) as [
+			Array<{ ID: number,PSEUDO: string }>,
 			unknown
 		];
 
-		const userId = rows_id[0].ID;
-		sessionStore.set(userId);
+		const id = rows_id[0].ID;
+		const pseudoUser = rows_id[0].PSEUDO;
+		const userInfo:sessionData = {id,pseudo:pseudoUser}
+		sessionStore.set(userInfo);
 		return new Response(
 			JSON.stringify({
 				message: 'Utilisateur créé avec succès. Redirection...'

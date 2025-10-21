@@ -1,7 +1,7 @@
 <script>
 	import { sessionStore } from './store/sessionStore';
-
-	let pseudo = sessionStore.get();
+	let pseudo = sessionStore.get().pseudo;
+	console.log(pseudo)
 </script>
 
 <nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
@@ -14,7 +14,7 @@
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Jouer</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
-			<li><p>{$sessionStore}</p></li>
+			<li><p>{pseudo}</p></li>
 		</ul>
 	</div>
 </nav>

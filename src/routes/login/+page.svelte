@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { sessionStore } from '$lib/store/sessionStore';
-
+	import type { sessionData } from '$lib/store/sessionStore';
 	let email = '';
 	let mdp = '';
 	let errors: { [key: string]: string } = {};
@@ -10,6 +10,7 @@
 	let repbody: {
 		message: string;
 		userId: number;
+		pseudo: string;
 	};
 
 	async function sendForm() {
@@ -24,8 +25,10 @@
 		repbody = await response.json();
 		if (response.status === 201) {
 			rep = 0;
-			const userId = repbody.userId;
-			sessionStore.set(userId);
+			const id = repbody.userId;
+			const pseudo = repbody.pseudo;
+			const userInfo:sessionData = {id,pseudo} 
+			sessionStore.set(userInfo);
 			window.setTimeout(() => {
 				goto('/home');
 			});
