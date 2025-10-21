@@ -11,6 +11,8 @@
     let nbEssai:number = 0;
 
 	async function newGame() {
+		nbEssai = 0;
+		tabguess = [];
 		const response = await fetch('/game/pedantix/', {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -24,6 +26,8 @@
 
 	async function sendGuess() {
         nbEssai++;
+		tabguess.push(userGuess);
+		tabguess = tabguess;
 		const response = await fetch('/game/pedantix/', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -50,8 +54,8 @@
 			</div>
 		</div>
 
-		<div class="row relative mb-6 flex">
-            <form on:submit|preventDefault={sendGuess}>
+		<div class="row relative mb-6">
+            <form on:submit|preventDefault={sendGuess} class="flex row">
 			<input
 				id="guess"
 				type="text"
@@ -66,7 +70,6 @@
             </button>
             </form>
 		</div>
-
 		<div class="mb-6 rounded-lg p-6">
 			<p class="mb-4 text-sm text-gray-600">
 				{#each tabTitle as item}

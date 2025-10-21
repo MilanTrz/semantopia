@@ -2,6 +2,7 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
 	const id = sessionStore.get().id;
+	const pseudoUser = sessionStore.get().pseudo;
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
@@ -42,7 +43,7 @@
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 
-			{#if !isconnected}
+			{#if !id}
 				<li>
 					<button class="text-gray-600 transition hover:text-purple-600"
 						><a href="/login">Se connecter</a></button
@@ -56,7 +57,7 @@
 				</li>
 			{:else}
 				<li>
-					<p>{pseudo}</p>
+					<p>{pseudoUser}</p>
 				</li>
 			{/if}
 		</ul>
