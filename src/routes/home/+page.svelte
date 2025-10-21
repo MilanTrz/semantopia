@@ -2,23 +2,22 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
 	const id = sessionStore.get();
-	let pseudo = "";
+	let pseudo = '';
 	let isconnected: boolean = false;
-	let repbody:  {
+	let repbody: {
 		pseudo: string;
 	};
 	function verifierConnexion(): boolean {
-		if (sessionStore.get()){
+		if (sessionStore.get()) {
 			onMount(() => {
-			getPseudo(); 
-		});
+				getPseudo();
+			});
 			isconnected = true;
-
 		}
 		return isconnected;
 	}
-	async function getPseudo(){
-		const response = await fetch('/home/',{
+	async function getPseudo() {
+		const response = await fetch('/home/', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -27,7 +26,7 @@
 		});
 		repbody = await response.json();
 		if (response.status === 201) {
-			 pseudo = repbody.pseudo
+			pseudo = repbody.pseudo;
 		}
 	}
 	verifierConnexion();
@@ -43,23 +42,24 @@
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Jouer</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
-			
-		{#if !isconnected}
-			<li >
-				<button class="text-gray-600 transition hover:text-purple-600"
-					><a href="/login">Se connecter</a></button
-				>
-			</li>
-			<li>
-				<button class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
-					><a href="/register">Créer un compte</a></button
-				>
-			</li>
+
+			{#if !isconnected}
+				<li>
+					<button class="text-gray-600 transition hover:text-purple-600"
+						><a href="/login">Se connecter</a></button
+					>
+				</li>
+				<li>
+					<button
+						class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
+						><a href="/register">Créer un compte</a></button
+					>
+				</li>
 			{:else}
 				<li>
 					<p>{pseudo}</p>
 				</li>
-		{/if}
+			{/if}
 		</ul>
 	</div>
 </nav>

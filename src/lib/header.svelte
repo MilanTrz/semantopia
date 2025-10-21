@@ -1,8 +1,9 @@
 <script>
-	import { sessionStore } from "./store/sessionStore";
+	import { sessionStore } from './store/sessionStore';
 
-let pseudo = sessionStore.get();
+	let pseudo = sessionStore.get();
 </script>
+
 <nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
 	<div class="flex items-center gap-3">
 		<img src="/src/lib/assets/logo.png" alt="Logo du site web" width="40" height="40" />
