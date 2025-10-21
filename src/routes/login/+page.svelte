@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { sessionStore } from "$lib/store/sessionStore";
+	import { goto } from '$app/navigation';
+	import { sessionStore } from '$lib/store/sessionStore';
 
 	let email = '';
 	let mdp = '';
@@ -8,28 +8,28 @@
 	let seSouvenir = false;
 	let rep = -1;
 	let repbody: {
-	message: string;
-	userId: number;
+		message: string;
+		userId: number;
 	};
 
-	async function  sendForm() {
-		const response = await fetch("/login/",{
-			method: "POST",
-			headers: {"Content-Type": "application/json"},
+	async function sendForm() {
+		const response = await fetch('/login/', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				email,
-				mdp,
-			}),
+				mdp
+			})
 		});
 		repbody = await response.json();
-		if (response.status === 201){
+		if (response.status === 201) {
 			rep = 0;
 			const userId = repbody.userId;
-			sessionStore.set({ userId });
-			window.setTimeout(() =>{
-				goto("/home");
-			})
-		}else{
+			sessionStore.set(userId);
+			window.setTimeout(() => {
+				goto('/home');
+			});
+		} else {
 			rep = 1;
 		}
 	}
@@ -49,24 +49,20 @@
 				alt="Logo du site web"
 				width="40"
 				height="40"
-				class="brightness-0 invert"
 			/>
 		</div>
 
 		<h2 class="mb-2 text-center text-2xl font-bold text-gray-800">Connexion à Sémantopia</h2>
 
-				 {#if rep === 0}
-            <p
-                class="bg-green-500 py-2 px-4 rounded text-white mb-4 text-center"
-            >
-                {repbody.message}
-            </p>
-        {:else if rep === 1}
-            <p class="bg-red-500 py-2 px-4 rounded text-white mb-4 text-center">
-                {repbody.message}
-            </p>
-        {/if}
-
+		{#if rep === 0}
+			<p class="mb-4 rounded bg-green-500 px-4 py-2 text-center text-white">
+				{repbody.message}
+			</p>
+		{:else if rep === 1}
+			<p class="mb-4 rounded bg-red-500 px-4 py-2 text-center text-white">
+				{repbody.message}
+			</p>
+		{/if}
 
 		<form on:submit|preventDefault={sendForm} class="w-full">
 			<div class="mb-5">

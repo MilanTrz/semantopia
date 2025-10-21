@@ -1,11 +1,11 @@
-<script lang=ts>
-	import { goto } from "$app/navigation";
+<script lang="ts">
+	import { goto } from '$app/navigation';
 
-    let pseudo = "";
-    let email = "";
-    let mdp = "";
-    let errors: { [key: string]: string } = {};
-    let formValidation = true;
+	let pseudo = '';
+	let email = '';
+	let mdp = '';
+	let errors: { [key: string]: string } = {};
+	let formValidation = true;
 	let rep = -1;
 	let repbody: { [key: string]: string } = {};
 
@@ -21,22 +21,22 @@
 		//if (!verificationForm()) {
 		//	return;
 		//}
-		const response = await fetch("/register/",{
-			method: "POST",
-			headers: {"Content-Type": "application/json"},
+		const response = await fetch('/register/', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				email,
 				mdp,
-				pseudo,
-			}),
+				pseudo
+			})
 		});
 		repbody = await response.json();
-		if (response.status === 201){
+		if (response.status === 201) {
 			rep = 0;
-			window.setTimeout(() =>{
-				goto("/home");
-			})
-		}else{
+			window.setTimeout(() => {
+				goto('/home');
+			});
+		} else {
 			rep = 1;
 		}
 	}
@@ -51,26 +51,19 @@
 		style="width: 450px; height: 653px;"
 	>
 		<div class="mb-6 rounded-full bg-indigo-500 p-4">
-			<img
-				src="/src/lib/assets/logo.png"
-				alt="Logo du site web"
-				width="40"
-				height="40"
-			/>
+			<img src="/src/lib/assets/logo.png" alt="Logo du site web" width="40" height="40" />
 		</div>
 
 		<h2 class="mb-2 text-center text-2xl font-bold text-gray-800">Connexion à Sémantopia</h2>
-		 {#if rep === 0}
-            <p
-                class="bg-green-500 py-2 px-4 rounded text-white mb-4 text-center"
-            >
-                {repbody.message}
-            </p>
-        {:else if rep === 1}
-            <p class="bg-red-500 py-2 px-4 rounded text-white mb-4 text-center">
-                {repbody.message}
-            </p>
-        {/if}
+		{#if rep === 0}
+			<p class="mb-4 rounded bg-green-500 px-4 py-2 text-center text-white">
+				{repbody.message}
+			</p>
+		{:else if rep === 1}
+			<p class="mb-4 rounded bg-red-500 px-4 py-2 text-center text-white">
+				{repbody.message}
+			</p>
+		{/if}
 
 		<form on:submit|preventDefault={sendForm} class="w-full">
 			<div class="mb-5">

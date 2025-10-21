@@ -1,12 +1,36 @@
 <script lang="ts">
-	import { sessionStore } from "$lib/store/sessionStore";
-
-	console.log(sessionStore.get());
+	import { sessionStore } from '$lib/store/sessionStore';
+	import { onMount } from 'svelte';
+	const id = sessionStore.get();
+	let pseudo = "";
 	let isconnected: boolean = false;
+	let repbody:  {
+		pseudo: string;
+	};
 	function verifierConnexion(): boolean {
-		//to-do faire la logique pour vérifier si la personne est connecter
+		if (sessionStore.get()){
+			onMount(() => {
+			getPseudo(); 
+		});
+			isconnected = true;
+
+		}
 		return isconnected;
 	}
+	async function getPseudo(){
+		const response = await fetch('/home/',{
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				id
+			})
+		});
+		repbody = await response.json();
+		if (response.status === 201) {
+			 pseudo = repbody.pseudo
+		}
+	}
+	verifierConnexion();
 </script>
 
 <nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
@@ -19,7 +43,9 @@
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Jouer</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
-			<li>
+			
+		{#if !isconnected}
+			<li >
 				<button class="text-gray-600 transition hover:text-purple-600"
 					><a href="/login">Se connecter</a></button
 				>
@@ -29,6 +55,11 @@
 					><a href="/register">Créer un compte</a></button
 				>
 			</li>
+			{:else}
+				<li>
+					<p>{pseudo}</p>
+				</li>
+		{/if}
 		</ul>
 	</div>
 </nav>
