@@ -21,28 +21,26 @@
 	let isLoading = true;
 	let isVictory = false;
 
-
 	async function newGame() {
 		nbEssai = 0;
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
 		userGuess = '';
-		try{
-	
-		const response = await fetch('/game/pedantix/', {
-			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
-		});
-		repbody = await response.json();
-		if (response.status == 201) {
-			tabTitle = repbody.tabHiddenTitle;
-			tabContent = repbody.tabHiddenContent;
-		}
-	}catch (error) {
+		try {
+			const response = await fetch('/game/pedantix/', {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			repbody = await response.json();
+			if (response.status == 201) {
+				tabTitle = repbody.tabHiddenTitle;
+				tabContent = repbody.tabHiddenContent;
+			}
+		} catch (error) {
 			console.error('Erreur de chargement:', error);
 		} finally {
-			isLoading = false; 
+			isLoading = false;
 		}
 	}
 
@@ -62,44 +60,44 @@
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
 		}
-		if (tabTitle.every(item => typeof item === 'string')){
+		if (tabTitle.every((item) => typeof item === 'string')) {
 			triggerVictory();
 		}
 		userGuess = '';
 	}
 
-	function triggerVictory(){
-	isVictory = true;
-	const duration = 4 * 1000; // 
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+	function triggerVictory() {
+		isVictory = true;
+		const duration = 4 * 1000; //
+		const animationEnd = Date.now() + duration;
+		const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
 
-    const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now();
+		const interval = setInterval(() => {
+			const timeLeft = animationEnd - Date.now();
 
-      if (timeLeft <= 0) {
-        clearInterval(interval);
-        return;
-      }
+			if (timeLeft <= 0) {
+				clearInterval(interval);
+				return;
+			}
 
-      const particleCount = 50 * (timeLeft / duration);
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: {
-          x: Math.random(),
-          y: Math.random() * 0.5,
-        },
-        colors: ['#bb0000', '#ffffff', '#ffcc00', '#00bbff'],
-      });
-    }, 250);
-  
+			const particleCount = 50 * (timeLeft / duration);
+			confetti({
+				...defaults,
+				particleCount,
+				origin: {
+					x: Math.random(),
+					y: Math.random() * 0.5
+				},
+				colors: ['#bb0000', '#ffffff', '#ffcc00', '#00bbff']
+			});
+		}, 250);
 	}
 
 	onMount(() => {
 		newGame();
 	});
 </script>
+
 <Header />
 <div class="row flex min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto max-w-3xl">
@@ -111,10 +109,12 @@
 			</div>
 		</div>
 		{#if isLoading}
-		<div class="flex flex-col items-center justify-center py-12">
-			<div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
-			<p class="text-gray-600 font-medium">Chargement de la partie...</p>
-		</div>
+			<div class="flex flex-col items-center justify-center py-12">
+				<div
+					class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
+				></div>
+				<p class="font-medium text-gray-600">Chargement de la partie...</p>
+			</div>
 		{/if}
 
 		<div class="row relative mb-6">
@@ -125,12 +125,12 @@
 					bind:value={userGuess}
 					placeholder="Tapez votre proposition..."
 					class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
-					disabled={isVictory}	
+					disabled={isVictory}
 				/>
 				<button
 					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 					type="submit"
-					disabled={isVictory}	
+					disabled={isVictory}
 				>
 					Envoyer
 				</button>
@@ -141,7 +141,7 @@
 				{#each tabTitle as item}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
-							 {Array(item).fill('■').join('')}
+							{Array(item).fill('■').join('')}
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
@@ -157,7 +157,7 @@
 				{#each tabContent as item}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
-							 {Array(item).fill('■').join('')}
+							{Array(item).fill('■').join('')}
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>

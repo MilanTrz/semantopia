@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { sessionStore } from '$lib/store/sessionStore';
+	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	let session = sessionStore.get();
 	let id: number | null = session ? session.id : null;
-	const pseudoUser: string | null = session ? session.pseudo: null;
+	const pseudoUser: string | null = session ? session.pseudo : null;
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
@@ -34,37 +35,7 @@
 	verifierConnexion();
 </script>
 
-<nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
-	<div class="flex items-center gap-3">
-		<img src="/src/lib/assets/logo.png" alt="Logo du site web" width="40" height="40" />
-		<h3 class="text-xl font-bold text-gray-800">Sémantopia</h3>
-	</div>
-	<div>
-		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
-
-			{#if !id}
-				<li>
-					<button class="text-gray-600 transition hover:text-purple-600"
-						><a href="/login">Se connecter</a></button
-					>
-				</li>
-				<li>
-					<button
-						class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
-						><a href="/register">Créer un compte</a></button
-					>
-				</li>
-			{:else}
-				<li>
-					<p>{pseudoUser}</p>
-				</li>
-			{/if}
-		</ul>
-	</div>
-</nav>
-
+<Header />
 <section class="bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 px-8 py-16">
 	<div class="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
 		<div class="text-white">

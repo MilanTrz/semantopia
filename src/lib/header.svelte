@@ -1,7 +1,15 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { sessionStore } from './store/sessionStore';
 	let session = sessionStore.get();
 	let pseudo: string | null = session ? session.pseudo : null;
+	let avatar: string | null = session ? session.avatar : null;
+	function logout() {
+		sessionStore.clear();
+		window.setTimeout(() => {
+			goto('/login');
+		});
+	}
 </script>
 
 <nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
@@ -16,9 +24,26 @@
 	<div>
 		<ul class="flex items-center gap-6">
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
+			<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 			{#if pseudo}
 				<li><p>{pseudo}</p></li>
+				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />
+				<button
+					class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
+					on:click={logout}>Se deconnecter</button
+				>
+			{:else}
+				<li>
+					<button class="text-gray-600 transition hover:text-purple-600"
+						><a href="/login">Se connecter</a></button
+					>
+				</li>
+				<li>
+					<button
+						class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
+						><a href="/register">Créer un compte</a></button
+					>
+				</li>
 			{/if}
 		</ul>
 	</div>

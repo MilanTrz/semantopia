@@ -128,7 +128,17 @@ async function getContentPage(
 }
 
 function isValideTitle(title: string): boolean {
-	const forbiddenWords = ['Liste', 'Catégorie', 'Utilisateur', 'Discussion','Membres','ordre','alphabétique','Communauté','gens'];
+	const forbiddenWords = [
+		'Liste',
+		'Catégorie',
+		'Utilisateur',
+		'Discussion',
+		'Membres',
+		'ordre',
+		'alphabétique',
+		'Communauté',
+		'gens'
+	];
 	const lowerTitle = title.toLowerCase();
 	for (const word of forbiddenWords) {
 		if (lowerTitle.includes(word.toLowerCase())) {
