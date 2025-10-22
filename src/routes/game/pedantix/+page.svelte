@@ -139,7 +139,7 @@
 				{#each tabTitle as item}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
-							■
+							 {Array(item).fill('■').join('')}
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
@@ -155,7 +155,7 @@
 				{#each tabContent as item}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
-							■
+							 {Array(item).fill('■').join('')}
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
