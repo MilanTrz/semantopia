@@ -8,7 +8,7 @@
 	};
 	let tabTitle: number[];
 	let tabContent: number[];
-    let nbEssai:number = 0;
+	let nbEssai: number = 0;
 
 	async function newGame() {
 		nbEssai = 0;
@@ -25,7 +25,7 @@
 	}
 
 	async function sendGuess() {
-        nbEssai++;
+		nbEssai++;
 		tabguess.push(userGuess);
 		tabguess = tabguess;
 		const response = await fetch('/game/pedantix/', {
@@ -55,23 +55,24 @@
 		</div>
 
 		<div class="row relative mb-6">
-            <form on:submit|preventDefault={sendGuess} class="flex row">
-			<input
-				id="guess"
-				type="text"
-				bind:value={userGuess}
-				placeholder="Tapez votre proposition..."
-				class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
-			/>
-			<button
-				class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-				type="submit">
-                Envoyer
-            </button>
-            </form>
+			<form on:submit|preventDefault={sendGuess} class="row flex">
+				<input
+					id="guess"
+					type="text"
+					bind:value={userGuess}
+					placeholder="Tapez votre proposition..."
+					class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+				/>
+				<button
+					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					type="submit"
+				>
+					Envoyer
+				</button>
+			</form>
 		</div>
 		<div class="mb-6 rounded-lg p-6">
-			<p class="mb-4 text-sm text-gray-600">
+			<p class="mb-4 text-sm tracking-wide text-gray-600">
 				{#each tabTitle as item}
 					{#if typeof item === 'number'}
 						■{' '}
@@ -80,7 +81,7 @@
 					{/if}
 				{/each}
 			</p>
-			<p class="h-32 w-full focus:outline-none">
+			<p class="w-full tracking-wide focus:outline-none">
 				{#each tabContent as item}
 					{#if typeof item === 'number'}
 						■{' '}
@@ -116,6 +117,53 @@
 			>
 				📤 Partager résultat
 			</button>
+		</div>
+	</div>
+	<div>
+		<div>
+			<h4> Règles du jeu</h4>
+			<ol>
+				<li>
+					<p>Trouvez le mot mystère en vous aidant de la
+proximité sémantique</p>
+				</li>
+				<li>
+					<p>Plus votre proposition est proche du mot, plus le
+pourcentage est élevé</p>
+				</li>
+				<li>
+					<p>Chaque bonne proposition révèle des mots dans
+l'extrait Wikipedia</p>
+				</li>
+				<li>
+					<p>Utilisez les indices pour vous rapprocher du mot
+cible</p>
+				</li>
+			</ol>
+		</div>
+		<div>
+			<h4>Vos statistiques</h4>
+			<div>
+				<div>
+					<p></p>
+					<p>Parties jouées</p>
+				</div>
+				<div>
+					<p></p>
+					<p>Taux de réussite</p>
+				</div>
+				<div>
+					<p></p>
+					<p>Essais moyen</p>
+				</div>
+				<div>
+					<p></p>
+					<p>Série actuelle</p>
+				</div>
+			</div>
+		</div>
+		<div>
+
 		</div>
 	</div>
 </div>

@@ -20,13 +20,12 @@ export async function POST({ request }: RequestEvent) {
 			});
 		}
 
-		const [rows_id] = (await pool.query('SELECT ID, PSEUDO FROM USERS WHERE EMAIL = ? ', [email])) as [
-			Array<{ ID: number, PSEUDO: string }>,
-			unknown
-		];
+		const [rows_id] = (await pool.query('SELECT ID, PSEUDO FROM USERS WHERE EMAIL = ? ', [
+			email
+		])) as [Array<{ ID: number; PSEUDO: string }>, unknown];
 
 		const userId = rows_id[0].ID;
-		const pseudo = rows_id[0].PSEUDO
+		const pseudo = rows_id[0].PSEUDO;
 		return new Response(
 			JSON.stringify({
 				message: 'Connexion établie. Redirection...',

@@ -27,7 +27,7 @@
 			rep = 0;
 			const id = repbody.userId;
 			const pseudo = repbody.pseudo;
-			const userInfo:sessionData = {id,pseudo} 
+			const userInfo: sessionData = { id, pseudo };
 			sessionStore.set(userInfo);
 			window.setTimeout(() => {
 				goto('/home');

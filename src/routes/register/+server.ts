@@ -34,14 +34,13 @@ export async function POST({ request }: RequestEvent) {
 			[email, hashedPassword, pseudo, userDate, 'testlien']
 		);
 
-		const [rows_id] = (await pool.query('SELECT ID,PSEUDO FROM USERS WHERE EMAIL = ? ', [email])) as [
-			Array<{ ID: number,PSEUDO: string }>,
-			unknown
-		];
+		const [rows_id] = (await pool.query('SELECT ID,PSEUDO FROM USERS WHERE EMAIL = ? ', [
+			email
+		])) as [Array<{ ID: number; PSEUDO: string }>, unknown];
 
 		const id = rows_id[0].ID;
 		const pseudoUser = rows_id[0].PSEUDO;
-		const userInfo:sessionData = {id,pseudo:pseudoUser}
+		const userInfo: sessionData = { id, pseudo: pseudoUser };
 		sessionStore.set(userInfo);
 		return new Response(
 			JSON.stringify({
