@@ -2,6 +2,7 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import confetti from 'canvas-confetti';
+	import { sessionStore } from '$lib/store/sessionStore';
 
 	let userGuess = '';
 	let tabguess: string[] = [];
@@ -21,16 +22,38 @@
 	let isLoading = true;
 	let isVictory = false;
 
+	const session = sessionStore.get();
+	const idUser: number | null = session ? session.id : null;
+	console.log(idUser);
+
 	async function newGame() {
 		nbEssai = 0;
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
+		try{
+			await fetch('/game/pedantix',{
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,isVictory,idUser
+				})
+			})
+		}catch (error) {
+		console.error('Erreur Server:', error);
+		throw error;
+	}
+		
 		userGuess = '';
+		if (idUser === null) {
+			console.error("idUser est null");
+			return;
+			}
+		const url = `/game/pedantix?userId=${encodeURIComponent(idUser)}`;
 		try {
-			const response = await fetch('/game/pedantix/', {
+			const response = await fetch(url, {
 				method: 'GET',
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/json' },
 			});
 			repbody = await response.json();
 			if (response.status == 201) {
@@ -66,8 +89,20 @@
 		userGuess = '';
 	}
 
-	function triggerVictory() {
+	async function triggerVictory() {
 		isVictory = true;
+		try{
+			await fetch('/game/pedantix',{
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,isVictory,idUser
+				})
+			})
+		}catch (error) {
+		console.error('Erreur Server:', error);
+		throw error;
+	}
 		const duration = 4 * 1000; //
 		const animationEnd = Date.now() + duration;
 		const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };

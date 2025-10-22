@@ -5,6 +5,7 @@
 	let session = sessionStore.get();
 	let id: number | null = session ? session.id : null;
 	const pseudoUser: string | null = session ? session.pseudo : null;
+	console.log(id);
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
