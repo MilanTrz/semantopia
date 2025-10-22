@@ -78,7 +78,7 @@ async function getRandomTitlePage(lang: string = 'fr'): Promise<string> {
 		for (const pageId in pages) {
 			const page = pages[pageId];
 
-			if (page.length && page.length < 30000) {
+			if (page.length && page.length > 70000) {
 				continue;
 			}
 
@@ -128,7 +128,7 @@ async function getContentPage(
 }
 
 function isValideTitle(title: string): boolean {
-	const forbiddenWords = ['Liste', 'Catégorie', 'Utilisateur', 'Discussion'];
+	const forbiddenWords = ['Liste', 'Catégorie', 'Utilisateur', 'Discussion','Membres','ordre','alphabétique','Communauté'];
 	const lowerTitle = title.toLowerCase();
 	for (const word of forbiddenWords) {
 		if (lowerTitle.includes(word.toLowerCase())) {
