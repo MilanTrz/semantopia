@@ -27,6 +27,7 @@
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
+		userGuess = '';
 		try{
 	
 		const response = await fetch('/game/pedantix/', {
@@ -64,6 +65,7 @@
 		if (tabTitle.every(item => typeof item === 'string')){
 			triggerVictory();
 		}
+		userGuess = '';
 	}
 
 	function triggerVictory(){

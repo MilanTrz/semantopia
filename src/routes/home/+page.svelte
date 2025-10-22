@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
-	const id = sessionStore.get().id;
-	const pseudoUser = sessionStore.get().pseudo;
+	let session = sessionStore.get();
+	let id: number | null = session ? session.id : null;
+	const pseudoUser: string | null = session ? session.pseudo: null;
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
