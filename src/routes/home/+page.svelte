@@ -1,9 +1,37 @@
 <script lang="ts">
+	import { sessionStore } from '$lib/store/sessionStore';
+	import { onMount } from 'svelte';
+	let session = sessionStore.get();
+	let id: number | null = session ? session.id : null;
+	const pseudoUser: string | null = session ? session.pseudo: null;
+	let pseudo = '';
 	let isconnected: boolean = false;
+	let repbody: {
+		pseudo: string;
+	};
 	function verifierConnexion(): boolean {
-		//to-do faire la logique pour vérifier si la personne est connecter
+		if (sessionStore.get()) {
+			onMount(() => {
+				getPseudo();
+			});
+			isconnected = true;
+		}
 		return isconnected;
 	}
+	async function getPseudo() {
+		const response = await fetch('/home/', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				id
+			})
+		});
+		repbody = await response.json();
+		if (response.status === 201) {
+			pseudo = repbody.pseudo;
+		}
+	}
+	verifierConnexion();
 </script>
 
 <nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
@@ -13,19 +41,26 @@
 	</div>
 	<div>
 		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Jouer</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
-			<li>
-				<button class="text-gray-600 transition hover:text-purple-600"
-					><a href="/src/routes/login">Se connecter</a></button
-				>
-			</li>
-			<li>
-				<button class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
-					><a href="/src/routes/register">Créer un compte</a></button
-				>
-			</li>
+
+			{#if !id}
+				<li>
+					<button class="text-gray-600 transition hover:text-purple-600"
+						><a href="/login">Se connecter</a></button
+					>
+				</li>
+				<li>
+					<button
+						class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
+						><a href="/register">Créer un compte</a></button
+					>
+				</li>
+			{:else}
+				<li>
+					<p>{pseudoUser}</p>
+				</li>
+			{/if}
 		</ul>
 	</div>
 </nav>
@@ -100,7 +135,7 @@
 			</div>
 		</a>
 		<a
-			href="/jeux/pedantix"
+			href="/game/pedantix"
 			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
 		>
 			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
