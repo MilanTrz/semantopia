@@ -34,9 +34,10 @@ export async function POST({ request }: RequestEvent) {
 			[email, hashedPassword, pseudo, userDate, '/src/lib/assets/photo_profil/photo_default.png']
 		);
 
-		const [rows_id] = (await pool.query('SELECT ID,PSEUDO,AVATAR, CREATION_DATE FROM USERS WHERE EMAIL = ? ', [
-			email
-		])) as [Array<{ ID: number; PSEUDO: string; AVATAR: string, CREATION_DATE: Date }>, unknown];
+		const [rows_id] = (await pool.query(
+			'SELECT ID,PSEUDO,AVATAR, CREATION_DATE FROM USERS WHERE EMAIL = ? ',
+			[email]
+		)) as [Array<{ ID: number; PSEUDO: string; AVATAR: string; CREATION_DATE: Date }>, unknown];
 
 		const id = rows_id[0].ID;
 		const pseudoUser = rows_id[0].PSEUDO;

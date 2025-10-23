@@ -6,7 +6,7 @@
 	let pseudoUser: string | null = session ? session.pseudo : null;
 	let email: string | null = session ? session.email : null;
 	const avatar: string | null = session ? session.avatar : null;
-    const date: Date | null = session ? session.dateCreation : null;
+	const date: Date | null = session ? session.dateCreation : null;
 	let partiesJouees: number = 0;
 	let tauxReussite: number = 0;
 </script>

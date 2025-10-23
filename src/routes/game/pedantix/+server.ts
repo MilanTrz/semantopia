@@ -1,3 +1,4 @@
+import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
 import levenshtein from 'js-levenshtein';
 let titleWikiPage: string;
@@ -35,12 +36,18 @@ export async function POST({ request }: RequestEvent) {
 	}
 }
 
-export async function GET() {
+export async function GET({ url }: RequestEvent) {
+	const userId = url.searchParams.get('userId');
 	titleWikiPage = await getRandomTitlePage();
 	titleWikiPageSplit = titleWikiPage.split(' ');
 	contentsplice = await getContentPage(titleWikiPage);
 	tabHiddenTitle = titleWikiPageSplit.map((str) => str.length);
 	tabHiddenContent = contentsplice.map((str) => str.length);
+	const date = new Date();
+	await pool.query(
+		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
+		[date, userId]
+	);
 
 	try {
 		return new Response(
@@ -137,7 +144,8 @@ function isValideTitle(title: string): boolean {
 		'ordre',
 		'alphabétique',
 		'Communauté',
-		'gens'
+		'gens',
+		'.'
 	];
 	const lowerTitle = title.toLowerCase();
 	for (const word of forbiddenWords) {
@@ -159,4 +167,31 @@ function checkSimilarity(wordTab: string, wordGuess: string): boolean {
 		return true;
 	}
 	return false;
+}
+
+export async function PUT({ request }: RequestEvent) {
+	const { nbEssai, isVictory, idUser } = await request.json();
+
+	try {
+		const [row_max] = (await pool.query(
+			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
+			[idUser]
+		)) as [Array<{ ID: number }>, unknown];
+		const idMax = row_max[0].ID;
+		if (isVictory) {
+			await pool.query(
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? ',
+				[nbEssai, idUser, idMax]
+			);
+		} else {
+			await pool.query(
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ?',
+				[nbEssai, idUser, idMax]
+			);
+		}
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		console.error('Erreur Server:', error);
+		throw error;
+	}
 }

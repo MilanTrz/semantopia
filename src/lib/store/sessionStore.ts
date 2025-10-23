@@ -1,5 +1,11 @@
 import { writable, get as getStoreValue } from 'svelte/store';
-export type sessionData = { id: number; pseudo: string; avatar: string; email: string,dateCreation: Date };
+export type sessionData = {
+	id: number;
+	pseudo: string;
+	avatar: string;
+	email: string;
+	dateCreation: Date;
+};
 function createSessionStore() {
 	const isBrowser = typeof window !== 'undefined';
 	const stored = isBrowser ? sessionStorage.getItem('sessionData') : null;
