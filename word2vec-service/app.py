@@ -3,14 +3,18 @@ from flask_cors import CORS
 from gensim.models import KeyedVectors
 import numpy as np
 import os
+import random
+
 
 app = Flask(__name__)
 CORS(app)
 
+INCLUDED_TAGS = ['_n', '_v', '_a', '_adv']
+
 print("Chargement du modèle word2vec français...")
 model = None
 
-MODEL_PATH = 'frWac_non_lem_no_postag_no_phrase_200_cbow_cut100.bin'
+MODEL_PATH = 'frWac_postag_no_phrase_1000_skip_cut100.bin'
 
 try:
     if os.path.exists(MODEL_PATH):
@@ -26,6 +30,25 @@ except Exception as e:
     model = None
 
 
+def remove_postag(word):
+    """Enlever le tag POS du mot"""
+    if '_' in word:
+        return word.rsplit('_', 1)[0]
+    return word
+
+
+def add_postag(word):
+    """Trouver le mot avec son tag dans le vocabulaire"""
+    if '_' in word and word in model:
+        return word
+
+    for word_with_tag in model.key_to_index.keys():
+        if word_with_tag.startswith(word + '_'):
+            return word_with_tag
+
+    return word
+
+
 @app.route('/api/similarity', methods=['POST'])
 def calculate_similarity():
     try:
@@ -39,14 +62,19 @@ def calculate_similarity():
         if model is None:
             return jsonify({'error': 'Modèle non chargé'}), 500
 
-        if word1 not in model or word2 not in model:
-            return jsonify({'code': 1, 'error': 'Un ou les deux mots ne sont pas dans le vocabulaire du modèle.'}), 200
+        word1_with_tag = add_postag(word1)
+        word2_with_tag = add_postag(word2)
 
-        similarity = model.similarity(word1, word2)
+        if word1_with_tag not in model:
+            return jsonify({'code': 1, 'error': f'"{word1}" n\'est pas dans le vocabulaire'}), 200
 
+        if word2_with_tag not in model:
+            return jsonify({'code': 1, 'error': f'"{word2}" n\'est pas dans le vocabulaire'}), 200
+
+        similarity = model.similarity(word1_with_tag, word2_with_tag)
         similarity = float(similarity)
 
-        print(f'Similarity between "{word1}" and "{word2}": {similarity}')
+        print(f'Similarité entre "{word1}" et "{word2}": {similarity}')
 
         return jsonify({
             'similarity': similarity,
@@ -64,11 +92,63 @@ def get_random_word():
         if model is None:
             return jsonify({'error': 'Modèle non chargé'}), 500
 
-        import random
-        random_word = random.choice(list(model.key_to_index.keys()))
+        words_filtered = [
+            word for word in list(model.key_to_index.keys())[:10000]
+            if '-' not in word and any(word.endswith(tag) for tag in INCLUDED_TAGS)
+        ]
+
+        if not words_filtered:
+            return jsonify({'error': 'Aucun mot trouvé'}), 500
+
+        random_word_with_tag = random.choice(words_filtered)
+        random_word = remove_postag(random_word_with_tag)
 
         return jsonify({
             'word': random_word
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/most-similar', methods=['POST'])
+def get_most_similar():
+    try:
+        data = request.get_json()
+        word = data.get('word', '').lower()
+        topn = int(data.get('topn', 100))
+
+        if not word:
+            return jsonify({'error': 'Le mot est requis'}), 400
+
+        if model is None:
+            return jsonify({'error': 'Modèle non chargé'}), 500
+
+        word_with_tag = add_postag(word)
+
+        if word_with_tag not in model:
+            return jsonify({'code': 1, 'error': f'"{word}" n\'est pas dans le vocabulaire'}), 200
+
+        similar_words = model.most_similar(word_with_tag, topn=topn * 2)
+
+        seen_words = set()
+        seen_words.add(word)
+        result = []
+
+        for sim_word, sim_score in similar_words:
+            word_without_tag = remove_postag(sim_word)
+            if word_without_tag not in seen_words:
+                seen_words.add(word_without_tag)
+                result.append({
+                    'word': word_without_tag,
+                    'similarity': float(sim_score) * 100
+                })
+                if len(result) >= topn:
+                    break
+
+        return jsonify({
+            'word': word,
+            'similar_words': result
         })
 
     except Exception as e:

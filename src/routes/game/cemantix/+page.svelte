@@ -2,7 +2,7 @@
 	import Header from '$lib/header.svelte';
 	
 	let userGuess = '';
-	let guesses: { word: string; similarity: number }[] = [];
+	let guesses: { word: string; similarity: number | false; attemptNumber: number; rank?: number }[] = [];
 	let nbEssai = 0;
 	let gameWon = false;
 	let targetWord = '';
@@ -36,6 +36,15 @@
 
 	async function sendGuess() {
 		if (!userGuess.trim()) {
+			return;
+		}
+
+		const wordToCheck = userGuess.trim().toLowerCase();
+		const alreadyGuessed = guesses.some(g => g.word.toLowerCase() === wordToCheck);
+		
+		if (alreadyGuessed) {
+			message = `⚠️ Vous avez déjà essayé le mot "${userGuess.trim()}".`;
+			userGuess = '';
 			return;
 		}
 
@@ -80,19 +89,30 @@
 	}
 
 	function getSimilarityColor(similarity: number): string {
-		if (similarity >= 80) return 'bg-green-100 border-green-400 text-green-800';
-		if (similarity >= 60) return 'bg-lime-100 border-lime-400 text-lime-800';
-		if (similarity >= 40) return 'bg-yellow-100 border-yellow-400 text-yellow-800';
-		if (similarity >= 20) return 'bg-orange-100 border-orange-400 text-orange-800';
-		return 'bg-red-100 border-red-400 text-red-800';
+		if (similarity >= 50) return 'bg-green-100 border-green-400 text-green-800';
+		if (similarity >= 35) return 'bg-lime-100 border-lime-400 text-lime-800';
+		if (similarity >= 20) return 'bg-yellow-100 border-yellow-400 text-yellow-800';
+		if (similarity >= 10) return 'bg-orange-100 border-orange-400 text-orange-800';
+		if (similarity >= 0) return 'bg-red-100 border-red-400 text-red-800';
+		return 'bg-blue-100 border-blue-400 text-blue-800';
 	}
 
 	function getSimilarityEmoji(similarity: number): string {
-		if (similarity >= 80) return '🔥';
-		if (similarity >= 60) return '😊';
-		if (similarity >= 40) return '🤔';
-		if (similarity >= 20) return '😐';
-		return '❄️';
+		if (similarity >= 50) return '🔥';
+		if (similarity >= 35) return '😊';
+		if (similarity >= 20) return '🤔';
+		if (similarity >= 10) return '😐';
+		if (similarity >= 0) return '❄️';
+		return '🧊';
+	}
+
+	function getTemperature(similarity: number): string {
+		return `${similarity.toFixed(2)}°C`;
+	}
+
+	function getRankProgress(rank: number | undefined): number {
+		if (!rank) return 0;
+		return Math.max(0, Math.min(100, ((1000 - rank) / 1000) * 100));
 	}
 </script>
 
@@ -152,26 +172,35 @@
 				</h2>
 				<div class="space-y-2">
 					{#each guesses as guess, index}
-						<div class="flex items-center justify-between rounded-lg border-2 {getSimilarityColor(guess.similarity)} p-4 transition hover:shadow-md">
-							<div class="flex items-center gap-4">
-								<span class="text-2xl">{getSimilarityEmoji(guess.similarity)}</span>
-								<div>
-									<p class="text-lg font-bold">{guess.word}</p>
-									<p class="text-sm opacity-75">Essai #{guesses.length - index}</p>
+						{#if typeof guess.similarity === 'number'}
+							<div class="flex items-center justify-between rounded-lg border-2 {getSimilarityColor(guess.similarity)} p-4 transition hover:shadow-md">
+								<div class="flex items-center gap-4">
+									<span class="text-2xl">{getSimilarityEmoji(guess.similarity)}</span>
+									<div>
+										<p class="text-lg font-bold">{guess.word}</p>
+										<p class="text-sm opacity-75">
+											Essai #{guess.attemptNumber}
+											{#if guess.rank}
+												<span class="ml-2 px-2 py-0.5 bg-white/50 rounded-full font-bold">
+													🏆 Top {guess.rank}
+												</span>
+											{/if}
+										</p>
+									</div>
+								</div>
+								<div class="text-right">
+									<p class="text-2xl font-bold">{getTemperature(guess.similarity)}</p>
+									{#if guess.rank}
+										<div class="mt-1 h-2 w-24 rounded-full bg-white/50 overflow-hidden">
+											<div 
+												class="h-full bg-current transition-all duration-500"
+												style="width: {getRankProgress(guess.rank)}%"
+											></div>
+										</div>
+									{/if}
 								</div>
 							</div>
-							<div class="text-right">
-								<p class="text-2xl font-bold">{guess.similarity.toFixed(2)}%</p>
-								{#if guess.similarity >= 0}
-									<div class="mt-1 h-2 w-24 rounded-full bg-white/50 overflow-hidden">
-										<div 
-											class="h-full bg-current transition-all duration-500"
-											style="width: {guess.similarity}%"
-										></div>
-									</div>
-								{/if}
-							</div>
-						</div>
+						{/if}
 					{/each}
 				</div>
 			</div>
@@ -222,25 +251,29 @@
 				</li>
 			</ol>
 
-			<div class="mt-6 grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-sm">
+			<div class="mt-6 grid grid-cols-2 md:grid-cols-6 gap-3 text-center text-sm">
+				<div class="rounded-lg bg-blue-100 border-2 border-blue-400 p-3">
+					<p class="font-bold text-blue-800">🧊 Négatif</p>
+					<p class="text-blue-600">Glacial</p>
+				</div>
 				<div class="rounded-lg bg-red-100 border-2 border-red-400 p-3">
-					<p class="font-bold text-red-800">❄️ 0-20%</p>
+					<p class="font-bold text-red-800">❄️ 0-10°C</p>
 					<p class="text-red-600">Très froid</p>
 				</div>
 				<div class="rounded-lg bg-orange-100 border-2 border-orange-400 p-3">
-					<p class="font-bold text-orange-800">😐 20-40%</p>
+					<p class="font-bold text-orange-800">😐 10-20°C</p>
 					<p class="text-orange-600">Froid</p>
 				</div>
 				<div class="rounded-lg bg-yellow-100 border-2 border-yellow-400 p-3">
-					<p class="font-bold text-yellow-800">🤔 40-60%</p>
+					<p class="font-bold text-yellow-800">🤔 20-35°C</p>
 					<p class="text-yellow-600">Tiède</p>
 				</div>
 				<div class="rounded-lg bg-lime-100 border-2 border-lime-400 p-3">
-					<p class="font-bold text-lime-800">😊 60-80%</p>
+					<p class="font-bold text-lime-800">😊 35-50°C</p>
 					<p class="text-lime-600">Chaud</p>
 				</div>
 				<div class="rounded-lg bg-green-100 border-2 border-green-400 p-3">
-					<p class="font-bold text-green-800">🔥 80-100%</p>
+					<p class="font-bold text-green-800">🔥 50°C+</p>
 					<p class="text-green-600">Brûlant !</p>
 				</div>
 			</div>

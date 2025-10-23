@@ -1,7 +1,10 @@
 import type { RequestEvent } from '@sveltejs/kit';
 
 let targetWord: string = '';
-let guesses: { word: string; similarity: number }[] = [];
+let guesses: { word: string; similarity: number | false; attemptNumber: number; rank?: number }[] =
+	[];
+let attemptCounter = 0;
+let topWords: string[] = [];
 
 export async function POST({ request }: RequestEvent) {
 	const { userGuess } = await request.json();
@@ -16,6 +19,14 @@ export async function POST({ request }: RequestEvent) {
 		const similarity = await calculateSimilarity(userGuess.toLowerCase(), targetWord.toLowerCase());
 
 		const isWinner = userGuess.toLowerCase() === targetWord.toLowerCase();
+
+		let rank: number | undefined = undefined;
+		if (similarity !== false && similarity !== null) {
+			const guessIndex = topWords.findIndex((w) => w.toLowerCase() === userGuess.toLowerCase());
+			if (guessIndex !== -1) {
+				rank = guessIndex + 1;
+			}
+		}
 
 		if (similarity === false) {
 			return new Response(
@@ -45,8 +56,13 @@ export async function POST({ request }: RequestEvent) {
 
 		const existingGuess = guesses.find((g) => g.word.toLowerCase() === userGuess.toLowerCase());
 		if (!existingGuess) {
-			guesses.push({ word: userGuess, similarity });
-			guesses.sort((a, b) => b.similarity - a.similarity);
+			attemptCounter++;
+			guesses.push({ word: userGuess, similarity, attemptNumber: attemptCounter, rank });
+			guesses.sort((a, b) => {
+				const aVal = typeof a.similarity === 'number' ? a.similarity : -Infinity;
+				const bVal = typeof b.similarity === 'number' ? b.similarity : -Infinity;
+				return bVal - aVal;
+			});
 		}
 
 		return new Response(
@@ -69,7 +85,10 @@ export async function GET() {
 	try {
 		targetWord = await getRandomWord();
 		guesses = [];
+		attemptCounter = 0;
 
+		topWords = await getTopWords(targetWord, 1000);
+		console.log('Top mots proches:', topWords);
 		return new Response(
 			JSON.stringify({
 				message: 'Nouvelle partie créée',
@@ -98,6 +117,27 @@ async function getRandomWord(): Promise<string> {
 	} catch (error) {
 		console.error('Erreur lors de la récupération du mot aléatoire:', error);
 		throw error;
+	}
+}
+
+async function getTopWords(word: string, topn: number = 1000): Promise<string[]> {
+	try {
+		const response = await fetch('http://localhost:5000/api/most-similar', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ word, topn })
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			return data.similar_words.map((item: { word: string }) => item.word);
+		}
+
+		console.error('Erreur lors de la récupération des mots proches');
+		return [];
+	} catch (error) {
+		console.error('Erreur lors de la récupération des mots proches:', error);
+		return [];
 	}
 }
 
