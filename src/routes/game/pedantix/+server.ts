@@ -39,10 +39,17 @@ export async function POST({ request }: RequestEvent) {
 export async function GET({ url }: RequestEvent) {
 	const userId = url.searchParams.get('userId');
 	titleWikiPage = await getRandomTitlePage();
-	titleWikiPageSplit = titleWikiPage.split(' ');
+	titleWikiPageSplit = titleWikiPage
+		.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
+		.filter((s) => s.trim() !== '');
 	contentsplice = await getContentPage(titleWikiPage);
-	tabHiddenTitle = titleWikiPageSplit.map((str) => str.length);
-	tabHiddenContent = contentsplice.map((str) => str.length);
+	tabHiddenTitle = titleWikiPageSplit.map((str) =>
+		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
+	);
+
+	tabHiddenContent = contentsplice.map((str) =>
+		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
+	);
 	const date = new Date();
 	await pool.query(
 		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
@@ -129,7 +136,10 @@ async function getContentPage(
 	const firstLines = lines.slice(0, numLines);
 
 	const text = firstLines.join(' ');
-	const words = text.split(/\s+/).filter((word: string) => word.trim() !== '');
+	const words = text
+		.replace(/([.,!?;:()[\]{}"'«»\-–—])/g, ' $1 ')
+		.split(/\s+/) // Split par espaces
+		.filter((word: string) => word !== '');
 
 	return words;
 }
@@ -161,8 +171,9 @@ function isValideTitle(title: string): boolean {
 
 function checkSimilarity(wordTab: string, wordGuess: string): boolean {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-	const distance = levenshtein(wordTab, newWord);
-	const similarity = 1 - distance / Math.max(wordTab.length, wordGuess.length);
+	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+	const distance = levenshtein(newWordTab, newWord);
+	const similarity = 1 - distance / Math.max(newWordTab.length, wordGuess.length);
 	if (similarity >= 0.5) {
 		return true;
 	}

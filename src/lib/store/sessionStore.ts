@@ -35,12 +35,12 @@ function createSessionStore() {
 				return updated;
 			});
 		},
-		updateUserInfo: ( pseudo: string, email: string)  => {
+		updateUserInfo: (pseudo: string, email: string) => {
 			store.update((sessionData) => {
 				const updated = {
 					...sessionData,
 					pseudo: pseudo,
-					email: email,
+					email: email
 				};
 				if (isBrowser) sessionStorage.setItem('sessionData', JSON.stringify(updated));
 				return updated;
