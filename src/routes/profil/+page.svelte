@@ -4,11 +4,78 @@
 	import { onMount } from 'svelte';
 	let session = sessionStore.get();
 	let pseudoUser: string | null = session ? session.pseudo : null;
+	const idUser: number | null = session ? session.id : null;
 	let email: string | null = session ? session.email : null;
 	const avatar: string | null = session ? session.avatar : null;
 	const date: Date | null = session ? session.dateCreation : null;
+	let newDate: Date;
+	let dateFormat: string;
+
+	type GameSession = {
+		ID: number;
+		TYPE: string;
+		WIN: boolean;
+		DATE_PARTIE: string;
+	};
+	let rows_histo: GameSession[] = [];
+	if (date) {
+		newDate = new Date(date);
+		dateFormat = newDate.toLocaleDateString('fr-FR', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+	}
+
 	let partiesJouees: number = 0;
 	let tauxReussite: number = 0;
+
+	let repbodyStats: {
+		nbParties: number;
+		nbEssaiMoyen: number;
+		tauxReussite: number;
+		serieActuelle: number;
+	};
+
+	async function getStats() {
+		if (idUser === null) {
+			console.error('idUser est null');
+			return;
+		}
+		try {
+			const url = `/api/statistiques?userId=${encodeURIComponent(idUser)}`;
+			const responseStats: Response = await fetch(url, {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			repbodyStats = await responseStats.json();
+			partiesJouees = repbodyStats.nbParties ?? 0;
+			tauxReussite = repbodyStats.tauxReussite ?? 0;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function getHisto() {
+		try {
+			const response = await fetch('/api/statistiques', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser
+				})
+			});
+			const data = await response.json();
+			rows_histo = data.rows_histo;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	onMount(() => {
+		getStats();
+		getHisto();
+	});
 </script>
 
 <Header />
@@ -20,7 +87,7 @@
 					<div class="flex flex-col items-center text-center">
 						<img src={avatar} alt="photo_profil" class="mb-4 h-24 w-24 rounded-full object-cover" />
 						<h3 class="mb-1 text-xl font-bold text-gray-900">{pseudoUser}</h3>
-						<p class="mb-6 text-sm text-gray-500">Membre depuis {date}</p>
+						<p class="mb-6 text-sm text-gray-500">Membre depuis le {dateFormat}</p>
 					</div>
 				</div>
 			</aside>
@@ -87,7 +154,37 @@
 						<div class="mb-4 flex items-center justify-between">
 							<h3 class="text-lg font-semibold text-gray-900">Historique des parties</h3>
 						</div>
-						<div class="space-y-3"></div>
+
+						{#if rows_histo.length === 0}
+							<p class="text-center text-gray-500">Aucune partie trouvée.</p>
+						{:else}
+							<ul class="space-y-4">
+								{#each rows_histo as partie}
+									<li>
+										<div
+											class={`flex items-center justify-between rounded-lg p-4
+           									 ${partie.WIN ? 'bg-green-100' : 'bg-red-100'}`}
+										>
+											<div>
+												<p
+													class={`flex items-center gap-2 text-lg font-semibold
+                									${partie.WIN ? 'text-green-700' : 'text-red-700'}`}
+												>
+													{partie.TYPE} #{partie.ID}
+												</p>
+												<p class="text-sm text-gray-500">
+													{new Date(partie.DATE_PARTIE).toLocaleDateString('fr-FR', {
+														day: '2-digit',
+														month: 'long',
+														year: 'numeric'
+													})}
+												</p>
+											</div>
+										</div>
+									</li>
+								{/each}
+							</ul>
+						{/if}
 					</div>
 
 					<div class="rounded-lg bg-white p-6 shadow-sm">
