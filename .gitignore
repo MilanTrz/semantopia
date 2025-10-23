@@ -1,6 +1,7 @@
 test-results
 node_modules
 word2vec-service/venv/
+word2vec-service/*.bin
 
 # Output
 .output

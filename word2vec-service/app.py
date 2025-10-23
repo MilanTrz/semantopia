@@ -4,6 +4,7 @@ from gensim.models import KeyedVectors
 import numpy as np
 import os
 import random
+import urllib.request
 
 
 app = Flask(__name__)
@@ -15,16 +16,45 @@ print("Chargement du modèle word2vec français...")
 model = None
 
 MODEL_PATH = 'frWac_postag_no_phrase_1000_skip_cut100.bin'
+MODEL_URL = 'https://embeddings.net/embeddings/frWac_postag_no_phrase_1000_skip_cut100.bin'
+
+
+def download_model(url, destination):
+    """Télécharge le modèle word2vec"""
+    print(f"Téléchargement du modèle depuis {url}...")
+    print("Cela peut prendre plusieurs minutes (fichier ~500 Mo)...")
+
+    def show_progress(block_num, block_size, total_size):
+        downloaded = block_num * block_size
+        percent = min(100, downloaded * 100 / total_size)
+        print(
+            f"\rProgrès: {percent:.1f}% ({downloaded / (1024*1024):.1f} MB / {total_size / (1024*1024):.1f} MB)", end='')
+
+    try:
+        urllib.request.urlretrieve(url, destination, show_progress)
+        print("\nTéléchargement terminé!")
+        return True
+    except Exception as e:
+        print(f"\nErreur lors du téléchargement: {e}")
+        return False
+
 
 try:
+    if not os.path.exists(MODEL_PATH):
+        print(f"Le fichier modèle n'existe pas: {MODEL_PATH}")
+        if download_model(MODEL_URL, MODEL_PATH):
+            print("Modèle téléchargé avec succès, chargement en cours...")
+        else:
+            print("Impossible de télécharger le modèle automatiquement.")
+            print("Veuillez le télécharger manuellement depuis:")
+            print(
+                "https://embeddings.net/embeddings/frWac_postag_no_phrase_1000_skip_cut100.bin")
+            model = None
+
     if os.path.exists(MODEL_PATH):
         model = KeyedVectors.load_word2vec_format(
             MODEL_PATH, binary=True, unicode_errors='ignore')
         print("Modèle chargé avec succès!")
-    else:
-        print(f"ERREUR: Le fichier modèle n'existe pas: {MODEL_PATH}")
-        print("Téléchargez le modèle depuis: https://fauconnier.github.io/#data")
-        print("Et placez-le dans le dossier word2vec-service/")
 except Exception as e:
     print(f"Erreur lors du chargement du modèle: {e}")
     model = None
