@@ -7,7 +7,6 @@ let contentsplice: string[];
 let tabHiddenTitle: (number | string)[];
 let tabHiddenContent: (number | string)[];
 
-
 export async function POST({ request }: RequestEvent) {
 	const { userGuess } = await request.json();
 
@@ -38,7 +37,7 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function GET({ url }: RequestEvent) {
-	const  userId  = url.searchParams.get('userId')
+	const userId = url.searchParams.get('userId');
 	titleWikiPage = await getRandomTitlePage();
 	titleWikiPageSplit = titleWikiPage.split(' ');
 	contentsplice = await getContentPage(titleWikiPage);
@@ -47,8 +46,8 @@ export async function GET({ url }: RequestEvent) {
 	const date = new Date();
 	await pool.query(
 		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
-		[date,userId]
-	)
+		[date, userId]
+	);
 
 	try {
 		return new Response(
@@ -170,37 +169,28 @@ function checkSimilarity(wordTab: string, wordGuess: string): boolean {
 	return false;
 }
 
-export async function PUT({ request }: RequestEvent){
-	const { nbEssai,isVictory,idUser } = await request.json();
+export async function PUT({ request }: RequestEvent) {
+	const { nbEssai, isVictory, idUser } = await request.json();
 
-	try{
-		const [row_max] = await pool.query(
-				'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
-				[idUser]
-			)as [Array<{ ID: number; }>, unknown];
-			const idMax = row_max[0].ID;
-
-			const [row_max2] = await pool.query(
-				'SELECT MAX(ID) - 1 AS ID FROM GAME_SESSION WHERE USER_ID = ?',
-				[idUser]
-			)as [Array<{ ID: number; }>, unknown];
-			const idMax2 = row_max2[0].ID;
-		
-		if (isVictory){
-			
+	try {
+		const [row_max] = (await pool.query(
+			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
+			[idUser]
+		)) as [Array<{ ID: number }>, unknown];
+		const idMax = row_max[0].ID;
+		if (isVictory) {
 			await pool.query(
-			'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? ' ,
-			[nbEssai,idUser,idMax]
-			
-		)
-		}else{
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? ',
+				[nbEssai, idUser, idMax]
+			);
+		} else {
 			await pool.query(
-			'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ?',
-			[nbEssai,idUser,idMax2]
-			)
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ?',
+				[nbEssai, idUser, idMax]
+			);
 		}
 		return new Response(null, { status: 204 });
-	}catch (error) {
+	} catch (error) {
 		console.error('Erreur Server:', error);
 		throw error;
 	}

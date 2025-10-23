@@ -10,50 +10,48 @@
 		tabHiddenTitle: number[];
 		tabHiddenContent: number[];
 	};
+
+	let repbodyStats: {
+		nbParties: number;
+		nbEssaiMoyen: number;
+		tauxReussite: number;
+		serieActuelle: number;
+	};
 	let tabTitle: number[];
 	let tabContent: number[];
 	let nbEssai: number = 0;
 
 	let partiesJouees: number = 0;
-	let tauxReussite: string = '0%';
+	let tauxReussite: number = 0;
 	let essaisMoyen: number = 0.0;
 	let serieActuelle: number = 0;
 
 	let isLoading = true;
 	let isVictory = false;
 
+	let isSurrender = true;
+
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : null;
 	console.log(idUser);
 
 	async function newGame() {
-		nbEssai = 0;
+		getStatistics();
+		isSurrender = true;
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
-		try{
-			await fetch('/game/pedantix',{
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					nbEssai,isVictory,idUser
-				})
-			})
-		}catch (error) {
-		console.error('Erreur Server:', error);
-		throw error;
-	}
-		
+		nbEssai = 0;
 		userGuess = '';
 		if (idUser === null) {
-			console.error("idUser est null");
+			console.error('idUser est null');
 			return;
-			}
+		}
 		const url = `/game/pedantix?userId=${encodeURIComponent(idUser)}`;
 		try {
 			const response = await fetch(url, {
 				method: 'GET',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json' }
 			});
 			repbody = await response.json();
 			if (response.status == 201) {
@@ -91,18 +89,21 @@
 
 	async function triggerVictory() {
 		isVictory = true;
-		try{
-			await fetch('/game/pedantix',{
+		isSurrender = false;
+		try {
+			await fetch('/game/pedantix', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					nbEssai,isVictory,idUser
+					nbEssai,
+					isVictory,
+					idUser
 				})
-			})
-		}catch (error) {
-		console.error('Erreur Server:', error);
-		throw error;
-	}
+			});
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
 		const duration = 4 * 1000; //
 		const animationEnd = Date.now() + duration;
 		const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
@@ -126,6 +127,45 @@
 				colors: ['#bb0000', '#ffffff', '#ffcc00', '#00bbff']
 			});
 		}, 250);
+	}
+
+	async function surrenderGame() {
+		isSurrender = false;
+		isVictory = false;
+		try {
+			await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser
+				})
+			});
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function getStatistics() {
+		try {
+			const responseStats: Response = await fetch('/api/statistiques', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId : idUser,
+					gameType: 'pedantix'
+				})
+			});
+			repbodyStats = await responseStats.json();
+			partiesJouees = repbodyStats.nbParties ?? 0;
+			tauxReussite = repbodyStats.tauxReussite ?? 0;
+			essaisMoyen = repbodyStats.nbEssaiMoyen ?? 0;
+			serieActuelle = repbodyStats.serieActuelle ?? 0;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
 	}
 
 	onMount(() => {
@@ -220,12 +260,21 @@
 		</div>
 
 		<div class="flex gap-4">
-			<button
-				class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-				on:click={newGame}
-			>
-				🔄 Nouvelle partie
-			</button>
+			{#if !isSurrender}
+				<button
+					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					on:click={newGame}
+				>
+					🔄 Nouvelle partie
+				</button>
+			{:else}
+				<button
+					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					on:click={surrenderGame}
+				>
+					🔄 Abandonner la Partie
+				</button>
+			{/if}
 			<button
 				class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
 			>
@@ -266,7 +315,7 @@
 					<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 				</div>
 				<div class="text-center">
-					<p class="text-4xl font-bold text-green-600">{tauxReussite}</p>
+					<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
 					<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 				</div>
 				<div class="text-center">
