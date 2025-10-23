@@ -6,10 +6,12 @@
 	let pseudoUser: string | null = session ? session.pseudo : null;
 	const idUser: number | null = session ? session.id : null;
 	let email: string | null = session ? session.email : null;
-	const avatar: string | null = session ? session.avatar : null;
+	let mdpUser: string = '';
+	let avatar: string | null = session ? session.avatar : null;
 	const date: Date | null = session ? session.dateCreation : null;
 	let newDate: Date;
 	let dateFormat: string;
+	let fileInput: HTMLInputElement;
 
 	type GameSession = {
 		ID: number;
@@ -72,6 +74,47 @@
 			throw error;
 		}
 	}
+	async function changeInfoUser() {
+		try {
+			await fetch('/profil', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					pseudo: pseudoUser,
+					email: email,
+					mdp: mdpUser
+				})
+			});
+			if (pseudoUser && email){
+				sessionStore.updateUserInfo(pseudoUser,email);
+			}
+			
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	function openInput() {
+		fileInput.click();
+	}
+	async function changeAvatar(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const fichier = target.files?.[0];
+		if (fichier && idUser) {
+			const fichierUrl: string = './src/lib/assets/photo_profil/' + fichier.name;
+			const formData = new FormData();
+			formData.append('userId', String(idUser));
+			formData.append('file', fichier);
+			formData.append('newFilePath', fichierUrl);
+
+			sessionStore.updateAvatar(fichierUrl);
+			await fetch('/api/profil/', {
+				method: 'POST',
+				body: formData
+			});
+		}
+	}
 	onMount(() => {
 		getStats();
 		getHisto();
@@ -85,7 +128,20 @@
 			<aside class="lg:col-span-1">
 				<div class="rounded-lg bg-white p-6 shadow-sm">
 					<div class="flex flex-col items-center text-center">
-						<img src={avatar} alt="photo_profil" class="mb-4 h-24 w-24 rounded-full object-cover" />
+						<button on:click={openInput}>
+							<img
+								src={avatar}
+								alt="photo_profil"
+								class="mb-4 h-24 w-24 rounded-full object-cover"
+							/>
+						</button>
+						<input
+							bind:this={fileInput}
+							type="file"
+							accept="image/*"
+							class="hidden"
+							on:change={changeAvatar}
+						/>
 						<h3 class="mb-1 text-xl font-bold text-gray-900">{pseudoUser}</h3>
 						<p class="mb-6 text-sm text-gray-500">Membre depuis le {dateFormat}</p>
 					</div>
@@ -189,7 +245,7 @@
 
 					<div class="rounded-lg bg-white p-6 shadow-sm">
 						<h3 class="mb-6 text-lg font-semibold text-gray-900">Paramètres du compte</h3>
-						<form class="space-y-5">
+						<form class="space-y-5" on:submit|preventDefault={changeInfoUser}>
 							<div>
 								<label for="pseudo" class="mb-2 block text-sm font-medium text-gray-700">
 									Pseudonyme
@@ -217,23 +273,16 @@
 							</div>
 
 							<div>
-								<label for="password" class="mb-2 block text-sm font-medium text-gray-700">
-									Mot de passe
+								<label for="mdp" class="mb-2 block text-sm font-medium text-gray-700">
+									Mot De Passe
 								</label>
-								<button
-									type="button"
-									class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-								>
-									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-										/>
-									</svg>
-									Modifier le mot de passe
-								</button>
+								<input
+									id="mdp"
+									type="password"
+									bind:value={mdpUser}
+									placeholder="••••••••"
+									class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+								/>
 							</div>
 
 							<button

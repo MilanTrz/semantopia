@@ -47,20 +47,6 @@
 				L'univers fascinant des jeux de mots vous attend ! Développez votre vocabulaire, stimulez
 				votre esprit et défiez vos amis dans une aventure linguistique unique.
 			</p>
-			<div class="flex flex-wrap gap-3">
-				<button
-					class="rounded-lg bg-yellow-400 px-6 py-3 font-semibold text-gray-900 transition hover:bg-yellow-300"
-					><a href="/login">Jouer en invité</a></button
-				>
-				<button
-					class="bg-opacity-20 hover:bg-opacity-30 rounded-lg border border-white bg-white px-6 py-3 font-semibold text-black transition"
-					><a href="/login">Se Connecter</a></button
-				>
-				<button
-					class="rounded-lg bg-white px-6 py-3 font-semibold text-purple-600 transition hover:bg-gray-100"
-					><a href="/register">Créer un compte</a></button
-				>
-			</div>
 		</div>
 		<div
 			class="bg-opacity-40 rounded-2xl bg-purple-700 p-8 text-center text-white backdrop-blur-sm"
