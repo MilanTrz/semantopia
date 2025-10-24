@@ -2,23 +2,33 @@ import pool from '$lib/server/db';
 import { type RequestEvent } from '@sveltejs/kit';
 import { writeFile, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
+import {mkdir} from 'fs/promises'
+import path from 'path';
 
 export async function POST({ request }: RequestEvent) {
 	try {
 		const data = await request.formData();
 		const userId = Number(data.get('userId'));
 		const file = data.get('file') as File;
-		const newFilePath = data.get('newFilePath');
-		if (!newFilePath || typeof newFilePath !== 'string') {
+		const newFileName = data.get('fileName') as string;
+		if (!newFileName || typeof newFileName  !== 'string') {
 			return new Response(JSON.stringify({ message: 'Chemin de fichier manquant ou invalide.' }), {
 				status: 400
 			});
 		}
+		const uploadDir = path.join(process.cwd(), 'static', 'photo_profil');
+		await mkdir(uploadDir, { recursive: true });
+
+	
+		const newFilePath = path.join(uploadDir, newFileName);
+
+
 		const [rowsUser] = (await pool.query('SELECT AVATAR FROM USERS WHERE ID = ?', [userId])) as [
 			Array<{ AVATAR: string }>,
 			unknown
 		];
 		const oldPathFile: string = rowsUser[0].AVATAR;
+		console.log(oldPathFile);
 
 		if (existsSync(oldPathFile)) {
 			await unlink(oldPathFile);

@@ -37,10 +37,10 @@
 	const idUser: number | null = session ? session.id : 0;
 
 	async function newGame() {
-		if (idUser){
+		if (idUser) {
 			getStatistics();
-		}	
-		
+		}
+
 		isSurrender = true;
 		tabguess = [];
 		isLoading = true;
@@ -112,18 +112,17 @@
 		isVictory = true;
 		isSurrender = false;
 		try {
-			if (idUser){
+			if (idUser) {
 				await fetch('/game/pedantix', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					nbEssai,
-					isVictory,
-					idUser
-				})
-			});
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						nbEssai,
+						isVictory,
+						idUser
+					})
+				});
 			}
-			
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -135,18 +134,17 @@
 		isSurrender = false;
 		isVictory = false;
 		try {
-			if (idUser){
+			if (idUser) {
 				await fetch('/game/pedantix', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					nbEssai,
-					isVictory,
-					idUser
-				})
-			});
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						nbEssai,
+						isVictory,
+						idUser
+					})
+				});
 			}
-			
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -330,29 +328,29 @@
 			</ul>
 		</div>
 		{#if idUser}
-		<div class="rounded-lg bg-white p-6 shadow-sm">
-			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-				📊 Vos statistiques
-			</h4>
-			<div class="grid grid-cols-2 gap-6">
-				<div class="text-center">
-					<p class="text-4xl font-bold text-purple-600">{partiesJouees}</p>
-					<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-				</div>
-				<div class="text-center">
-					<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
-					<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-				</div>
-				<div class="text-center">
-					<p class="text-4xl font-bold text-blue-600">{essaisMoyen}</p>
-					<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
-				</div>
-				<div class="text-center">
-					<p class="text-4xl font-bold text-orange-600">{serieActuelle}</p>
-					<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
+			<div class="rounded-lg bg-white p-6 shadow-sm">
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+					📊 Vos statistiques
+				</h4>
+				<div class="grid grid-cols-2 gap-6">
+					<div class="text-center">
+						<p class="text-4xl font-bold text-purple-600">{partiesJouees}</p>
+						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
+					</div>
+					<div class="text-center">
+						<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
+						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
+					</div>
+					<div class="text-center">
+						<p class="text-4xl font-bold text-blue-600">{essaisMoyen}</p>
+						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
+					</div>
+					<div class="text-center">
+						<p class="text-4xl font-bold text-orange-600">{serieActuelle}</p>
+						<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
+					</div>
 				</div>
 			</div>
-		</div>
 		{/if}
 
 		<div class="rounded-lg bg-white p-6 shadow-sm">
@@ -362,21 +360,21 @@
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
 					<a href="/game/cemantix">
-					<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
+						<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
 					</a>
 				</div>
 				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
 					<a href="/game/cemantix">
-					<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
+						<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
 					</a>
 				</div>
 				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
 					<a href="/game/cemantix">
-					<h5 class="font-medium text-gray-700">📝Motix</h5>
+						<h5 class="font-medium text-gray-700">📝Motix</h5>
 					</a>
 				</div>
 			</div>

@@ -5,7 +5,6 @@
 	let session = sessionStore.get();
 	let id: number | null = session ? session.id : null;
 	const pseudoUser: string | null = session ? session.pseudo : null;
-	console.log(id);
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
@@ -130,7 +129,7 @@
 			</div>
 		</a>
 		<a
-			href="/jeux/correlix"
+			href="/game/correlix"
 			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
 		>
 			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
