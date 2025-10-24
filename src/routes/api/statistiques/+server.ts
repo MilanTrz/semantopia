@@ -31,9 +31,9 @@ export async function POST({ request }: RequestEvent) {
 			[userId, gameType]
 		);
 		const stats = row_game[0];
-		const nbParties = stats.NB_PARTIES_JOUES;
-		const nbEssaiMoyen = stats.NB_ESSAI_MOYEN;
-		const tauxReussite = stats.TAUX_REUSSITE;
+		const nbParties = stats.NB_PARTIES_JOUES ?? 0;
+		const nbEssaiMoyen = stats.NB_ESSAI_MOYEN ?? 0;
+		const tauxReussite = stats.TAUX_REUSSITE ?? 0;
 		const serieActuelle = stats.SERIE_ACTUELLE ?? 0;
 		return new Response(
 			JSON.stringify({

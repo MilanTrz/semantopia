@@ -86,10 +86,9 @@
 					mdp: mdpUser
 				})
 			});
-			if (pseudoUser && email){
-				sessionStore.updateUserInfo(pseudoUser,email);
+			if (pseudoUser && email) {
+				sessionStore.updateUserInfo(pseudoUser, email);
 			}
-			
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
