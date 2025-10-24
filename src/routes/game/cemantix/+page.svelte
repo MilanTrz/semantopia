@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
-
+	import { triggerConfettiAnimation } from '$lib';
+	
 	let userGuess = '';
 	let guesses: {
 		word: string;
@@ -78,6 +79,7 @@
 						gameWon = true;
 						targetWord = data.targetWord;
 						message = `🎉 Félicitations ! Vous avez trouvé le mot "${targetWord}" en ${nbEssai} essais !`;
+						triggerConfettiAnimation();
 					} else {
 						message = `Proximité de ${userGuess.trim()}: ${data.similarity.toFixed(2)}%`;
 					}

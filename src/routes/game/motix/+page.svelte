@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
-	import confetti from 'canvas-confetti';
+	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { writable } from 'svelte/store';
 	const session = sessionStore.get();
@@ -79,7 +79,7 @@
 		const isCorrect = cleanGuess.every((letter, i) => letter === tabWordFind[i]);
 		if (isCorrect) {
 			victoryGame();
-			confetti();
+			triggerConfettiAnimation();
 			isDisabled = true;
 			return null;
 		}
