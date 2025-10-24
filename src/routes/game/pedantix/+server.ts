@@ -37,7 +37,8 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function GET({ url }: RequestEvent) {
-	const userId = url.searchParams.get('userId');
+	const userId = Number(url.searchParams.get('userId'));
+
 	titleWikiPage = await getRandomTitlePage();
 	titleWikiPageSplit = titleWikiPage
 		.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
@@ -51,10 +52,13 @@ export async function GET({ url }: RequestEvent) {
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
 	const date = new Date();
-	await pool.query(
+	if (userId !== 0){
+		await pool.query(
 		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
 		[date, userId]
 	);
+	}
+	
 
 	try {
 		return new Response(
@@ -92,7 +96,7 @@ async function getRandomTitlePage(lang: string = 'fr'): Promise<string> {
 		for (const pageId in pages) {
 			const page = pages[pageId];
 
-			if (page.length && page.length > 70000) {
+			if (page.length && page.length > 70000 ) {
 				continue;
 			}
 
