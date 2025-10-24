@@ -3,7 +3,7 @@
 	import { sessionStore } from './store/sessionStore';
 	let session = sessionStore.get();
 	let pseudo: string | null = session ? session.pseudo : null;
-	let avatar: string | null = session ? session.avatar : null;
+	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
 	function logout() {
 		sessionStore.clear();
 		window.setTimeout(() => {
@@ -23,9 +23,9 @@
 	</div>
 	<div>
 		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
-			<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
+			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>			
 			{#if pseudo}
+				<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 				<li><p>{pseudo}</p></li>
 				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />
 				<button

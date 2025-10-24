@@ -51,7 +51,7 @@ export async function POST({ request }: RequestEvent) {
 	}
 }
 export async function GET({ url }: RequestEvent) {
-	const userId = url.searchParams.get('userId');
+	const userId = Number(url.searchParams.get('userId'));
 	try {
 		const [row_game] = (await pool.query(
 			`
@@ -65,9 +65,9 @@ export async function GET({ url }: RequestEvent) {
     `,
 			[userId]
 		)) as [Array<{ NB_PARTIES_JOUES: number; TAUX_REUSSITE: number }>, unknown];
-		const stats = row_game[0];
-		const nbParties = stats.NB_PARTIES_JOUES;
-		const tauxReussite = stats.TAUX_REUSSITE;
+		const stats = row_game[0] ?? { NB_PARTIES_JOUES: 0, TAUX_REUSSITE: 0 };
+		const nbParties = stats.NB_PARTIES_JOUES ?? 0;
+		const tauxReussite = stats.TAUX_REUSSITE ?? 0;
 		return new Response(
 			JSON.stringify({
 				nbParties,

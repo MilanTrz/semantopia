@@ -2,16 +2,34 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
-	let session = sessionStore.get();
-	let pseudoUser: string | null = session ? session.pseudo : null;
-	const idUser: number | null = session ? session.id : null;
-	let email: string | null = session ? session.email : null;
-	let mdpUser: string = '';
-	let avatar: string | null = session ? session.avatar : null;
-	const date: Date | null = session ? session.dateCreation : null;
-	let newDate: Date;
-	let dateFormat: string;
-	let fileInput: HTMLInputElement;
+	import { browser } from '$app/environment';
+
+
+			$: {
+		console.log('=== DEBUG SESSION ===');
+		console.log('$sessionStore complet:', $sessionStore);
+		console.log('$sessionStore?.id:', $sessionStore?.id);
+		console.log('Type:', typeof $sessionStore);
+		console.log('Browser:', browser);
+		console.log('SessionStorage brut:', 
+			browser ? sessionStorage.getItem('sessionData') : 'SSR'
+		);
+		console.log('====================');
+	}
+
+		
+	$: pseudoUser = $sessionStore?.pseudo ?? null;
+	$: idUser = $sessionStore?.id ?? null;
+	$: email = $sessionStore?.email ?? null;
+	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
+	$: date = $sessionStore?.dateCreation ?? null;
+	
+		
+
+		let mdpUser: string = '';
+		let newDate: Date;
+		let dateFormat: string;
+		let fileInput: HTMLInputElement;
 
 	type GameSession = {
 		ID: number;
@@ -20,8 +38,8 @@
 		DATE_PARTIE: string;
 	};
 	let rows_histo: GameSession[] = [];
-	if (date) {
-		newDate = new Date(date);
+	$: if (date) {
+		const newDate = new Date(date);
 		dateFormat = newDate.toLocaleDateString('fr-FR', {
 			year: 'numeric',
 			month: 'long',
@@ -101,18 +119,19 @@
 		const target = event.target as HTMLInputElement;
 		const fichier = target.files?.[0];
 		if (fichier && idUser) {
-			const fichierUrl: string = './src/lib/assets/photo_profil/' + fichier.name;
+			const fichierUrl: string = '/photo_profil/' + fichier.name;
 			const formData = new FormData();
 			formData.append('userId', String(idUser));
 			formData.append('file', fichier);
-			formData.append('newFilePath', fichierUrl);
-
-			sessionStore.updateAvatar(fichierUrl);
+			formData.append('fileName', fichier.name);
+			
 			await fetch('/api/profil/', {
 				method: 'POST',
 				body: formData
 			});
+			sessionStore.updateAvatar(fichierUrl);
 		}
+		
 	}
 	onMount(() => {
 		getStats();
@@ -128,11 +147,13 @@
 				<div class="rounded-lg bg-white p-6 shadow-sm">
 					<div class="flex flex-col items-center text-center">
 						<button on:click={openInput}>
+							{#key avatar}
 							<img
 								src={avatar}
 								alt="photo_profil"
 								class="mb-4 h-24 w-24 rounded-full object-cover"
 							/>
+							{/key}
 						</button>
 						<input
 							bind:this={fileInput}
