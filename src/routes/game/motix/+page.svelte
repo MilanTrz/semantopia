@@ -57,12 +57,13 @@
 	}
 
 	function sendGuess() {
-		nbEssai++;
-		if (nbEssai == 6) {
+		
+		if (nbEssai == 5) {
 			isLoose = true;
 			isDisabled = true;
 			return null;
 		}
+		nbEssai++;
 		tabGuesses.update((g) => [
 			...g,
 			userGuess
