@@ -18,9 +18,9 @@
 		serieActuelle: number;
 	};
 	let tabTitle: number[];
-	let tabTitleTemp: number[];
+	let tabTitleTemp: number[] = [];
 	let tabContent: number[];
-	let tabContentTemp: number[];
+	let tabContentTemp: number[] = [];
 	let nbEssai: number = 0;
 
 	let partiesJouees: number = 0;
@@ -34,11 +34,13 @@
 	let isSurrender = true;
 
 	const session = sessionStore.get();
-	const idUser: number | null = session ? session.id : null;
-	console.log(idUser);
+	const idUser: number | null = session ? session.id : 0;
 
 	async function newGame() {
-		getStatistics();
+		if (idUser){
+			getStatistics();
+		}	
+		
 		isSurrender = true;
 		tabguess = [];
 		isLoading = true;
@@ -110,7 +112,8 @@
 		isVictory = true;
 		isSurrender = false;
 		try {
-			await fetch('/game/pedantix', {
+			if (idUser){
+				await fetch('/game/pedantix', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -119,6 +122,8 @@
 					idUser
 				})
 			});
+			}
+			
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -152,7 +157,8 @@
 		isSurrender = false;
 		isVictory = false;
 		try {
-			await fetch('/game/pedantix', {
+			if (idUser){
+				await fetch('/game/pedantix', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -161,6 +167,8 @@
 					idUser
 				})
 			});
+			}
+			
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -239,7 +247,7 @@
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
-								{item}
+								{item}{' '}
 							</span>
 						</span>{' '}
 					{:else}
@@ -265,7 +273,7 @@
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
-								{item}
+								{item}{' '}
 							</span>
 						</span>{' '}
 					{:else}
@@ -279,7 +287,7 @@
 							class:px-1={isNewlyFoundContent(i)}
 						>
 							{item}{' '}
-						</span>
+						</span>{' '}
 					{/if}
 				{/each}
 			</p>
@@ -343,7 +351,7 @@
 				</li>
 			</ul>
 		</div>
-
+		{#if idUser}
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
 				📊 Vos statistiques
@@ -367,6 +375,7 @@
 				</div>
 			</div>
 		</div>
+		{/if}
 
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
@@ -374,20 +383,23 @@
 				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
-					<span class="mr-3 text-xl">🧩</span>
-					<h5 class="font-medium text-gray-700">Cémantix</h5>
+					<a href="/game/cemantix">
+					<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
+					</a>
 				</div>
 				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
-					<span class="mr-3 text-xl">🔗</span>
-					<h5 class="font-medium text-gray-700">Corrélix</h5>
+					<a href="/game/cemantix">
+					<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
+					</a>
 				</div>
 				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
-					<span class="mr-3 text-xl">📝</span>
-					<h5 class="font-medium text-gray-700">Motix</h5>
+					<a href="/game/cemantix">
+					<h5 class="font-medium text-gray-700">📝Motix</h5>
+					</a>
 				</div>
 			</div>
 		</div>
