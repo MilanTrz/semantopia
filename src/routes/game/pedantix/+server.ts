@@ -1,3 +1,4 @@
+import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
 import levenshtein from 'js-levenshtein';
 let titleWikiPage: string;
@@ -35,12 +36,25 @@ export async function POST({ request }: RequestEvent) {
 	}
 }
 
-export async function GET() {
+export async function GET({ url }: RequestEvent) {
+	const userId = url.searchParams.get('userId');
 	titleWikiPage = await getRandomTitlePage();
-	titleWikiPageSplit = titleWikiPage.split(' ');
+	titleWikiPageSplit = titleWikiPage
+		.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
+		.filter((s) => s.trim() !== '');
 	contentsplice = await getContentPage(titleWikiPage);
-	tabHiddenTitle = titleWikiPageSplit.map((str) => str.length);
-	tabHiddenContent = contentsplice.map((str) => str.length);
+	tabHiddenTitle = titleWikiPageSplit.map((str) =>
+		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
+	);
+
+	tabHiddenContent = contentsplice.map((str) =>
+		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
+	);
+	const date = new Date();
+	await pool.query(
+		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
+		[date, userId]
+	);
 
 	try {
 		return new Response(
@@ -122,13 +136,27 @@ async function getContentPage(
 	const firstLines = lines.slice(0, numLines);
 
 	const text = firstLines.join(' ');
-	const words = text.split(/\s+/).filter((word: string) => word.trim() !== '');
+	const words = text
+		.replace(/([.,!?;:()[\]{}"'«»\-–—])/g, ' $1 ')
+		.split(/\s+/) // Split par espaces
+		.filter((word: string) => word !== '');
 
 	return words;
 }
 
 function isValideTitle(title: string): boolean {
-	const forbiddenWords = ['Liste', 'Catégorie', 'Utilisateur', 'Discussion','Membres','ordre','alphabétique','Communauté','gens'];
+	const forbiddenWords = [
+		'Liste',
+		'Catégorie',
+		'Utilisateur',
+		'Discussion',
+		'Membres',
+		'ordre',
+		'alphabétique',
+		'Communauté',
+		'gens',
+		'.'
+	];
 	const lowerTitle = title.toLowerCase();
 	for (const word of forbiddenWords) {
 		if (lowerTitle.includes(word.toLowerCase())) {
@@ -143,10 +171,38 @@ function isValideTitle(title: string): boolean {
 
 function checkSimilarity(wordTab: string, wordGuess: string): boolean {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-	const distance = levenshtein(wordTab, newWord);
-	const similarity = 1 - distance / Math.max(wordTab.length, wordGuess.length);
+	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+	const distance = levenshtein(newWordTab, newWord);
+	const similarity = 1 - distance / Math.max(newWordTab.length, wordGuess.length);
 	if (similarity >= 0.5) {
 		return true;
 	}
 	return false;
+}
+
+export async function PUT({ request }: RequestEvent) {
+	const { nbEssai, isVictory, idUser } = await request.json();
+
+	try {
+		const [row_max] = (await pool.query(
+			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
+			[idUser]
+		)) as [Array<{ ID: number }>, unknown];
+		const idMax = row_max[0].ID;
+		if (isVictory) {
+			await pool.query(
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
+				[nbEssai, idUser, idMax, 'pedantix']
+			);
+		} else {
+			await pool.query(
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
+				[nbEssai, idUser, idMax, 'pedantix']
+			);
+		}
+		return new Response(null, { status: 204 });
+	} catch (error) {
+		console.error('Erreur Server:', error);
+		throw error;
+	}
 }

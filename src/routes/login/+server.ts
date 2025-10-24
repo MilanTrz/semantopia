@@ -20,17 +20,23 @@ export async function POST({ request }: RequestEvent) {
 			});
 		}
 
-		const [rows_id] = (await pool.query('SELECT ID, PSEUDO FROM USERS WHERE EMAIL = ? ', [
-			email
-		])) as [Array<{ ID: number; PSEUDO: string }>, unknown];
+		const [rows_id] = (await pool.query(
+			'SELECT ID, PSEUDO, AVATAR, CREATION_DATE FROM USERS WHERE EMAIL = ? ',
+			[email]
+		)) as [Array<{ ID: number; PSEUDO: string; AVATAR: string; CREATION_DATE: Date }>, unknown];
 
 		const userId = rows_id[0].ID;
 		const pseudo = rows_id[0].PSEUDO;
+		const avatar = rows_id[0].AVATAR;
+		const date = rows_id[0].CREATION_DATE;
 		return new Response(
 			JSON.stringify({
 				message: 'Connexion établie. Redirection...',
 				userId,
-				pseudo
+				pseudo,
+				avatar,
+				email,
+				date
 			}),
 			{ status: 201 }
 		);

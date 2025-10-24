@@ -2,6 +2,7 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import confetti from 'canvas-confetti';
+	import { sessionStore } from '$lib/store/sessionStore';
 
 	let userGuess = '';
 	let tabguess: string[] = [];
@@ -9,40 +10,60 @@
 		tabHiddenTitle: number[];
 		tabHiddenContent: number[];
 	};
+
+	let repbodyStats: {
+		nbParties: number;
+		nbEssaiMoyen: number;
+		tauxReussite: number;
+		serieActuelle: number;
+	};
 	let tabTitle: number[];
+	let tabTitleTemp: number[];
 	let tabContent: number[];
+	let tabContentTemp: number[];
 	let nbEssai: number = 0;
 
 	let partiesJouees: number = 0;
-	let tauxReussite: string = '0%';
+	let tauxReussite: number = 0;
 	let essaisMoyen: number = 0.0;
 	let serieActuelle: number = 0;
 
 	let isLoading = true;
 	let isVictory = false;
 
+	let isSurrender = true;
+
+	const session = sessionStore.get();
+	const idUser: number | null = session ? session.id : null;
+	console.log(idUser);
 
 	async function newGame() {
-		nbEssai = 0;
+		getStatistics();
+		isSurrender = true;
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
+		nbEssai = 0;
 		userGuess = '';
-		try{
-	
-		const response = await fetch('/game/pedantix/', {
-			method: 'GET',
-			headers: { 'Content-Type': 'application/json' }
-		});
-		repbody = await response.json();
-		if (response.status == 201) {
-			tabTitle = repbody.tabHiddenTitle;
-			tabContent = repbody.tabHiddenContent;
+		if (idUser === null) {
+			console.error('idUser est null');
+			return;
 		}
-	}catch (error) {
+		const url = `/game/pedantix?userId=${encodeURIComponent(idUser)}`;
+		try {
+			const response = await fetch(url, {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			repbody = await response.json();
+			if (response.status == 201) {
+				tabTitle = repbody.tabHiddenTitle;
+				tabContent = repbody.tabHiddenContent;
+			}
+		} catch (error) {
 			console.error('Erreur de chargement:', error);
 		} finally {
-			isLoading = false; 
+			isLoading = false;
 		}
 	}
 
@@ -59,47 +80,118 @@
 		});
 		repbody = await response.json();
 		if (response.status == 201) {
+			tabTitleTemp = tabTitle;
+			tabContentTemp = tabContent;
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
 		}
-		if (tabTitle.every(item => typeof item === 'string')){
+		if (tabTitle.every((item) => typeof item === 'string')) {
 			triggerVictory();
 		}
 		userGuess = '';
 	}
 
-	function triggerVictory(){
-	isVictory = true;
-	const duration = 4 * 1000; // 
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+	function isNewlyFoundTitle(index: number): boolean {
+		return (
+			typeof tabTitleTemp[index] === 'number' &&
+			typeof tabTitle[index] === 'string' &&
+			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabTitle[index] as string)
+		);
+	}
+	function isNewlyFoundContent(index: number): boolean {
+		return (
+			typeof tabContentTemp[index] === 'number' &&
+			typeof tabContent[index] === 'string' &&
+			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabContent[index] as string)
+		);
+	}
 
-    const interval = setInterval(() => {
-      const timeLeft = animationEnd - Date.now();
+	async function triggerVictory() {
+		isVictory = true;
+		isSurrender = false;
+		try {
+			await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser
+				})
+			});
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+		const duration = 4 * 1000; //
+		const animationEnd = Date.now() + duration;
+		const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
 
-      if (timeLeft <= 0) {
-        clearInterval(interval);
-        return;
-      }
+		const interval = setInterval(() => {
+			const timeLeft = animationEnd - Date.now();
 
-      const particleCount = 50 * (timeLeft / duration);
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: {
-          x: Math.random(),
-          y: Math.random() * 0.5,
-        },
-        colors: ['#bb0000', '#ffffff', '#ffcc00', '#00bbff'],
-      });
-    }, 250);
-  
+			if (timeLeft <= 0) {
+				clearInterval(interval);
+				return;
+			}
+
+			const particleCount = 50 * (timeLeft / duration);
+			confetti({
+				...defaults,
+				particleCount,
+				origin: {
+					x: Math.random(),
+					y: Math.random() * 0.5
+				},
+				colors: ['#bb0000', '#ffffff', '#ffcc00', '#00bbff']
+			});
+		}, 250);
+	}
+
+	async function surrenderGame() {
+		isSurrender = false;
+		isVictory = false;
+		try {
+			await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser
+				})
+			});
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function getStatistics() {
+		try {
+			const responseStats: Response = await fetch('/api/statistiques', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					gameType: 'pedantix'
+				})
+			});
+			repbodyStats = await responseStats.json();
+			partiesJouees = repbodyStats.nbParties ?? 0;
+			tauxReussite = repbodyStats.tauxReussite ?? 0;
+			essaisMoyen = repbodyStats.nbEssaiMoyen ?? 0;
+			serieActuelle = repbodyStats.serieActuelle ?? 0;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
 	}
 
 	onMount(() => {
 		newGame();
 	});
 </script>
+
 <Header />
 <div class="row flex min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto max-w-3xl">
@@ -111,10 +203,12 @@
 			</div>
 		</div>
 		{#if isLoading}
-		<div class="flex flex-col items-center justify-center py-12">
-			<div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"></div>
-			<p class="text-gray-600 font-medium">Chargement de la partie...</p>
-		</div>
+			<div class="flex flex-col items-center justify-center py-12">
+				<div
+					class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
+				></div>
+				<p class="font-medium text-gray-600">Chargement de la partie...</p>
+			</div>
 		{/if}
 
 		<div class="row relative mb-6">
@@ -125,12 +219,12 @@
 					bind:value={userGuess}
 					placeholder="Tapez votre proposition..."
 					class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
-					disabled={isVictory}	
+					disabled={isVictory}
 				/>
 				<button
 					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 					type="submit"
-					disabled={isVictory}	
+					disabled={isVictory}
 				>
 					Envoyer
 				</button>
@@ -138,10 +232,10 @@
 		</div>
 		<div class="mb-6 rounded-lg p-6">
 			<p class="mb-4 text-sm tracking-wide text-gray-600">
-				{#each tabTitle as item}
+				{#each tabTitle as item, i}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
-							 {Array(item).fill('■').join('')}
+							{Array(item).fill('■').join('')}
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
@@ -149,15 +243,25 @@
 							</span>
 						</span>{' '}
 					{:else}
-						{item}{' '}
+						<span
+							class="inline-block"
+							class:text-green-600={isNewlyFoundTitle(i)}
+							class:bg-green-100={isNewlyFoundTitle(i)}
+							class:border-2={isNewlyFoundTitle(i)}
+							class:border-green-500={isNewlyFoundTitle(i)}
+							class:rounded={isNewlyFoundTitle(i)}
+							class:px-1={isNewlyFoundTitle(i)}
+						>
+							{item}{' '}
+						</span>
 					{/if}
 				{/each}
 			</p>
 			<p class="w-full tracking-wide focus:outline-none">
-				{#each tabContent as item}
+				{#each tabContent as item, i}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
-							 {Array(item).fill('■').join('')}
+							{Array(item).fill('■').join('')}
 							<span
 								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
@@ -165,7 +269,17 @@
 							</span>
 						</span>{' '}
 					{:else}
-						{item}{' '}
+						<span
+							class="inline-block"
+							class:text-green-600={isNewlyFoundContent(i)}
+							class:bg-green-100={isNewlyFoundContent(i)}
+							class:border-2={isNewlyFoundContent(i)}
+							class:border-green-500={isNewlyFoundContent(i)}
+							class:rounded={isNewlyFoundContent(i)}
+							class:px-1={isNewlyFoundContent(i)}
+						>
+							{item}{' '}
+						</span>
 					{/if}
 				{/each}
 			</p>
@@ -185,12 +299,21 @@
 		</div>
 
 		<div class="flex gap-4">
-			<button
-				class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-				on:click={newGame}
-			>
-				🔄 Nouvelle partie
-			</button>
+			{#if !isSurrender}
+				<button
+					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					on:click={newGame}
+				>
+					🔄 Nouvelle partie
+				</button>
+			{:else}
+				<button
+					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					on:click={surrenderGame}
+				>
+					🔄 Abandonner la Partie
+				</button>
+			{/if}
 			<button
 				class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
 			>
@@ -231,7 +354,7 @@
 					<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 				</div>
 				<div class="text-center">
-					<p class="text-4xl font-bold text-green-600">{tauxReussite}</p>
+					<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
 					<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 				</div>
 				<div class="text-center">
