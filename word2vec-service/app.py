@@ -17,6 +17,7 @@ model = None
 
 MODEL_PATH = 'frWac_postag_no_phrase_1000_skip_cut100.bin'
 MODEL_URL = 'https://embeddings.net/embeddings/frWac_postag_no_phrase_1000_skip_cut100.bin'
+MODEL_NOT_LOADED = "Modèle non chargé"
 
 
 def download_model(url, destination):
@@ -90,7 +91,7 @@ def calculate_similarity():
             return jsonify({'error': 'Les deux mots sont requis'}), 400
 
         if model is None:
-            return jsonify({'error': 'Modèle non chargé'}), 500
+            return jsonify({'error': MODEL_NOT_LOADED}), 500
 
         word1_with_tag = add_postag(word1)
         word2_with_tag = add_postag(word2)
@@ -120,7 +121,7 @@ def calculate_similarity():
 def get_random_word():
     try:
         if model is None:
-            return jsonify({'error': 'Modèle non chargé'}), 500
+            return jsonify({'error': MODEL_NOT_LOADED}), 500
 
         words_filtered = [
             word for word in list(model.key_to_index.keys())[:10000]
@@ -152,7 +153,7 @@ def get_most_similar():
             return jsonify({'error': 'Le mot est requis'}), 400
 
         if model is None:
-            return jsonify({'error': 'Modèle non chargé'}), 500
+            return jsonify({'error': MODEL_NOT_LOADED}), 500
 
         word_with_tag = add_postag(word)
 
@@ -179,6 +180,33 @@ def get_most_similar():
         return jsonify({
             'word': word,
             'similar_words': result
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/check-word', methods=['POST'])
+def check_word():
+    try:
+        data = request.get_json()
+        word = data.get('word', '').lower()
+
+        if not word:
+            return jsonify({'error': 'Le mot est requis'}), 400
+
+        if model is None:
+            return jsonify({'error': MODEL_NOT_LOADED}), 500
+
+        # Chercher le mot avec son tag dans le vocabulaire
+        word_with_tag = add_postag(word)
+
+        # Vérifier si le mot existe
+        exists = word_with_tag in model
+
+        return jsonify({
+            'word': word,
+            'exists': exists
         })
 
     except Exception as e:
