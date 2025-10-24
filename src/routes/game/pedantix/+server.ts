@@ -191,13 +191,13 @@ export async function PUT({ request }: RequestEvent) {
 		const idMax = row_max[0].ID;
 		if (isVictory) {
 			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? ',
-				[nbEssai, idUser, idMax]
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
+				[nbEssai, idUser, idMax, 'pedantix']
 			);
 		} else {
 			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ?',
-				[nbEssai, idUser, idMax]
+				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
+				[nbEssai, idUser, idMax, 'pedantix']
 			);
 		}
 		return new Response(null, { status: 204 });

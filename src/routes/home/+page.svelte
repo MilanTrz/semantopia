@@ -114,7 +114,7 @@
 			</div>
 		</a>
 		<a
-			href="/jeux/motix"
+			href="/game/motix"
 			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
 		>
 			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">

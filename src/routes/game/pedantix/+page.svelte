@@ -84,7 +84,6 @@
 			tabContentTemp = tabContent;
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
-
 		}
 		if (tabTitle.every((item) => typeof item === 'string')) {
 			triggerVictory();
@@ -93,17 +92,19 @@
 	}
 
 	function isNewlyFoundTitle(index: number): boolean {
-		
-    return typeof tabTitleTemp[index] === 'number' && 
-           typeof tabTitle[index] === 'string' &&
-           !/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabTitle[index] as string);
-}
-function isNewlyFoundContent(index: number): boolean {
-    return typeof tabContentTemp[index] === 'number' && 
-           typeof tabContent[index] === 'string' &&
-           !/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabContent[index] as string);
-}
-
+		return (
+			typeof tabTitleTemp[index] === 'number' &&
+			typeof tabTitle[index] === 'string' &&
+			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabTitle[index] as string)
+		);
+	}
+	function isNewlyFoundContent(index: number): boolean {
+		return (
+			typeof tabContentTemp[index] === 'number' &&
+			typeof tabContent[index] === 'string' &&
+			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabContent[index] as string)
+		);
+	}
 
 	async function triggerVictory() {
 		isVictory = true;
@@ -231,7 +232,7 @@ function isNewlyFoundContent(index: number): boolean {
 		</div>
 		<div class="mb-6 rounded-lg p-6">
 			<p class="mb-4 text-sm tracking-wide text-gray-600">
-				{#each tabTitle as item,i}
+				{#each tabTitle as item, i}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
 							{Array(item).fill('■').join('')}
@@ -242,19 +243,22 @@ function isNewlyFoundContent(index: number): boolean {
 							</span>
 						</span>{' '}
 					{:else}
-								<span class="inline-block" class:text-green-600={isNewlyFoundTitle(i)} 
-					class:bg-green-100={isNewlyFoundTitle(i)} 
-					class:border-2={isNewlyFoundTitle(i)} 
-					class:border-green-500={isNewlyFoundTitle(i)} 
-					class:rounded={isNewlyFoundTitle(i)} 
-					class:px-1={isNewlyFoundTitle(i)}>
-						{item}{' '}
+						<span
+							class="inline-block"
+							class:text-green-600={isNewlyFoundTitle(i)}
+							class:bg-green-100={isNewlyFoundTitle(i)}
+							class:border-2={isNewlyFoundTitle(i)}
+							class:border-green-500={isNewlyFoundTitle(i)}
+							class:rounded={isNewlyFoundTitle(i)}
+							class:px-1={isNewlyFoundTitle(i)}
+						>
+							{item}{' '}
 						</span>
 					{/if}
 				{/each}
 			</p>
 			<p class="w-full tracking-wide focus:outline-none">
-				{#each tabContent as item,i}
+				{#each tabContent as item, i}
 					{#if typeof item === 'number'}
 						<span class="group relative inline-block cursor-help">
 							{Array(item).fill('■').join('')}
@@ -265,13 +269,16 @@ function isNewlyFoundContent(index: number): boolean {
 							</span>
 						</span>{' '}
 					{:else}
-						<span class="inline-block" class:text-green-600={ isNewlyFoundContent(i)} 
-					class:bg-green-100={ isNewlyFoundContent(i)} 
-					class:border-2={ isNewlyFoundContent(i)} 
-					class:border-green-500={ isNewlyFoundContent(i)} 
-					class:rounded={ isNewlyFoundContent(i)} 
-					class:px-1={ isNewlyFoundContent(i)}>
-						{item}{' '}
+						<span
+							class="inline-block"
+							class:text-green-600={isNewlyFoundContent(i)}
+							class:bg-green-100={isNewlyFoundContent(i)}
+							class:border-2={isNewlyFoundContent(i)}
+							class:border-green-500={isNewlyFoundContent(i)}
+							class:rounded={isNewlyFoundContent(i)}
+							class:px-1={isNewlyFoundContent(i)}
+						>
+							{item}{' '}
 						</span>
 					{/if}
 				{/each}
