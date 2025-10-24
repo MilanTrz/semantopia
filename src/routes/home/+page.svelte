@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { sessionStore } from '$lib/store/sessionStore';
+	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	let session = sessionStore.get();
 	let id: number | null = session ? session.id : null;
-	const pseudoUser: string | null = session ? session.pseudo: null;
+	const pseudoUser: string | null = session ? session.pseudo : null;
+	console.log(id);
 	let pseudo = '';
 	let isconnected: boolean = false;
 	let repbody: {
@@ -34,37 +36,7 @@
 	verifierConnexion();
 </script>
 
-<nav class="flex items-center justify-between bg-white px-8 py-4 shadow-sm">
-	<div class="flex items-center gap-3">
-		<img src="/src/lib/assets/logo.png" alt="Logo du site web" width="40" height="40" />
-		<h3 class="text-xl font-bold text-gray-800">Sémantopia</h3>
-	</div>
-	<div>
-		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
-
-			{#if !id}
-				<li>
-					<button class="text-gray-600 transition hover:text-purple-600"
-						><a href="/login">Se connecter</a></button
-					>
-				</li>
-				<li>
-					<button
-						class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"
-						><a href="/register">Créer un compte</a></button
-					>
-				</li>
-			{:else}
-				<li>
-					<p>{pseudoUser}</p>
-				</li>
-			{/if}
-		</ul>
-	</div>
-</nav>
-
+<Header />
 <section class="bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 px-8 py-16">
 	<div class="mx-auto grid max-w-6xl items-center gap-8 md:grid-cols-2">
 		<div class="text-white">
@@ -75,20 +47,6 @@
 				L'univers fascinant des jeux de mots vous attend ! Développez votre vocabulaire, stimulez
 				votre esprit et défiez vos amis dans une aventure linguistique unique.
 			</p>
-			<div class="flex flex-wrap gap-3">
-				<button
-					class="rounded-lg bg-yellow-400 px-6 py-3 font-semibold text-gray-900 transition hover:bg-yellow-300"
-					><a href="/login">Jouer en invité</a></button
-				>
-				<button
-					class="bg-opacity-20 hover:bg-opacity-30 rounded-lg border border-white bg-white px-6 py-3 font-semibold text-black transition"
-					><a href="/login">Se Connecter</a></button
-				>
-				<button
-					class="rounded-lg bg-white px-6 py-3 font-semibold text-purple-600 transition hover:bg-gray-100"
-					><a href="/register">Créer un compte</a></button
-				>
-			</div>
 		</div>
 		<div
 			class="bg-opacity-40 rounded-2xl bg-purple-700 p-8 text-center text-white backdrop-blur-sm"
@@ -156,7 +114,7 @@
 			</div>
 		</a>
 		<a
-			href="/jeux/motix"
+			href="/game/motix"
 			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
 		>
 			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">

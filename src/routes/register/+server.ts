@@ -31,16 +31,19 @@ export async function POST({ request }: RequestEvent) {
 
 		await pool.query(
 			'INSERT INTO USERS (EMAIL, PASSWORD, PSEUDO,CREATION_DATE,AVATAR) VALUES (?, ?, ?, ?, ?)',
-			[email, hashedPassword, pseudo, userDate, 'testlien']
+			[email, hashedPassword, pseudo, userDate, '/src/lib/assets/photo_profil/photo_default.png']
 		);
 
-		const [rows_id] = (await pool.query('SELECT ID,PSEUDO FROM USERS WHERE EMAIL = ? ', [
-			email
-		])) as [Array<{ ID: number; PSEUDO: string }>, unknown];
+		const [rows_id] = (await pool.query(
+			'SELECT ID,PSEUDO,AVATAR, CREATION_DATE FROM USERS WHERE EMAIL = ? ',
+			[email]
+		)) as [Array<{ ID: number; PSEUDO: string; AVATAR: string; CREATION_DATE: Date }>, unknown];
 
 		const id = rows_id[0].ID;
 		const pseudoUser = rows_id[0].PSEUDO;
-		const userInfo: sessionData = { id, pseudo: pseudoUser };
+		const avatar = rows_id[0].AVATAR;
+		const date = rows_id[0].CREATION_DATE;
+		const userInfo: sessionData = { id, pseudo: pseudoUser, avatar, email, dateCreation: date };
 		sessionStore.set(userInfo);
 		return new Response(
 			JSON.stringify({

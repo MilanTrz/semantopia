@@ -11,6 +11,9 @@
 		message: string;
 		userId: number;
 		pseudo: string;
+		avatar: string;
+		email: string;
+		date: Date;
 	};
 
 	async function sendForm() {
@@ -27,7 +30,10 @@
 			rep = 0;
 			const id = repbody.userId;
 			const pseudo = repbody.pseudo;
-			const userInfo: sessionData = { id, pseudo };
+			const avatar = repbody.avatar;
+			const email = repbody.email;
+			const date = repbody.date;
+			const userInfo: sessionData = { id, pseudo, avatar, email, dateCreation: date };
 			sessionStore.set(userInfo);
 			window.setTimeout(() => {
 				goto('/home');

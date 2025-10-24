@@ -1,0 +1,299 @@
+<script lang="ts">
+	import { sessionStore } from '$lib/store/sessionStore';
+	import Header from '$lib/header.svelte';
+	import { onMount } from 'svelte';
+	let session = sessionStore.get();
+	let pseudoUser: string | null = session ? session.pseudo : null;
+	const idUser: number | null = session ? session.id : null;
+	let email: string | null = session ? session.email : null;
+	let mdpUser: string = '';
+	let avatar: string | null = session ? session.avatar : null;
+	const date: Date | null = session ? session.dateCreation : null;
+	let newDate: Date;
+	let dateFormat: string;
+	let fileInput: HTMLInputElement;
+
+	type GameSession = {
+		ID: number;
+		TYPE: string;
+		WIN: boolean;
+		DATE_PARTIE: string;
+	};
+	let rows_histo: GameSession[] = [];
+	if (date) {
+		newDate = new Date(date);
+		dateFormat = newDate.toLocaleDateString('fr-FR', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+	}
+
+	let partiesJouees: number = 0;
+	let tauxReussite: number = 0;
+
+	let repbodyStats: {
+		nbParties: number;
+		nbEssaiMoyen: number;
+		tauxReussite: number;
+		serieActuelle: number;
+	};
+
+	async function getStats() {
+		if (idUser === null) {
+			console.error('idUser est null');
+			return;
+		}
+		try {
+			const url = `/api/statistiques?userId=${encodeURIComponent(idUser)}`;
+			const responseStats: Response = await fetch(url, {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			repbodyStats = await responseStats.json();
+			partiesJouees = repbodyStats.nbParties ?? 0;
+			tauxReussite = repbodyStats.tauxReussite ?? 0;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function getHisto() {
+		try {
+			const response = await fetch('/api/statistiques', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser
+				})
+			});
+			const data = await response.json();
+			rows_histo = data.rows_histo;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function changeInfoUser() {
+		try {
+			await fetch('/profil', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					pseudo: pseudoUser,
+					email: email,
+					mdp: mdpUser
+				})
+			});
+			if (pseudoUser && email) {
+				sessionStore.updateUserInfo(pseudoUser, email);
+			}
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	function openInput() {
+		fileInput.click();
+	}
+	async function changeAvatar(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const fichier = target.files?.[0];
+		if (fichier && idUser) {
+			const fichierUrl: string = './src/lib/assets/photo_profil/' + fichier.name;
+			const formData = new FormData();
+			formData.append('userId', String(idUser));
+			formData.append('file', fichier);
+			formData.append('newFilePath', fichierUrl);
+
+			sessionStore.updateAvatar(fichierUrl);
+			await fetch('/api/profil/', {
+				method: 'POST',
+				body: formData
+			});
+		}
+	}
+	onMount(() => {
+		getStats();
+		getHisto();
+	});
+</script>
+
+<Header />
+<div class="min-h-screen bg-gray-50 py-8">
+	<div class="mx-auto max-w-7xl px-4">
+		<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+			<aside class="lg:col-span-1">
+				<div class="rounded-lg bg-white p-6 shadow-sm">
+					<div class="flex flex-col items-center text-center">
+						<button on:click={openInput}>
+							<img
+								src={avatar}
+								alt="photo_profil"
+								class="mb-4 h-24 w-24 rounded-full object-cover"
+							/>
+						</button>
+						<input
+							bind:this={fileInput}
+							type="file"
+							accept="image/*"
+							class="hidden"
+							on:change={changeAvatar}
+						/>
+						<h3 class="mb-1 text-xl font-bold text-gray-900">{pseudoUser}</h3>
+						<p class="mb-6 text-sm text-gray-500">Membre depuis le {dateFormat}</p>
+					</div>
+				</div>
+			</aside>
+
+			<section class="lg:col-span-2">
+				<div class="space-y-6">
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+						<div class="rounded-lg bg-white p-6 shadow-sm">
+							<div class="flex items-center justify-between">
+								<div>
+									<p class="text-sm font-medium text-gray-500">Parties jouées</p>
+									<h3 class="mt-2 text-3xl font-bold text-gray-900">{partiesJouees}</h3>
+								</div>
+								<div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
+									<svg
+										class="h-6 w-6 text-blue-600"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+										/>
+									</svg>
+								</div>
+							</div>
+						</div>
+
+						<div class="rounded-lg bg-white p-6 shadow-sm">
+							<div class="mb-4 flex items-center justify-between">
+								<div class="flex-1">
+									<p class="text-sm font-medium text-gray-500">Taux de réussite</p>
+									<h3 class="mt-2 text-3xl font-bold text-gray-900">{tauxReussite}%</h3>
+								</div>
+								<div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
+									<svg
+										class="h-6 w-6 text-green-600"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+										/>
+									</svg>
+								</div>
+							</div>
+							<div class="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+								<div
+									class="h-full rounded-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-500"
+									style="width: {tauxReussite}%"
+								></div>
+							</div>
+						</div>
+					</div>
+
+					<div class="rounded-lg bg-white p-6 shadow-sm">
+						<div class="mb-4 flex items-center justify-between">
+							<h3 class="text-lg font-semibold text-gray-900">Historique des parties</h3>
+						</div>
+
+						{#if rows_histo.length === 0}
+							<p class="text-center text-gray-500">Aucune partie trouvée.</p>
+						{:else}
+							<ul class="space-y-4">
+								{#each rows_histo as partie}
+									<li>
+										<div
+											class={`flex items-center justify-between rounded-lg p-4
+           									 ${partie.WIN ? 'bg-green-100' : 'bg-red-100'}`}
+										>
+											<div>
+												<p
+													class={`flex items-center gap-2 text-lg font-semibold
+                									${partie.WIN ? 'text-green-700' : 'text-red-700'}`}
+												>
+													{partie.TYPE} #{partie.ID}
+												</p>
+												<p class="text-sm text-gray-500">
+													{new Date(partie.DATE_PARTIE).toLocaleDateString('fr-FR', {
+														day: '2-digit',
+														month: 'long',
+														year: 'numeric'
+													})}
+												</p>
+											</div>
+										</div>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</div>
+
+					<div class="rounded-lg bg-white p-6 shadow-sm">
+						<h3 class="mb-6 text-lg font-semibold text-gray-900">Paramètres du compte</h3>
+						<form class="space-y-5" on:submit|preventDefault={changeInfoUser}>
+							<div>
+								<label for="pseudo" class="mb-2 block text-sm font-medium text-gray-700">
+									Pseudonyme
+								</label>
+								<input
+									id="pseudo"
+									type="text"
+									bind:value={pseudoUser}
+									placeholder="Votre pseudo"
+									class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+								/>
+							</div>
+
+							<div>
+								<label for="email" class="mb-2 block text-sm font-medium text-gray-700">
+									Adresse email
+								</label>
+								<input
+									id="email"
+									type="email"
+									bind:value={email}
+									placeholder="votre@email.com"
+									class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+								/>
+							</div>
+
+							<div>
+								<label for="mdp" class="mb-2 block text-sm font-medium text-gray-700">
+									Mot De Passe
+								</label>
+								<input
+									id="mdp"
+									type="password"
+									bind:value={mdpUser}
+									placeholder="••••••••"
+									class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm transition outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+								/>
+							</div>
+
+							<button
+								type="submit"
+								class="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+							>
+								Sauvegarder les modifications
+							</button>
+						</form>
+					</div>
+				</div>
+			</section>
+		</div>
+	</div>
+</div>

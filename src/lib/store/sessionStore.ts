@@ -1,5 +1,11 @@
 import { writable, get as getStoreValue } from 'svelte/store';
-export type sessionData = { id: number; pseudo: string };
+export type sessionData = {
+	id: number;
+	pseudo: string;
+	avatar: string;
+	email: string;
+	dateCreation: Date;
+};
 function createSessionStore() {
 	const isBrowser = typeof window !== 'undefined';
 	const stored = isBrowser ? sessionStorage.getItem('sessionData') : null;
@@ -18,6 +24,27 @@ function createSessionStore() {
 		},
 		get: () => {
 			return getStoreValue(store);
+		},
+		updateAvatar: (newAvatarUrl: string) => {
+			store.update((sessionData) => {
+				const updated = {
+					...sessionData,
+					avatar: newAvatarUrl
+				};
+				if (isBrowser) sessionStorage.setItem('sessionData', JSON.stringify(updated));
+				return updated;
+			});
+		},
+		updateUserInfo: (pseudo: string, email: string) => {
+			store.update((sessionData) => {
+				const updated = {
+					...sessionData,
+					pseudo: pseudo,
+					email: email
+				};
+				if (isBrowser) sessionStorage.setItem('sessionData', JSON.stringify(updated));
+				return updated;
+			});
 		}
 	};
 }
