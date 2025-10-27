@@ -4,32 +4,26 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-
-			$: {
+	$: {
 		console.log('=== DEBUG SESSION ===');
 		console.log('$sessionStore complet:', $sessionStore);
 		console.log('$sessionStore?.id:', $sessionStore?.id);
 		console.log('Type:', typeof $sessionStore);
 		console.log('Browser:', browser);
-		console.log('SessionStorage brut:', 
-			browser ? sessionStorage.getItem('sessionData') : 'SSR'
-		);
+		console.log('SessionStorage brut:', browser ? sessionStorage.getItem('sessionData') : 'SSR');
 		console.log('====================');
 	}
 
-		
 	$: pseudoUser = $sessionStore?.pseudo ?? null;
 	$: idUser = $sessionStore?.id ?? null;
 	$: email = $sessionStore?.email ?? null;
 	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
 	$: date = $sessionStore?.dateCreation ?? null;
-	
-		
 
-		let mdpUser: string = '';
-		let newDate: Date;
-		let dateFormat: string;
-		let fileInput: HTMLInputElement;
+	let mdpUser: string = '';
+	let newDate: Date;
+	let dateFormat: string;
+	let fileInput: HTMLInputElement;
 
 	type GameSession = {
 		ID: number;
@@ -124,14 +118,13 @@
 			formData.append('userId', String(idUser));
 			formData.append('file', fichier);
 			formData.append('fileName', fichier.name);
-			
+
 			await fetch('/api/profil/', {
 				method: 'POST',
 				body: formData
 			});
 			sessionStore.updateAvatar(fichierUrl);
 		}
-		
 	}
 	onMount(() => {
 		getStats();
@@ -148,11 +141,11 @@
 					<div class="flex flex-col items-center text-center">
 						<button on:click={openInput}>
 							{#key avatar}
-							<img
-								src={avatar}
-								alt="photo_profil"
-								class="mb-4 h-24 w-24 rounded-full object-cover"
-							/>
+								<img
+									src={avatar}
+									alt="photo_profil"
+									class="mb-4 h-24 w-24 rounded-full object-cover"
+								/>
 							{/key}
 						</button>
 						<input

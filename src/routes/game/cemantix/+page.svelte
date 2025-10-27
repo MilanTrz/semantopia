@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
 	import { triggerConfettiAnimation } from '$lib';
-	
+
 	let userGuess = '';
 	let guesses: {
 		word: string;

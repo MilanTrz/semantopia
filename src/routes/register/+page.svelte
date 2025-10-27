@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { sessionStore, type sessionData } from '$lib/store/sessionStore';
 
 	let pseudo = '';
 	let email = '';
@@ -7,20 +8,27 @@
 	let errors: { [key: string]: string } = {};
 	let formValidation = true;
 	let rep = -1;
-	let repbody: { [key: string]: string } = {};
+	let repbody: {
+		message: string;
+		userId: number;
+		pseudoUser: string;
+		avatar: string;
+		email: string;
+		date: Date;
+	};
 
 	function verificationForm(): boolean {
 		errors = {};
-		if (!email.match('/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/')) {
-			errors.email = "L'email est incorrecte";
+		if (!email.match(/^[\w.-]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+			errors.email = "L'email est incorrecte .";
 			formValidation = false;
 		}
 		return formValidation;
 	}
 	async function sendForm() {
-		//if (!verificationForm()) {
-		//	return;
-		//}
+		if (!verificationForm()) {
+			return;
+		}
 		const response = await fetch('/register/', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -33,6 +41,13 @@
 		repbody = await response.json();
 		if (response.status === 201) {
 			rep = 0;
+			const id = repbody.userId;
+			const pseudo = repbody.pseudoUser;
+			const avatar = repbody.avatar;
+			const email = repbody.email;
+			const date = repbody.date;
+			const userInfo: sessionData = { id, pseudo, avatar, email, dateCreation: date };
+			sessionStore.set(userInfo);
 			window.setTimeout(() => {
 				goto('/home');
 			});

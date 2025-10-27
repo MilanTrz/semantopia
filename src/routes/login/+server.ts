@@ -29,6 +29,7 @@ export async function POST({ request }: RequestEvent) {
 		const pseudo = rows_id[0].PSEUDO;
 		const avatar = rows_id[0].AVATAR;
 		const date = rows_id[0].CREATION_DATE;
+
 		return new Response(
 			JSON.stringify({
 				message: 'Connexion établie. Redirection...',

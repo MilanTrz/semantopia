@@ -2,8 +2,7 @@ import bcrypt from 'bcrypt';
 import pool from '$lib/server/db';
 import type { RowDataPacket } from 'mysql2';
 import type { RequestEvent } from './$types';
-import { sessionStore } from '$lib/store/sessionStore';
-import type { sessionData } from '$lib/store/sessionStore';
+
 export async function POST({ request }: RequestEvent) {
 	const now = new Date();
 	const userDate = now.toISOString().slice(0, 19).replace('T', ' ');
@@ -31,7 +30,7 @@ export async function POST({ request }: RequestEvent) {
 
 		await pool.query(
 			'INSERT INTO USERS (EMAIL, PASSWORD, PSEUDO,CREATION_DATE,AVATAR) VALUES (?, ?, ?, ?, ?)',
-			[email, hashedPassword, pseudo, userDate, '/src/lib/assets/photo_profil/photo_default.png']
+			[email, hashedPassword, pseudo, userDate, './static/photo_profil/photo_default.png']
 		);
 
 		const [rows_id] = (await pool.query(
@@ -39,15 +38,19 @@ export async function POST({ request }: RequestEvent) {
 			[email]
 		)) as [Array<{ ID: number; PSEUDO: string; AVATAR: string; CREATION_DATE: Date }>, unknown];
 
-		const id = rows_id[0].ID;
+		const userId = rows_id[0].ID;
 		const pseudoUser = rows_id[0].PSEUDO;
 		const avatar = rows_id[0].AVATAR;
 		const date = rows_id[0].CREATION_DATE;
-		const userInfo: sessionData = { id, pseudo: pseudoUser, avatar, email, dateCreation: date };
-		sessionStore.set(userInfo);
+
 		return new Response(
 			JSON.stringify({
-				message: 'Utilisateur créé avec succès. Redirection...'
+				message: 'Utilisateur créé avec succès. Redirection...',
+				userId,
+				pseudoUser,
+				avatar,
+				email,
+				date
 			}),
 			{ status: 201 }
 		);

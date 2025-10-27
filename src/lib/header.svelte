@@ -23,7 +23,7 @@
 	</div>
 	<div>
 		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>			
+			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			{#if pseudo}
 				<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 				<li><p>{pseudo}</p></li>
