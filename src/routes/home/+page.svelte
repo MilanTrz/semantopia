@@ -1,38 +1,5 @@
 <script lang="ts">
-	import { sessionStore } from '$lib/store/sessionStore';
 	import Header from '$lib/header.svelte';
-	import { onMount } from 'svelte';
-	let session = sessionStore.get();
-	let id: number | null = session ? session.id : null;
-	const pseudoUser: string | null = session ? session.pseudo : null;
-	let pseudo = '';
-	let isconnected: boolean = false;
-	let repbody: {
-		pseudo: string;
-	};
-	function verifierConnexion(): boolean {
-		if (sessionStore.get()) {
-			onMount(() => {
-				getPseudo();
-			});
-			isconnected = true;
-		}
-		return isconnected;
-	}
-	async function getPseudo() {
-		const response = await fetch('/home/', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				id
-			})
-		});
-		repbody = await response.json();
-		if (response.status === 201) {
-			pseudo = repbody.pseudo;
-		}
-	}
-	verifierConnexion();
 </script>
 
 <Header />

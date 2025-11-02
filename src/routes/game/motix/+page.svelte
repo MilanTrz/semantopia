@@ -19,6 +19,7 @@
 	let nbParties: number = 0;
 	let tauxReussite: number = 0;
 	let nbEssaiMoyen: number = 0;
+	let serieActuelle: number = 0;
 
 	let repbodyStats: {
 		nbParties: number;
@@ -93,6 +94,19 @@
 		if (tabWordFind[index] === letter) {
 			return 'bg-green-500 text-white';
 		}
+		const countInWord = tabWordFind.filter((l) => l === letter).length;
+		const countGreen = guess
+			.slice(0, index + 1)
+			.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
+		const countYellowBefore = guess
+			.slice(0, index)
+			.filter(
+				(l, i) => l === letter && tabWordFind[i] !== letter && tabWordFind.includes(letter)
+			).length;
+
+		if (countGreen + countYellowBefore >= countInWord) {
+			return 'bg-gray-500 text-white';
+		}
 		return 'bg-yellow-500 text-white';
 	}
 
@@ -107,9 +121,10 @@
 				body: JSON.stringify({
 					nbEssai: nbEssai,
 					isVictory: isWin,
-					userId: userId
+					idUser: userId
 				})
 			});
+			getStats();
 		}
 	}
 	async function victoryGame() {
@@ -122,9 +137,10 @@
 				body: JSON.stringify({
 					nbEssai: nbEssai,
 					isVictory: isWin,
-					userId: userId
+					idUser: userId
 				})
 			});
+			getStats();
 		}
 	}
 
@@ -139,9 +155,10 @@
 				})
 			});
 			repbodyStats = await response.json();
-			nbParties = repbodyStats.nbParties;
-			tauxReussite = repbodyStats.tauxReussite;
-			nbEssaiMoyen = repbodyStats.nbEssaiMoyen;
+			nbParties = repbodyStats.nbParties ?? 0;
+			tauxReussite = repbodyStats.tauxReussite ?? 0;
+			nbEssaiMoyen = repbodyStats.nbEssaiMoyen ?? 0;
+			serieActuelle = repbodyStats.serieActuelle ?? 0;
 		}
 	}
 	onMount(() => {
@@ -157,7 +174,7 @@
 			<div class="mb-8">
 				<h2 class="text-4xl font-bold text-gray-900">Motix</h2>
 				<p class="mt-1 text-gray-600">
-					En cinq essai max, trouver le mot grâce a la position des lettres des mot proposés
+					En cinq essais maximum, trouver le mot grâce a la position des lettres des mot proposés
 				</p>
 				<p class="mt-2 text-sm text-gray-500">NbEssai : {nbEssai}</p>
 				<p>Le mot contient {tabWordFind.length} lettres</p>
@@ -185,7 +202,7 @@
 				class="flex h-40 items-center justify-center rounded-lg border-2 border-green-500 bg-green-100 p-6"
 			>
 				<p class="text-3xl font-bold text-green-700">
-					Félicitations vous avez gagner en {nbEssai} essai
+					Félicitations vous avez gagner en {nbEssai} essais
 				</p>
 			</div>
 		{/if}
@@ -294,7 +311,7 @@
 						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-orange-600"></p>
+						<p class="text-4xl font-bold text-orange-600">{serieActuelle}</p>
 						<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
 					</div>
 				</div>

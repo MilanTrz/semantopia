@@ -18,11 +18,27 @@ export async function POST({ request }: RequestEvent) {
 		const [row_game]: [GameStats[], unknown] = await pool.query(
 			`
     SELECT
-    USER_ID,
-    TYPE,
-    COUNT(ID) AS NB_PARTIES_JOUES,
-    AVG(NOMBRE_ESSAI) AS NB_ESSAI_MOYEN,
-    SUM(WIN) / COUNT(ID) AS TAUX_REUSSITE
+        USER_ID,
+        TYPE,
+        COUNT(ID) AS NB_PARTIES_JOUES,
+        AVG(NOMBRE_ESSAI) AS NB_ESSAI_MOYEN,
+        SUM(WIN) / COUNT(ID) AS TAUX_REUSSITE,
+        (
+            SELECT COUNT(*)
+            FROM GAME_SESSION gs2
+            WHERE gs2.USER_ID = GAME_SESSION.USER_ID
+              AND gs2.TYPE = GAME_SESSION.TYPE
+              AND gs2.WIN = 1
+              AND gs2.ID > COALESCE(
+                  (
+                      SELECT MAX(gs3.ID)
+                      FROM GAME_SESSION gs3
+                      WHERE gs3.USER_ID = GAME_SESSION.USER_ID
+                        AND gs3.TYPE = GAME_SESSION.TYPE
+                        AND gs3.WIN = 0
+                  ), 0
+              )
+        ) AS SERIE_ACTUELLE
     FROM GAME_SESSION
     WHERE USER_ID = ? AND TYPE = ?
     GROUP BY USER_ID, TYPE
