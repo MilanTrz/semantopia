@@ -34,7 +34,6 @@ export async function POST({ request }: RequestEvent) {
 
 export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser } = await request.json();
-
 	try {
 		const [row_max] = (await pool.query(
 			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
@@ -60,7 +59,6 @@ export async function PUT({ request }: RequestEvent) {
 }
 
 async function getRandomWord(sizeWord: number): Promise<string> {
-	console.log(sizeWord);
 	const response = await fetch('https://trouve-mot.fr/api/size/' + sizeWord);
 	if (!response.ok) {
 		throw new Error('Erreur lors de la récupération du mot');

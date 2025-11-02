@@ -4,16 +4,6 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-	$: {
-		console.log('=== DEBUG SESSION ===');
-		console.log('$sessionStore complet:', $sessionStore);
-		console.log('$sessionStore?.id:', $sessionStore?.id);
-		console.log('Type:', typeof $sessionStore);
-		console.log('Browser:', browser);
-		console.log('SessionStorage brut:', browser ? sessionStorage.getItem('sessionData') : 'SSR');
-		console.log('====================');
-	}
-
 	$: pseudoUser = $sessionStore?.pseudo ?? null;
 	$: idUser = $sessionStore?.id ?? null;
 	$: email = $sessionStore?.email ?? null;
