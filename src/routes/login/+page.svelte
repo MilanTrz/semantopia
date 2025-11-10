@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import type { sessionData } from '$lib/store/sessionStore';
+	import { onMount } from 'svelte';
 	let email = '';
 	let mdp = '';
 	let errors: { [key: string]: string } = {};
@@ -22,7 +23,8 @@
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				email,
-				mdp
+				mdp,
+				seSouvenir
 			})
 		});
 		repbody = await response.json();
@@ -42,6 +44,14 @@
 			rep = 1;
 		}
 	}
+	onMount(async () => {
+		const res = await fetch('/api/loginChecked');
+		const data = await res.json();
+
+		if (data.user) {
+			goto('/home');
+		}
+	});
 </script>
 
 <div

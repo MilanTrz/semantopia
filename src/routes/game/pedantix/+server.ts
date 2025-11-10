@@ -11,17 +11,17 @@ export async function POST({ request }: RequestEvent) {
 
 	try {
 		await Promise.all([
-		...contentsplice.map(async (word, index) => {
-			if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-				tabHiddenContent[index] = word;
-			}
-		}),
-		...titleWikiPageSplit.map(async (word, index) => {
-			if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-				tabHiddenTitle[index] = word;
-			}
-		})
-	]);
+			...contentsplice.map(async (word, index) => {
+				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
+					tabHiddenContent[index] = word;
+				}
+			}),
+			...titleWikiPageSplit.map(async (word, index) => {
+				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
+					tabHiddenTitle[index] = word;
+				}
+			})
+		]);
 
 		return new Response(
 			JSON.stringify({
@@ -176,25 +176,25 @@ function isValideTitle(title: string): boolean {
 async function checkSimilarity(wordTab: string, wordGuess: string) {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-	try{
+	try {
 		const response = await fetch('http://localhost:5000/api/similarity', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					word1: newWord,
-					word2: newWordTab
-				})
-			});
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				word1: newWord,
+				word2: newWordTab
+			})
+		});
 		const data = await response.json();
-		if (data.similarity >= 0.70	){
+		if (data.similarity >= 0.7) {
 			return true;
 		}
 		return false;
-	}catch (error) {
-			return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
-				status: 500
-			});
-		}
+	} catch (error) {
+		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
+			status: 500
+		});
+	}
 }
 
 export async function PUT({ request }: RequestEvent) {
