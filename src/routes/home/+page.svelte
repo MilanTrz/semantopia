@@ -38,7 +38,7 @@
 
 	<div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-4">
 		<a
-			href="/jeux/cemantix"
+			href="/game/cemantix"
 			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
 		>
 			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
