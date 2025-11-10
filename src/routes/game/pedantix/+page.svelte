@@ -22,6 +22,7 @@
 	let tabContent: number[];
 	let tabContentTemp: number[] = [];
 	let nbEssai: number = 0;
+	let isWordExist = true;
 
 	let partiesJouees: number = 0;
 	let tauxReussite: number = 0;
@@ -70,6 +71,25 @@
 	}
 
 	async function sendGuess() {
+		isWordExist = true;
+		try {
+			const response = await fetch('http://localhost:5000/api/check-word', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					word: userGuess
+				})
+			});
+			const data = await response.json();
+			if (!data.exists) {
+				isWordExist = false;
+				return null;
+			}
+		} catch (error) {
+			return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
+				status: 500
+			});
+		}
 		nbEssai++;
 		tabguess.push(userGuess);
 		tabguess = tabguess;
@@ -192,6 +212,27 @@
 					class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
 				></div>
 				<p class="font-medium text-gray-600">Chargement de la partie...</p>
+			</div>
+		{/if}
+		{#if !isWordExist}
+			<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6">
+				<svg
+					class="h-6 w-6 flex-shrink-0 text-amber-600"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+					/>
+				</svg>
+				<div>
+					<p class="font-semibold text-amber-900">Mot introuvable</p>
+					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire</p>
+				</div>
 			</div>
 		{/if}
 
