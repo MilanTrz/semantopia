@@ -4,6 +4,8 @@
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { writable } from 'svelte/store';
+	let letters = 'AZERTYUIOPQSDFGHJKLMWXCVBN'.split('');
+	$: letterColors = $tabGuesses.length > 0 ? letters.map(letter => getKeyboardLetterColor(letter)) : Array(letters.length).fill('bg-gray-300 text-black');
 	const session = sessionStore.get();
 	const userId: number | null = session ? session.id : null;
 	let nbEssai = 0;
@@ -93,6 +95,7 @@
 				.toLowerCase()
 				.split('')
 		]);
+		letterColors = letters.map(letter => getKeyboardLetterColor(letter));
 		const cleanGuess = userGuess
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
@@ -108,28 +111,31 @@
 		userGuess = '';
 	}
 	function getLetterClass(letter: string, index: number, guess: string[]) {
-		if (!tabWordFind || tabWordFind.length === 0) return 'bg-gray-500 text-white';
-		if (!tabWordFind.includes(letter)) {
-			return 'bg-gray-500 text-white';
-		}
-		if (tabWordFind[index] === letter) {
-			return 'bg-green-500 text-white';
-		}
-		const countInWord = tabWordFind.filter((l) => l === letter).length;
-		const countGreen = guess
-			.slice(0, index + 1)
-			.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
-		const countYellowBefore = guess
-			.slice(0, index)
-			.filter(
-				(l, i) => l === letter && tabWordFind[i] !== letter && tabWordFind.includes(letter)
-			).length;
+    if (!tabWordFind || tabWordFind.length === 0) return 'bg-gray-500 text-white';
+    
+    if (!tabWordFind.includes(letter)) {
+        return 'bg-gray-500 text-white';
+    }
+    
+    if (tabWordFind[index] === letter) {
+        return 'bg-green-500 text-white';
+    }
+    
+    const countInWord = tabWordFind.filter((l) => l === letter).length;
 
-		if (countGreen + countYellowBefore >= countInWord) {
-			return 'bg-gray-500 text-white';
-		}
-		return 'bg-yellow-500 text-white';
-	}
+    const countGreen = guess.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
+    
+    const countYellowBefore = guess
+        .slice(0, index)
+        .filter((l, i) => l === letter && tabWordFind[i] !== letter)
+        .length;
+    
+    if (countGreen + countYellowBefore >= countInWord) {
+        return 'bg-gray-500 text-white';
+    }
+    
+    return 'bg-yellow-500 text-white';
+}
 
 	async function surrenderGame() {
 		isLoose = false;
@@ -182,6 +188,29 @@
 			serieActuelle = repbodyStats.serieActuelle ?? 0;
 		}
 	}
+
+	function getKeyboardLetterColor(letter: string) {
+    let bestColor = 'bg-gray-300 text-black';   
+    const normalizedLetter = letter.toLowerCase(); 
+    $tabGuesses.forEach(guess => {
+        guess.forEach((guessLetter, index) => {
+            if (guessLetter !== normalizedLetter) return;
+    
+            if (tabWordFind[index] === normalizedLetter) {
+                bestColor = 'bg-green-500 text-white';
+            }
+            else if (tabWordFind.includes(normalizedLetter) && !bestColor.includes('bg-green-500')) {
+                bestColor = 'bg-yellow-500 text-white';
+            }
+            else if (!tabWordFind.includes(normalizedLetter) && bestColor === 'bg-gray-300 text-black') {
+                bestColor = 'bg-gray-500 text-white';
+            }
+        });
+    });
+    
+    return bestColor;
+}
+
 	onMount(() => {
 		newGame();
 		getStats();
@@ -285,7 +314,17 @@
 				{/each}
 			</div>
 		</div>
-
+		<div class="mx-auto mt-16 mb-12 flex max-w-2xl flex-wrap justify-center gap-2">
+			{#each letters as letter, i}
+				<div
+					class="flex h-12 w-15 cursor-pointer items-center justify-center rounded select-none {letterColors[
+						i
+					]}"
+				>
+					{letter}
+				</div>
+			{/each}
+		</div>
 		<div class="flex gap-4">
 			{#if !isSurrender}
 				<button
