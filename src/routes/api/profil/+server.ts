@@ -26,16 +26,15 @@ export async function POST({ request }: RequestEvent) {
 			unknown
 		];
 		const oldPathFile: string = rowsUser[0].AVATAR;
-		console.log(oldPathFile);
 
 		if (existsSync(oldPathFile)) {
 			await unlink(oldPathFile);
 		}
-
+		const avatarPath = `/static/photo_profil/${newFileName}`;
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
 		await writeFile(newFilePath, buffer);
-		await pool.query('UPDATE USERS SET AVATAR = ? WHERE ID = ?', [newFilePath, userId]);
+		await pool.query('UPDATE USERS SET AVATAR = ? WHERE ID = ?', [avatarPath, userId]);
 
 		return new Response(JSON.stringify(null), { status: 200 });
 	} catch (error) {

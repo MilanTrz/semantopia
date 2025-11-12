@@ -7,6 +7,12 @@ declare global {
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}
+		interface Locals {
+			user: { id: number; email: string } | null;
+		}
+		interface PageData {
+			user: { id: number; email: string } | null;
+		}
 	}
 }
 

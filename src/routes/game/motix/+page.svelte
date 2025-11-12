@@ -4,6 +4,8 @@
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { writable } from 'svelte/store';
+	let letters = 'AZERTYUIOPQSDFGHJKLMWXCVBN'.split('');
+	$: letterColors = $tabGuesses.length > 0 ? letters.map(letter => getKeyboardLetterColor(letter)) : Array(letters.length).fill('bg-gray-300 text-black');
 	const session = sessionStore.get();
 	const userId: number | null = session ? session.id : null;
 	let nbEssai = 0;
@@ -13,6 +15,7 @@
 	let isSurrender = false;
 	let isLoose = false;
 	let isWin = false;
+	let isWordExist = true;
 	let tabWordFind: string[] = [];
 	const tabGuesses = writable<string[][]>([]);
 
@@ -57,8 +60,27 @@
 		}
 	}
 
-	function sendGuess() {
-		
+	async function sendGuess() {
+		isWordExist = true;
+		try {
+			const response = await fetch('http://localhost:5000/api/check-word', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					word: userGuess
+				})
+			});
+			const data = await response.json();
+			if (!data.exists) {
+				isWordExist = false;
+				return null;
+			}
+		} catch (error) {
+			return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
+				status: 500
+			});
+		}
+
 		if (nbEssai == 5) {
 			isLoose = true;
 			isDisabled = true;
@@ -73,6 +95,7 @@
 				.toLowerCase()
 				.split('')
 		]);
+		letterColors = letters.map(letter => getKeyboardLetterColor(letter));
 		const cleanGuess = userGuess
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
@@ -88,28 +111,31 @@
 		userGuess = '';
 	}
 	function getLetterClass(letter: string, index: number, guess: string[]) {
-		if (!tabWordFind || tabWordFind.length === 0) return 'bg-gray-500 text-white';
-		if (!tabWordFind.includes(letter)) {
-			return 'bg-gray-500 text-white';
-		}
-		if (tabWordFind[index] === letter) {
-			return 'bg-green-500 text-white';
-		}
-		const countInWord = tabWordFind.filter((l) => l === letter).length;
-		const countGreen = guess
-			.slice(0, index + 1)
-			.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
-		const countYellowBefore = guess
-			.slice(0, index)
-			.filter(
-				(l, i) => l === letter && tabWordFind[i] !== letter && tabWordFind.includes(letter)
-			).length;
+    if (!tabWordFind || tabWordFind.length === 0) return 'bg-gray-500 text-white';
+    
+    if (!tabWordFind.includes(letter)) {
+        return 'bg-gray-500 text-white';
+    }
+    
+    if (tabWordFind[index] === letter) {
+        return 'bg-green-500 text-white';
+    }
+    
+    const countInWord = tabWordFind.filter((l) => l === letter).length;
 
-		if (countGreen + countYellowBefore >= countInWord) {
-			return 'bg-gray-500 text-white';
-		}
-		return 'bg-yellow-500 text-white';
-	}
+    const countGreen = guess.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
+    
+    const countYellowBefore = guess
+        .slice(0, index)
+        .filter((l, i) => l === letter && tabWordFind[i] !== letter)
+        .length;
+    
+    if (countGreen + countYellowBefore >= countInWord) {
+        return 'bg-gray-500 text-white';
+    }
+    
+    return 'bg-yellow-500 text-white';
+}
 
 	async function surrenderGame() {
 		isLoose = false;
@@ -162,6 +188,29 @@
 			serieActuelle = repbodyStats.serieActuelle ?? 0;
 		}
 	}
+
+	function getKeyboardLetterColor(letter: string) {
+    let bestColor = 'bg-gray-300 text-black';   
+    const normalizedLetter = letter.toLowerCase(); 
+    $tabGuesses.forEach(guess => {
+        guess.forEach((guessLetter, index) => {
+            if (guessLetter !== normalizedLetter) return;
+    
+            if (tabWordFind[index] === normalizedLetter) {
+                bestColor = 'bg-green-500 text-white';
+            }
+            else if (tabWordFind.includes(normalizedLetter) && !bestColor.includes('bg-green-500')) {
+                bestColor = 'bg-yellow-500 text-white';
+            }
+            else if (!tabWordFind.includes(normalizedLetter) && bestColor === 'bg-gray-300 text-black') {
+                bestColor = 'bg-gray-500 text-white';
+            }
+        });
+    });
+    
+    return bestColor;
+}
+
 	onMount(() => {
 		newGame();
 		getStats();
@@ -207,6 +256,27 @@
 				</p>
 			</div>
 		{/if}
+		{#if !isWordExist}
+			<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6">
+				<svg
+					class="h-6 w-6 flex-shrink-0 text-amber-600"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+					/>
+				</svg>
+				<div>
+					<p class="font-semibold text-amber-900">Mot introuvable</p>
+					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire</p>
+				</div>
+			</div>
+		{/if}
 
 		<div class="row relative mb-6">
 			<form on:submit|preventDefault={sendGuess} class="row flex">
@@ -244,7 +314,17 @@
 				{/each}
 			</div>
 		</div>
-
+		<div class="mx-auto mt-16 mb-12 flex max-w-2xl flex-wrap justify-center gap-2">
+			{#each letters as letter, i}
+				<div
+					class="flex h-12 w-15 cursor-pointer items-center justify-center rounded select-none {letterColors[
+						i
+					]}"
+				>
+					{letter}
+				</div>
+			{/each}
+		</div>
 		<div class="flex gap-4">
 			{#if !isSurrender}
 				<button

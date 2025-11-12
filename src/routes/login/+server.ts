@@ -2,8 +2,10 @@ import pool from '$lib/server/db';
 import bcrypt from 'bcrypt';
 import type { RowDataPacket } from 'mysql2';
 import type { RequestEvent } from './$types';
-export async function POST({ request }: RequestEvent) {
-	const { email, mdp } = await request.json();
+import jwt from 'jsonwebtoken';
+export async function POST({ request, cookies }: RequestEvent) {
+	const { email, mdp, seSouvenir } = await request.json();
+	const SECRET = process.env.JWT_SECRET || 'mon_super_secret_pour_jwt';
 	try {
 		const [rows] = await pool.query<RowDataPacket[]>('SELECT PASSWORD FROM USERS WHERE EMAIL = ?', [
 			email
@@ -29,6 +31,17 @@ export async function POST({ request }: RequestEvent) {
 		const pseudo = rows_id[0].PSEUDO;
 		const avatar = rows_id[0].AVATAR;
 		const date = rows_id[0].CREATION_DATE;
+		if (seSouvenir) {
+			const token = jwt.sign({ id: userId, email }, SECRET, { expiresIn: '7d' });
+
+			cookies.set('session', token, {
+				httpOnly: true,
+				secure: true,
+				sameSite: 'strict',
+				path: '/',
+				maxAge: 60 * 60 * 24 * 7
+			});
+		}
 
 		return new Response(
 			JSON.stringify({
