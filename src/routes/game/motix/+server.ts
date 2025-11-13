@@ -1,12 +1,17 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import pool from '$lib/server/db';
 let findWord: string;
+let findCategorie: string;
 let tabWord: string[];
 export async function POST({ request }: RequestEvent) {
 	const { sizeWord, userId } = await request.json();
 
 	try {
-		findWord = await getRandomWord(sizeWord);
+		const data = await getRandomWord(sizeWord);
+
+		findWord = data.name;
+		findCategorie = data.categorie;
+		const similarWord = await getSimmilarWord(findWord);
 		tabWord = findWord
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
@@ -21,7 +26,9 @@ export async function POST({ request }: RequestEvent) {
 
 		return new Response(
 			JSON.stringify({
-				tabWord
+				tabWord,
+				findCategorie,
+				similarWord
 			}),
 			{ status: 200 }
 		);
@@ -58,12 +65,24 @@ export async function PUT({ request }: RequestEvent) {
 	}
 }
 
-async function getRandomWord(sizeWord: number): Promise<string> {
+async function getRandomWord(sizeWord: number): Promise<{ name: string; categorie: string }> {
 	const response = await fetch('https://trouve-mot.fr/api/size/' + sizeWord);
 	if (!response.ok) {
 		throw new Error('Erreur lors de la récupération du mot');
 	}
 	const data = await response.json();
 	console.log(data);
-	return data[0].name;
+	return data[0];
+}
+async function getSimmilarWord(word: string) {
+	const response = await fetch('http://localhost:5000/api/most-similar', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			word: word,
+			topn: 1
+		})
+	});
+	const data = await response.json();
+	return data.similar_words[0].word;
 }

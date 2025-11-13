@@ -4,8 +4,12 @@
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { writable } from 'svelte/store';
+
 	let letters = 'AZERTYUIOPQSDFGHJKLMWXCVBN'.split('');
-	$: letterColors = $tabGuesses.length > 0 ? letters.map(letter => getKeyboardLetterColor(letter)) : Array(letters.length).fill('bg-gray-300 text-black');
+	$: letterColors =
+		$tabGuesses.length > 0
+			? letters.map((letter) => getKeyboardLetterColor(letter))
+			: Array(letters.length).fill('bg-gray-300 text-black');
 	const session = sessionStore.get();
 	const userId: number | null = session ? session.id : null;
 	let nbEssai = 0;
@@ -17,7 +21,15 @@
 	let isWin = false;
 	let isWordExist = true;
 	let tabWordFind: string[] = [];
+	let categorieWord: string = '';
+	let similarWord: string = '';
 	const tabGuesses = writable<string[][]>([]);
+
+	let revealedIndice = [false, false, false];
+
+	function toggleReveal(index: number) {
+		revealedIndice[index] = !revealedIndice[index];
+	}
 
 	let nbParties: number = 0;
 	let tauxReussite: number = 0;
@@ -32,6 +44,7 @@
 	};
 
 	async function newGame() {
+		revealedIndice = [false, false, false];
 		tabGuesses.set([]);
 		isDisabled = false;
 		isWin = false;
@@ -50,6 +63,8 @@
 			const data = await response.json();
 
 			tabWordFind = data.tabWord;
+			categorieWord = data.findCategorie;
+			similarWord = data.similarWord;
 			isLoading = false;
 			isSurrender = true;
 			userGuess = '';
@@ -95,7 +110,7 @@
 				.toLowerCase()
 				.split('')
 		]);
-		letterColors = letters.map(letter => getKeyboardLetterColor(letter));
+		letterColors = letters.map((letter) => getKeyboardLetterColor(letter));
 		const cleanGuess = userGuess
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
@@ -111,31 +126,30 @@
 		userGuess = '';
 	}
 	function getLetterClass(letter: string, index: number, guess: string[]) {
-    if (!tabWordFind || tabWordFind.length === 0) return 'bg-gray-500 text-white';
-    
-    if (!tabWordFind.includes(letter)) {
-        return 'bg-gray-500 text-white';
-    }
-    
-    if (tabWordFind[index] === letter) {
-        return 'bg-green-500 text-white';
-    }
-    
-    const countInWord = tabWordFind.filter((l) => l === letter).length;
+		if (!tabWordFind || tabWordFind.length === 0) return 'bg-gray-500 text-white';
 
-    const countGreen = guess.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
-    
-    const countYellowBefore = guess
-        .slice(0, index)
-        .filter((l, i) => l === letter && tabWordFind[i] !== letter)
-        .length;
-    
-    if (countGreen + countYellowBefore >= countInWord) {
-        return 'bg-gray-500 text-white';
-    }
-    
-    return 'bg-yellow-500 text-white';
-}
+		if (!tabWordFind.includes(letter)) {
+			return 'bg-gray-500 text-white';
+		}
+
+		if (tabWordFind[index] === letter) {
+			return 'bg-green-500 text-white';
+		}
+
+		const countInWord = tabWordFind.filter((l) => l === letter).length;
+
+		const countGreen = guess.filter((l, i) => l === letter && tabWordFind[i] === letter).length;
+
+		const countYellowBefore = guess
+			.slice(0, index)
+			.filter((l, i) => l === letter && tabWordFind[i] !== letter).length;
+
+		if (countGreen + countYellowBefore >= countInWord) {
+			return 'bg-gray-500 text-white';
+		}
+
+		return 'bg-yellow-500 text-white';
+	}
 
 	async function surrenderGame() {
 		isLoose = false;
@@ -190,26 +204,27 @@
 	}
 
 	function getKeyboardLetterColor(letter: string) {
-    let bestColor = 'bg-gray-300 text-black';   
-    const normalizedLetter = letter.toLowerCase(); 
-    $tabGuesses.forEach(guess => {
-        guess.forEach((guessLetter, index) => {
-            if (guessLetter !== normalizedLetter) return;
-    
-            if (tabWordFind[index] === normalizedLetter) {
-                bestColor = 'bg-green-500 text-white';
-            }
-            else if (tabWordFind.includes(normalizedLetter) && !bestColor.includes('bg-green-500')) {
-                bestColor = 'bg-yellow-500 text-white';
-            }
-            else if (!tabWordFind.includes(normalizedLetter) && bestColor === 'bg-gray-300 text-black') {
-                bestColor = 'bg-gray-500 text-white';
-            }
-        });
-    });
-    
-    return bestColor;
-}
+		let bestColor = 'bg-gray-300 text-black';
+		const normalizedLetter = letter.toLowerCase();
+		$tabGuesses.forEach((guess) => {
+			guess.forEach((guessLetter, index) => {
+				if (guessLetter !== normalizedLetter) return;
+
+				if (tabWordFind[index] === normalizedLetter) {
+					bestColor = 'bg-green-500 text-white';
+				} else if (tabWordFind.includes(normalizedLetter) && !bestColor.includes('bg-green-500')) {
+					bestColor = 'bg-yellow-500 text-white';
+				} else if (
+					!tabWordFind.includes(normalizedLetter) &&
+					bestColor === 'bg-gray-300 text-black'
+				) {
+					bestColor = 'bg-gray-500 text-white';
+				}
+			});
+		});
+
+		return bestColor;
+	}
 
 	onMount(() => {
 		newGame();
@@ -218,6 +233,7 @@
 </script>
 
 <Header />
+
 <div class="row flex min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto max-w-3xl">
 		<div class="mb-6">
@@ -372,6 +388,56 @@
 					<p>Tu gagnes si tu trouves le mot avant d’avoir épuisé 5 essais</p>
 				</li>
 			</ul>
+		</div>
+
+		<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+			<div class="w-full max-w-md">
+				<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+					<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
+
+					<div class="space-y-4">
+						{#if !revealedIndice[0]}
+							<button
+								on:click={() => toggleReveal(0)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Premier Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Catégorie du mot :</h4>
+								<p class="text-gray-800">{categorieWord}</p>
+							</div>
+						{/if}
+						{#if !revealedIndice[1]}
+							<button
+								on:click={() => toggleReveal(1)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Deuxième Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Premier lettre du mot :</h4>
+								<p class="text-gray-800">{tabWordFind[0]}</p>
+							</div>
+						{/if}
+						{#if !revealedIndice[2]}
+							<button
+								on:click={() => toggleReveal(2)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Troisième Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Mot similaire</h4>
+								<p class="text-gray-800">{similarWord}</p>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</div>
 		</div>
 		{#if userId}
 			<div class="rounded-lg bg-white p-6 shadow-sm">
