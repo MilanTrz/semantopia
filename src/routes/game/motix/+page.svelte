@@ -95,12 +95,7 @@
 				status: 500
 			});
 		}
-
-		if (nbEssai == 5) {
-			isLoose = true;
-			isDisabled = true;
-			return null;
-		}
+		
 		nbEssai++;
 		tabGuesses.update((g) => [
 			...g,
@@ -123,6 +118,12 @@
 			isDisabled = true;
 			return null;
 		}
+		if (nbEssai == 5) {
+			isLoose = true;
+			isDisabled = true;
+			return null;
+		}
+		
 		userGuess = '';
 	}
 	function getLetterClass(letter: string, index: number, guess: string[]) {
