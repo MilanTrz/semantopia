@@ -26,6 +26,9 @@
 			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			{#if pseudo}
 				<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
+				<li>
+					<a href="/achievements" class="text-gray-600 transition hover:text-purple-600">Badges</a>
+				</li>
 				<li><p>{pseudo}</p></li>
 				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />
 				<button
