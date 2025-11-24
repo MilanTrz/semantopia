@@ -2,39 +2,38 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
-    $: idUser = $sessionStore?.id ?? null;
+	$: idUser = $sessionStore?.id ?? null;
 	let userAllAchievements = 0;
 	let userAllRareAchievements = 0;
 	let userMissingAchievements = 0;
 
-    let repbodyAchievements:{
-        AllAchievements : number;
-        AllRareAchievements : number;
-        AllMissingAchievements: number;
-    }
+	let repbodyAchievements: {
+		AllAchievements: number;
+		AllRareAchievements: number;
+		AllMissingAchievements: number;
+	};
 
-    async function getInformationAchievements(){
-        try{
-            const response = await fetch('/achievements',{
-                method: 'POST',
+	async function getInformationAchievements() {
+		try {
+			const response = await fetch('/achievements', {
+				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					userId: idUser,
+					userId: idUser
 				})
-            })
-            repbodyAchievements = await response.json()
-            userAllAchievements =  repbodyAchievements.AllAchievements ?? 0;
-            userAllRareAchievements = repbodyAchievements.AllRareAchievements ?? 0;
-            userMissingAchievements = repbodyAchievements.AllMissingAchievements ?? 0;
-        }catch (error) {
+			});
+			repbodyAchievements = await response.json();
+			userAllAchievements = repbodyAchievements.AllAchievements ?? 0;
+			userAllRareAchievements = repbodyAchievements.AllRareAchievements ?? 0;
+			userMissingAchievements = repbodyAchievements.AllMissingAchievements ?? 0;
+		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
-    }
-    onMount(() =>{
-        getInformationAchievements();
-    })
-
+	}
+	onMount(() => {
+		getInformationAchievements();
+	});
 </script>
 
 <Header />
@@ -101,7 +100,7 @@
 					>Récents</button
 				>
 			</div>
-        </div>
+		</div>
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-4">
 			<div class="rounded-lg bg-white p-6 text-center shadow">
 				<div

@@ -23,14 +23,18 @@ export async function POST({ request, cookies }: RequestEvent) {
 		}
 
 		const [rows_id] = (await pool.query(
-			'SELECT ID, PSEUDO, AVATAR, CREATION_DATE FROM USERS WHERE EMAIL = ? ',
+			'SELECT ID, PSEUDO, AVATAR, CREATION_DATE, ISADMIN FROM USERS WHERE EMAIL = ? ',
 			[email]
-		)) as [Array<{ ID: number; PSEUDO: string; AVATAR: string; CREATION_DATE: Date }>, unknown];
+		)) as [
+			Array<{ ID: number; PSEUDO: string; AVATAR: string; CREATION_DATE: Date; ISADMIN: boolean }>,
+			unknown
+		];
 
 		const userId = rows_id[0].ID;
 		const pseudo = rows_id[0].PSEUDO;
 		const avatar = rows_id[0].AVATAR;
 		const date = rows_id[0].CREATION_DATE;
+		const isAdmin = rows_id[0].ISADMIN;
 		if (seSouvenir) {
 			const token = jwt.sign({ id: userId, email }, SECRET, { expiresIn: '7d' });
 
@@ -50,7 +54,8 @@ export async function POST({ request, cookies }: RequestEvent) {
 				pseudo,
 				avatar,
 				email,
-				date
+				date,
+				isAdmin
 			}),
 			{ status: 201 }
 		);

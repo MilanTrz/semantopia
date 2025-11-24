@@ -15,6 +15,7 @@
 		avatar: string;
 		email: string;
 		date: Date;
+		isAdmin: boolean;
 	};
 
 	function verificationForm(): boolean {
@@ -46,7 +47,8 @@
 			const avatar = repbody.avatar;
 			const email = repbody.email;
 			const date = repbody.date;
-			const userInfo: sessionData = { id, pseudo, avatar, email, dateCreation: date };
+			const isAdmin = repbody.isAdmin;
+			const userInfo: sessionData = { id, pseudo, avatar, email, dateCreation: date, isAdmin };
 			sessionStore.set(userInfo);
 			window.setTimeout(() => {
 				goto('/home');

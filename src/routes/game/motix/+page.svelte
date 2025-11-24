@@ -95,7 +95,7 @@
 				status: 500
 			});
 		}
-		
+
 		nbEssai++;
 		tabGuesses.update((g) => [
 			...g,
@@ -123,7 +123,7 @@
 			isDisabled = true;
 			return null;
 		}
-		
+
 		userGuess = '';
 	}
 	function getLetterClass(letter: string, index: number, guess: string[]) {

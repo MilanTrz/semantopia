@@ -1,5 +1,22 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import type { challenge } from '$lib/models/challenge';
+	import { onMount } from 'svelte';
+	let lastChallenge : challenge;
+
+	async function getLastChallenge(){
+		const response = await fetch('/home',{
+			method: 'GET',
+			headers: { 'Content-Type': 'application/json' }
+		})
+		const data = await response.json();
+		lastChallenge = data.lastChallenge;
+		console.log(lastChallenge);
+	}
+
+	onMount(() => {
+		getLastChallenge();
+	});
 </script>
 
 <Header />
@@ -116,6 +133,33 @@
 				</p>
 			</div>
 		</a>
+	</div>
+</section>
+<section class="flex gap-4 p-8 bg-gray-50">
+	<div class="bg-white rounded-lg shadow-md p-6 flex-1">
+		<div class="flex items-center gap-2 mb-2">
+			<span class="text-2xl">🏆</span>
+			<h3 class="text-xl font-bold text-gray-800">Défi du Jour</h3>
+		</div>
+		<p class="text-sm text-gray-500 mb-4">{new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+		
+		<h4 class="text-lg font-semibold text-gray-800 mb-3">Défi  Spécial</h4>
+		<p class="text-sm text-gray-600 mb-6"></p>
+	
+		<a href="/pedantix">
+			<button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+				<span>🔄</span>
+				Relever le défi maintenant
+			</button>
+		</a>
+	</div>
+	<div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md p-8 flex-1 flex flex-col items-center justify-center text-white text-center">
+		<div class="mb-4">
+			<span class="text-6xl">🎯</span>
+		</div>
+		<h3 class="text-2xl font-bold mb-3">Défi Quotidien</h3>
+		<p class="text-sm opacity-90 mb-6">Un nouveau challenge chaque jour pour tester vos limites</p>
+		<div class="text-4xl font-bold">434.5 × 24</div>
 	</div>
 </section>
 
