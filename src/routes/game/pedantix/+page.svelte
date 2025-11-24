@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import type { challenge } from '$lib/models/challenge';
 
 	let userGuess = '';
 	let tabguess: string[] = [];
@@ -36,6 +37,9 @@
 
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
+
+	let lastChallenge:challenge = {}
+	let userHintReaveal:number = 0;
 
 	async function newGame() {
 		if (idUser) {
@@ -142,6 +146,17 @@
 						idUser
 					})
 				});
+				if (lastChallenge){
+					if (lastChallenge.nbTry > 0){
+						if (nbEssai < lastChallenge.nbTry){
+							winChallenge()
+						}
+					}else if(lastChallenge.nbHint >= 0){
+						if (userHintReaveal < lastChallenge.nbHint){
+							winChallenge()
+						}
+					}
+				}
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -190,9 +205,30 @@
 			throw error;
 		}
 	}
+	async function checkChallenge(){
+		try{
+			const response = await fetch('/api/challenge/checkChallenge',{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					gameName : 'pedantix'
+				})
+
+			})
+			const data = response.json()
+			lastChallenge = data.lastChallenge
+		}catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function winChallenge(){
+		//pass
+	}
 
 	onMount(() => {
 		newGame();
+		checkChallenge()
 	});
 </script>
 

@@ -30,7 +30,6 @@ export async function GET(){
 				status: 400
 			});
 		}
-		console.log(row_defi)
 		const lastChallenge : challenge = {
 			name: row_defi[0].NAME,
 			description: row_defi[0].DESCRIPTION,
@@ -38,7 +37,6 @@ export async function GET(){
 			nbTry: row_defi[0].NBTRY,
 			nbHint: row_defi[0].NBHINT
 		}
-		console.log(lastChallenge)
 		return new Response(
 			JSON.stringify({
 				lastChallenge
