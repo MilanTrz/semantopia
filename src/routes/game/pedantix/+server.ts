@@ -11,6 +11,28 @@ export async function POST({ request }: RequestEvent) {
 	const { userGuess } = await request.json();
 
 	try {
+		const normalizedGuess = userGuess.toLowerCase().trim();
+
+		let foundInTitle = false;
+		let foundInContent = false;
+
+		titleWikiPageSplit.forEach((word) => {
+			if (word.toLowerCase() === normalizedGuess) {
+				foundInTitle = true;
+			}
+		});
+		contentsplice.forEach((word) => {
+			if (word.toLowerCase() === normalizedGuess) {
+				foundInContent = true;
+			}
+		});
+		const isWordInGame = await checkWord(userGuess)
+
+		if (!isWordInGame && !foundInTitle && !foundInContent){
+			return new Response(JSON.stringify({ message: 'Le mot n existe pas ou n est pas présent dans le titre ou le contenu', isWordInGame :false  }), {
+			status: 200
+		});
+		}
 		await Promise.all([
 			...contentsplice.map(async (word, index) => {
 				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
@@ -27,7 +49,8 @@ export async function POST({ request }: RequestEvent) {
 		return new Response(
 			JSON.stringify({
 				tabHiddenTitle,
-				tabHiddenContent
+				tabHiddenContent,
+				isWordInGame : true
 			}),
 			{ status: 201 }
 		);
@@ -40,13 +63,17 @@ export async function POST({ request }: RequestEvent) {
 
 export async function GET({ url }: RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
-
-	titleWikiPage = await getRandomTitlePage();
-	const hints = await getHints(titleWikiPage);
-	titleWikiPageSplit = titleWikiPage
+	let hints : hints;
+	do{
+		titleWikiPage = await getRandomTitlePage();
+		hints = await getHints(titleWikiPage);
+		titleWikiPageSplit = titleWikiPage
 		.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
 		.filter((s) => s.trim() !== '');
 	contentsplice = await getContentPage(titleWikiPage);
+	}while (contentsplice.length == 0);
+	
+	
 	tabHiddenTitle = titleWikiPageSplit.map((str) =>
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
@@ -277,4 +304,28 @@ async function getHints(title: string, lang: string = "fr"): Promise<hints> {
         intro: shortIntro,
         links: links
     };
+}
+
+async function checkWord(word: string){
+	 let isWordExist = true;
+    try{
+        	const response = await globalThis.fetch('http://localhost:5000/api/check-word', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					word: word
+				})
+			});
+			const data = await response.json();
+			if (!data.exists) {
+                isWordExist = false;
+				return  isWordExist;
+				
+			}
+			return isWordExist	
+    }catch (error) {
+		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
+			status: 500
+		});
+	}
 }

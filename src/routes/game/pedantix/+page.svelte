@@ -12,6 +12,7 @@
 		tabHiddenTitle: number[];
 		tabHiddenContent: number[];
 		hints: hints;
+		isWordInGame: boolean;
 	};
 
 	let repbodyStats: {
@@ -25,7 +26,6 @@
 	let tabContent: number[];
 	let tabContentTemp: number[] = [];
 	let nbEssai: number = 0;
-	let isWordExist = true;
 
 	let partiesJouees: number = 0;
 	let tauxReussite: number = 0;
@@ -45,6 +45,8 @@
 
 	let hintsGame: hints;
 	let revealedIndice = [false, false, false];
+
+	let isWordInGame:boolean = true;
 
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
@@ -86,25 +88,7 @@
 	}
 
 	async function sendGuess() {
-		isWordExist = true;
-		try {
-			const response = await fetch('http://localhost:5000/api/check-word', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					word: userGuess
-				})
-			});
-			const data = await response.json();
-			if (!data.exists) {
-				isWordExist = false;
-				return null;
-			}
-		} catch (error) {
-			return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
-				status: 500
-			});
-		}
+		isWordInGame = true;
 		nbEssai++;
 		tabguess.push(userGuess);
 		tabguess = tabguess;
@@ -116,12 +100,14 @@
 			})
 		});
 		repbody = await response.json();
-		if (response.status == 201) {
+		if (response.status == 201) {	
 			tabTitleTemp = tabTitle;
 			tabContentTemp = tabContent;
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
+			isWordInGame = repbody.isWordInGame;
 		}
+		isWordInGame = repbody.isWordInGame;
 		if (tabTitle.every((item) => typeof item === 'string')) {
 			triggerVictory();
 		}
@@ -263,7 +249,7 @@
 				<p class="font-medium text-gray-600">Chargement de la partie...</p>
 			</div>
 		{/if}
-		{#if !isWordExist}
+		{#if !isWordInGame}
 			<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6">
 				<svg
 					class="h-6 w-6 flex-shrink-0 text-amber-600"
@@ -280,7 +266,7 @@
 				</svg>
 				<div>
 					<p class="font-semibold text-amber-900">Mot introuvable</p>
-					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire</p>
+					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu</p>
 				</div>
 			</div>
 		{/if}
