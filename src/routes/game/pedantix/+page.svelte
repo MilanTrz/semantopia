@@ -4,12 +4,14 @@
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import type { challenge } from '$lib/models/challenge';
+	import type { hints } from '$lib/models/hints';
 
 	let userGuess = '';
 	let tabguess: string[] = [];
 	let repbody: {
 		tabHiddenTitle: number[];
 		tabHiddenContent: number[];
+		hints: hints;
 	};
 
 	let repbodyStats: {
@@ -37,9 +39,17 @@
 
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
-
-	let lastChallenge:challenge = {}
+	
+	//let lastChallenge:challenge = {}
 	let userHintReaveal:number = 0;
+
+	let hintsGame: hints;
+	let revealedIndice = [false, false, false];
+
+	function toggleReveal(index: number) {
+		revealedIndice[index] = !revealedIndice[index];
+	}
+
 
 	async function newGame() {
 		if (idUser) {
@@ -66,6 +76,7 @@
 			if (response.status == 201) {
 				tabTitle = repbody.tabHiddenTitle;
 				tabContent = repbody.tabHiddenContent;
+				hintsGame = repbody.hints
 			}
 		} catch (error) {
 			console.error('Erreur de chargement:', error);
@@ -146,6 +157,7 @@
 						idUser
 					})
 				});
+				/*
 				if (lastChallenge){
 					if (lastChallenge.nbTry > 0){
 						if (nbEssai < lastChallenge.nbTry){
@@ -157,6 +169,7 @@
 						}
 					}
 				}
+				*/
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -216,7 +229,7 @@
 
 			})
 			const data = response.json()
-			lastChallenge = data.lastChallenge
+			//lastChallenge = data.lastChallenge
 		}catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -228,7 +241,7 @@
 
 	onMount(() => {
 		newGame();
-		checkChallenge()
+		//checkChallenge()
 	});
 </script>
 
@@ -403,6 +416,55 @@
 					<p>Utilisez les indices pour vous rapprocher du mot cible</p>
 				</li>
 			</ul>
+		</div>
+		<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+			<div class="w-full max-w-md">
+				<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+					<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
+
+					<div class="space-y-4">
+						{#if !revealedIndice[0]}
+							<button
+								on:click={() => toggleReveal(0)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Premier Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Catégorie de la page Wikipedia :</h4>
+								<p class="text-gray-800">{hintsGame.categories[0]}</p>
+							</div>
+						{/if}
+						{#if !revealedIndice[1]}
+							<button
+								on:click={() => toggleReveal(1)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Deuxième Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Lien qui appartient a la page:</h4>
+								<p class="text-gray-800">{hintsGame.links}</p>
+							</div>
+						{/if}
+						{#if !revealedIndice[2]}
+							<button
+								on:click={() => toggleReveal(2)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Troisième Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Intro sans le titre de la page :</h4>
+								<p class="text-gray-800">{hintsGame.intro}</p>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</div>
 		</div>
 		{#if idUser}
 			<div class="rounded-lg bg-white p-6 shadow-sm">

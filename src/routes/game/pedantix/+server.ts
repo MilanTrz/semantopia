@@ -1,3 +1,4 @@
+import type { hints } from '$lib/models/hints';
 import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
 let titleWikiPage: string;
@@ -41,6 +42,7 @@ export async function GET({ url }: RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
 
 	titleWikiPage = await getRandomTitlePage();
+	const hints = await getHints(titleWikiPage);
 	titleWikiPageSplit = titleWikiPage
 		.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
 		.filter((s) => s.trim() !== '');
@@ -64,7 +66,8 @@ export async function GET({ url }: RequestEvent) {
 		return new Response(
 			JSON.stringify({
 				tabHiddenTitle,
-				tabHiddenContent
+				tabHiddenContent,
+				hints
 			}),
 			{ status: 201 }
 		);
@@ -142,7 +145,7 @@ async function getContentPage(
 	const text = firstLines.join(' ');
 	const words = text
 		.replace(/([.,!?;:()[\]{}"'«»\-–—])/g, ' $1 ')
-		.split(/\s+/) // Split par espaces
+		.split(/\s+/) 
 		.filter((word: string) => word !== '');
 
 	return words;
@@ -222,4 +225,56 @@ export async function PUT({ request }: RequestEvent) {
 		console.error('Erreur Server:', error);
 		throw error;
 	}
+}
+
+async function getHints(title: string, lang: string = "fr"): Promise<hints> {
+    const base = `https://${lang}.wikipedia.org/w/api.php`;
+
+    const makeUrl = (extra: Record<string, string>) =>
+        base +
+        "?" +
+        new URLSearchParams({
+            format: "json",
+            origin: "*",
+            action: "query",
+            titles: title,
+            ...extra
+        });
+
+    const [catRes, introRes, linksRes] = await Promise.all([
+        fetch(makeUrl({ prop: "categories" })),
+        fetch(makeUrl({ prop: "extracts", exintro: "true", explaintext: "true" })),
+        fetch(makeUrl({ prop: "links", pllimit: "10" }))
+    ]);
+
+    const catData = await catRes.json() as {
+        query: { pages: Record<string, { categories?: { title: string }[] }> }
+    };
+
+    const introData = await introRes.json() as {
+        query: { pages: Record<string, { extract?: string }> }
+    };
+
+    const linksData = await linksRes.json() as {
+        query: { pages: Record<string, { links?: { title: string }[] }> }
+    };
+
+    const pageId = Object.keys(catData.query.pages)[0];
+
+    const rawIntro = introData.query.pages[pageId].extract ?? "";
+
+    const titleRegex = new RegExp(title, "gi");
+    const censoredIntro = rawIntro.replace(titleRegex, "…");
+
+	  const shortIntro = censoredIntro.length > 50
+        ? censoredIntro.slice(0, 50) + "…"
+        : censoredIntro;
+
+		const links = linksData.query.pages[pageId].links?.slice(0, 3).map(l => l.title) ?? [];
+
+    return {
+        categories: catData.query.pages[pageId].categories?.map(c => c.title) ?? [],
+        intro: shortIntro,
+        links: links
+    };
 }
