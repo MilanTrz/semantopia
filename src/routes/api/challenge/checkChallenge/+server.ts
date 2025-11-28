@@ -7,12 +7,12 @@ export async function POST({ request }: RequestEvent) {
 	const {gameName} = await request.json()
 	try{
 		const [rowLastChallenge] = await pool.query<RowDataPacket[] & challenge[]>(
-			'SELECT NAME, DESCRIPTION, GAMENAME, NBTRY, NBHINT FROM Challenge WHERE NAME = ? ORDER BY ID DESC LIMIT 1',
+			'SELECT NAME, DESCRIPTION, GAMENAME, NBTRY, NBHINT FROM Challenge WHERE GAMENAME = ? ORDER BY ID DESC LIMIT 1',
 					[gameName]
 		)
 		if (rowLastChallenge.length == 0) {
 			return new Response(JSON.stringify({ message: 'Aucun défi pour ce mode de jeu actuellement' }), {
-				status: 400
+				status: 200
 			});
 		}
 		const lastChallenge : challenge = {

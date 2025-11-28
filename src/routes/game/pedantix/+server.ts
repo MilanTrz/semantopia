@@ -1,14 +1,27 @@
 import type { hints } from '$lib/models/hints';
 import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
-let titleWikiPage: string;
-let titleWikiPageSplit: string[];
-let contentsplice: string[];
-let tabHiddenTitle: (number | string)[];
-let tabHiddenContent: (number | string)[];
+
+// Stockage en mémoire des parties actives par ID de session
+const activeSessions: Map<string, {
+	titleWikiPage: string;
+	titleWikiPageSplit: string[];
+	contentsplice: string[];
+	tabHiddenTitle: (number | string)[];
+	tabHiddenContent: (number | string)[];
+}> = new Map();
 
 export async function POST({ request }: RequestEvent) {
-	const { userGuess } = await request.json();
+	const { userGuess, sessionId } = await request.json();
+	const session = activeSessions.get(sessionId);
+
+	if (!session) {
+		return new Response(JSON.stringify({ message: 'Session non trouvée', isWordInGame: false }), {
+			status: 400
+		});
+	}
+
+	const { titleWikiPageSplit, contentsplice, tabHiddenTitle, tabHiddenContent } = session;
 
 	try {
 		const normalizedGuess = userGuess.toLowerCase().trim();
@@ -26,13 +39,47 @@ export async function POST({ request }: RequestEvent) {
 				foundInContent = true;
 			}
 		});
-		const isWordInGame = await checkWord(userGuess)
 
-		if (!isWordInGame && !foundInTitle && !foundInContent){
-			return new Response(JSON.stringify({ message: 'Le mot n existe pas ou n est pas présent dans le titre ou le contenu', isWordInGame :false  }), {
-			status: 200
-		});
+		// Si le mot est trouvé exactement dans le titre ou le contenu, c'est valide
+		if (foundInTitle || foundInContent) {
+			// Chercher tous les mots similaires
+			await Promise.all([
+				...contentsplice.map(async (word, index) => {
+					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
+						tabHiddenContent[index] = word;
+					}
+				}),
+				...titleWikiPageSplit.map(async (word, index) => {
+					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
+						tabHiddenTitle[index] = word;
+					}
+				})
+			]);
+
+			// Mettre à jour la session
+			session.tabHiddenTitle = tabHiddenTitle;
+			session.tabHiddenContent = tabHiddenContent;
+
+			return new Response(
+				JSON.stringify({
+					tabHiddenTitle,
+					tabHiddenContent,
+					isWordInGame : true
+				}),
+				{ status: 201 }
+			);
 		}
+
+		// Sinon, vérifier si le mot existe dans le vocabulaire word2vec
+		const isWordInGame = await checkWord(userGuess);
+
+		if (!isWordInGame) {
+			return new Response(JSON.stringify({ message: 'Le mot n existe pas ou n est pas présent dans le titre ou le contenu', isWordInGame: false }), {
+				status: 200
+			});
+		}
+
+		// Chercher les mots similaires
 		await Promise.all([
 			...contentsplice.map(async (word, index) => {
 				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
@@ -45,6 +92,10 @@ export async function POST({ request }: RequestEvent) {
 				}
 			})
 		]);
+
+		// Mettre à jour la session
+		session.tabHiddenTitle = tabHiddenTitle;
+		session.tabHiddenContent = tabHiddenContent;
 
 		return new Response(
 			JSON.stringify({
@@ -63,7 +114,12 @@ export async function POST({ request }: RequestEvent) {
 
 export async function GET({ url }: RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
+	const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 	let hints : hints;
+	let titleWikiPage: string;
+	let titleWikiPageSplit: string[];
+	let contentsplice: string[];
+	
 	do{
 		titleWikiPage = await getRandomTitlePage();
 		hints = await getHints(titleWikiPage);
@@ -74,13 +130,23 @@ export async function GET({ url }: RequestEvent) {
 	}while (contentsplice.length == 0);
 	
 	
-	tabHiddenTitle = titleWikiPageSplit.map((str) =>
+	const tabHiddenTitle = titleWikiPageSplit.map((str) =>
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
 
-	tabHiddenContent = contentsplice.map((str) =>
+	const tabHiddenContent = contentsplice.map((str) =>
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
+
+	// Stocker la session
+	activeSessions.set(sessionId, {
+		titleWikiPage,
+		titleWikiPageSplit,
+		contentsplice,
+		tabHiddenTitle,
+		tabHiddenContent
+	});
+
 	const date = new Date();
 	if (userId !== 0) {
 		await pool.query(
@@ -92,6 +158,7 @@ export async function GET({ url }: RequestEvent) {
 	try {
 		return new Response(
 			JSON.stringify({
+				sessionId,
 				tabHiddenTitle,
 				tabHiddenContent,
 				hints
@@ -206,6 +273,12 @@ function isValideTitle(title: string): boolean {
 async function checkSimilarity(wordTab: string, wordGuess: string) {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+	
+	// Vérifier d'abord l'égalité exacte (après normalisation)
+	if (newWord.toLowerCase() === newWordTab.toLowerCase()) {
+		return true;
+	}
+	
 	try {
 		const response = await fetch('http://localhost:5000/api/similarity', {
 			method: 'POST',
@@ -216,14 +289,14 @@ async function checkSimilarity(wordTab: string, wordGuess: string) {
 			})
 		});
 		const data = await response.json();
-		if (data.similarity >= 0.7) {
+		if (data.similarity >= 0.8) {
 			return true;
 		}
 		return false;
 	} catch (error) {
-		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
-			status: 500
-		});
+		console.error('Erreur lors de la vérification de similarité:', error);
+		// Si le service échoue et que c'est une correspondance exacte, accepter quand même
+		return newWord.toLowerCase() === newWordTab.toLowerCase();
 	}
 }
 
@@ -307,7 +380,7 @@ async function getHints(title: string, lang: string = "fr"): Promise<hints> {
 }
 
 async function checkWord(word: string){
-	 let isWordExist = true;
+	let isWordExist = true;
     try{
         	const response = await globalThis.fetch('http://localhost:5000/api/check-word', {
 				method: 'POST',
@@ -319,13 +392,11 @@ async function checkWord(word: string){
 			const data = await response.json();
 			if (!data.exists) {
                 isWordExist = false;
-				return  isWordExist;
-				
+				return isWordExist;
 			}
-			return isWordExist	
+			return isWordExist;	
     }catch (error) {
-		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
-			status: 500
-		});
+		console.error('Erreur lors de la vérification du mot:', error);
+		return false;
 	}
 }

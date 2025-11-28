@@ -8,7 +8,9 @@
 
 	let userGuess = '';
 	let tabguess: string[] = [];
+	let sessionId: string = '';
 	let repbody: {
+		sessionId: string;
 		tabHiddenTitle: number[];
 		tabHiddenContent: number[];
 		hints: hints;
@@ -40,13 +42,14 @@
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
 	
-	//let lastChallenge:challenge = {}
-	let userHintReaveal:number = 0;
+	let lastChallenge: challenge | null = null;
+	let userHintReaveal: number = 0;
 
 	let hintsGame: hints;
 	let revealedIndice = [false, false, false];
 
 	let isWordInGame:boolean = true;
+	let isChallengeWinned: boolean = false;
 
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
@@ -57,7 +60,7 @@
 		if (idUser) {
 			getStatistics();
 		}
-
+		isChallengeWinned = false;
 		isSurrender = true;
 		tabguess = [];
 		isLoading = true;
@@ -76,6 +79,7 @@
 			});
 			repbody = await response.json();
 			if (response.status == 201) {
+				sessionId = repbody.sessionId;
 				tabTitle = repbody.tabHiddenTitle;
 				tabContent = repbody.tabHiddenContent;
 				hintsGame = repbody.hints
@@ -96,7 +100,8 @@
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				userGuess
+				userGuess,
+				sessionId
 			})
 		});
 		repbody = await response.json();
@@ -143,19 +148,21 @@
 						idUser
 					})
 				});
-				/*
+				
 				if (lastChallenge){
 					if (lastChallenge.nbTry > 0){
 						if (nbEssai < lastChallenge.nbTry){
+							isChallengeWinned = true;
 							winChallenge()
 						}
 					}else if(lastChallenge.nbHint >= 0){
 						if (userHintReaveal < lastChallenge.nbHint){
+							isChallengeWinned = true;
 							winChallenge()
 						}
 					}
 				}
-				*/
+				
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -214,20 +221,34 @@
 				})
 
 			})
-			const data = response.json()
-			//lastChallenge = data.lastChallenge
+			const data = await response.json()
+			if (data){
+				lastChallenge = data.lastChallenge
+			}
+			
 		}catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
 	}
 	async function winChallenge(){
-		//pass
+		try{
+			await fetch('/api/challenge/updateWinChallenge',{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					idUser: idUser
+				})
+			})
+		}catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
 	}
 
 	onMount(() => {
 		newGame();
-		//checkChallenge()
+		checkChallenge()
 	});
 </script>
 
@@ -241,6 +262,27 @@
 				<p class="mt-2 text-sm text-gray-500">NbEssai : {nbEssai}</p>
 			</div>
 		</div>
+		{#if isChallengeWinned}
+			<div class="flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6 mb-6">
+				<svg
+					class="h-6 w-6 flex-shrink-0 text-green-600"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+					/>
+				</svg>
+				<div>
+					<p class="font-semibold text-green-900">Défi relevé !</p>
+					<p class="text-sm text-green-700">Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !</p>
+				</div>
+			</div>
+		{/if}
 		{#if isLoading}
 			<div class="flex flex-col items-center justify-center py-12">
 				<div
