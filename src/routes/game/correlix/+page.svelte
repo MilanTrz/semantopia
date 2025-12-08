@@ -1,0 +1,582 @@
+<script lang="ts">
+	import Header from '$lib/header.svelte';
+	import { triggerConfettiAnimation } from '$lib';
+	import { onMount } from 'svelte';
+
+	type Step = {
+		word: string;
+		similarityToTarget: number;
+		similarityFromPrevious: number | null;
+		deltaToTarget: number | null;
+	};
+
+	type GraphNode = {
+		index: number;
+		label: string;
+		similarityToTarget: number;
+		reached: boolean;
+		isTarget: boolean;
+		isGhostTarget: boolean;
+		xPercent: number;
+		y: number;
+	};
+
+	type GraphEdge = {
+		x1: number;
+		y1: number;
+		x2: number;
+		y2: number;
+		similarity: number | null;
+		isGhost: boolean;
+		labelX: number;
+		labelY: number;
+	};
+
+	let startWord = '';
+	let targetWord = '';
+	let path: Step[] = [];
+	let minSimilarity = 30;
+	let userWord = '';
+	let message = '';
+	let gameWon = false;
+	let attempts = 0;
+	let isLoading = false;
+	let initializing = true;
+	let errorType: string | null = null;
+	let graphNodes: GraphNode[] = [];
+	let graphEdges: GraphEdge[] = [];
+	let activeIndex = 0;
+	let canSubmit = false;
+
+	const GRAPH_TOP = 10;
+	const GRAPH_BOTTOM = 50;
+
+	$: graphNodes = buildGraphNodes();
+	$: graphEdges = buildGraphEdges(graphNodes);
+	$: canSubmit = Boolean(userWord.trim()) && !gameWon && !isLoading && !initializing && path.length > 0;
+	$: {
+		if (!path.length && activeIndex !== 0) {
+			activeIndex = 0;
+		} else if (path.length > 0 && activeIndex > path.length - 1) {
+			activeIndex = path.length - 1;
+		}
+	}
+
+	onMount(() => {
+		newGame();
+	});
+
+	async function newGame() {
+		initializing = true;
+		isLoading = false;
+		gameWon = false;
+		errorType = null;
+		userWord = '';
+		message = '';
+
+		try {
+			const response = await fetch('/game/correlix/', {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			const data = await response.json();
+
+			if (response.ok) {
+				startWord = data.startWord;
+				targetWord = data.targetWord;
+				path = data.path ?? [];
+				minSimilarity = data.minSimilarity ?? 30;
+				attempts = Math.max(path.length - 1, 0);
+				activeIndex = Math.max(path.length - 1, 0);
+				message =
+					data.message ??
+					"Reliez des concepts assez proches pour avancer, sans pouvoir atteindre directement l'objectif.";
+			} else {
+				message = data.message ?? 'Impossible de lancer une nouvelle partie.';
+			}
+		} catch (error) {
+			console.error('Erreur newGame Correlix:', error);
+			message = 'Erreur de communication avec le serveur.';
+		} finally {
+			initializing = false;
+		}
+	}
+
+	async function sendGuess() {
+		const trimmedGuess = userWord.trim();
+		if (!trimmedGuess) {
+			return;
+		}
+
+		if (selectStepByWord(trimmedGuess)) {
+			userWord = '';
+			return;
+		}
+
+		if (gameWon || isLoading || initializing || !path.length) {
+			return;
+		}
+
+		isLoading = true;
+
+		try {
+			const response = await fetch('/game/correlix/', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userWord: trimmedGuess,
+					anchorWord: path[activeIndex]?.word ?? null
+				})
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				message = data.message ?? 'Erreur serveur.';
+				errorType = data.error ?? 'server_error';
+				return;
+			}
+
+			if (!data.success) {
+				message = data.message ?? 'Proposition invalide.';
+				errorType = data.error ?? 'invalid';
+				userWord = '';
+				return;
+			}
+
+			path = data.path ?? path;
+			attempts = Math.max(path.length - 1, 0);
+			message = data.message ?? '';
+			errorType = null;
+			userWord = '';
+			activeIndex = Math.max(path.length - 1, 0);
+
+			if (data.isWinner) {
+				gameWon = true;
+				triggerConfettiAnimation();
+			}
+		} catch (error) {
+			console.error('Erreur sendGuess Correlix:', error);
+			message = 'Erreur de communication avec le serveur.';
+			errorType = 'network';
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	function selectStep(index: number, userInitiated = false) {
+		if (!path.length) {
+			activeIndex = 0;
+			return;
+		}
+
+		const maxIndex = path.length - 1;
+		const nextIndex = Math.min(Math.max(index, 0), maxIndex);
+
+		if (userInitiated) {
+			userWord = '';
+			if (nextIndex === activeIndex) {
+				if (activeIndex !== maxIndex) {
+					activeIndex = maxIndex;
+					message = `Retour à l'étape finale "${path[maxIndex].word}".`;
+				}
+				errorType = null;
+				return;
+			}
+		}
+
+		activeIndex = nextIndex;
+		if (userInitiated) {
+			message = `Étape ${nextIndex} sélectionnée. Continuez depuis "${path[nextIndex].word}".`;
+			errorType = null;
+		}
+	}
+
+	function selectStepByWord(word: string): boolean {
+		if (!word || !path.length) {
+			return false;
+		}
+		const normalized = word.trim().toLowerCase();
+		const matchIndex = path.findIndex((step) => step.word.toLowerCase() === normalized);
+		if (matchIndex !== -1) {
+			selectStep(matchIndex, true);
+			return true;
+		}
+		return false;
+	}
+
+	function getMessageStyle() {
+		if (gameWon) {
+			return 'border-green-400 bg-green-50 text-green-800';
+		}
+		if (errorType) {
+			return 'border-amber-400 bg-amber-50 text-amber-800';
+		}
+		return 'border-blue-300 bg-blue-50 text-blue-800';
+	}
+
+	function formatPercent(value: number | null): string {
+		if (value === null || Number.isNaN(value)) {
+			return '--';
+		}
+		return `${value.toFixed(1)}%`;
+	}
+
+	function formatDelta(delta: number | null): string {
+		if (delta === null || Number.isNaN(delta)) {
+			return '';
+		}
+		const sign = delta > 0 ? '+' : '';
+		return `${sign}${delta.toFixed(1)} pts`;
+	}
+
+	function getDeltaColor(delta: number | null): string {
+		if (delta === null) {
+			return 'text-gray-500';
+		}
+		if (delta > 0) {
+			return 'text-green-600';
+		}
+		return 'text-rose-600';
+	}
+
+	function getSimilarityBadge(value: number): string {
+		if (value >= 70) {
+			return 'border-green-500 bg-green-50 text-green-700';
+		}
+		if (value >= 55) {
+			return 'border-lime-500 bg-lime-50 text-lime-700';
+		}
+		if (value >= 40) {
+			return 'border-yellow-500 bg-yellow-50 text-yellow-700';
+		}
+		if (value >= 30) {
+			return 'border-orange-500 bg-orange-50 text-orange-700';
+		}
+		return 'border-gray-400 bg-gray-50 text-gray-700';
+	}
+
+	function clampPercent(value: number | null | undefined): number {
+		if (value === null || value === undefined || Number.isNaN(value)) {
+			return 0;
+		}
+		return Math.min(100, Math.max(0, value));
+	}
+
+	function mapSimilarityToY(value: number | null | undefined): number {
+		const percent = clampPercent(value);
+		const ratio = percent / 100;
+		return GRAPH_BOTTOM - ratio * (GRAPH_BOTTOM - GRAPH_TOP);
+	}
+
+	function sameWord(a?: string, b?: string): boolean {
+		if (!a || !b) {
+			return false;
+		}
+		return a.trim().toLowerCase() === b.trim().toLowerCase();
+	}
+
+	function buildGraphNodes(): GraphNode[] {
+		if (!path.length) {
+			if (!startWord) {
+				return [];
+			}
+			return [
+				{
+					index: 0,
+					label: startWord,
+					similarityToTarget: 0,
+					reached: true,
+					isTarget: false,
+					isGhostTarget: false,
+					xPercent: 50,
+					y: GRAPH_BOTTOM
+				}
+			];
+		}
+
+		const nodes = path.map((step, index) => ({
+			index,
+			label: step.word,
+			similarityToTarget: clampPercent(step.similarityToTarget),
+			reached: true,
+			isTarget: false,
+			isGhostTarget: false,
+			xPercent: 0,
+			y: 0
+		}));
+
+		const lastNode = nodes.at(-1);
+		const reachedTarget = lastNode && sameWord(lastNode.label, targetWord);
+		if (reachedTarget && lastNode) {
+			lastNode.isTarget = true;
+			lastNode.similarityToTarget = 100;
+		} else if (targetWord) {
+			nodes.push({
+				index: nodes.length,
+				label: targetWord,
+				similarityToTarget: 100,
+				reached: false,
+				isTarget: true,
+				isGhostTarget: true,
+				xPercent: 0,
+				y: 0
+			});
+		}
+
+		const total = nodes.length;
+		return nodes.map((node, index) => ({
+			...node,
+			index,
+			xPercent: total > 1 ? (index / (total - 1)) * 100 : 50,
+			y: mapSimilarityToY(node.similarityToTarget)
+		}));
+	}
+
+	function buildGraphEdges(nodes: GraphNode[]): GraphEdge[] {
+		if (nodes.length < 2) {
+			return [];
+		}
+		return nodes.slice(1).map((node, idx) => {
+			const previous = nodes[idx];
+			const pathIndex = idx + 1;
+			const pathStep = path[pathIndex];
+			const isGhost = pathIndex >= path.length;
+			const similarity = pathStep
+				? pathStep.similarityFromPrevious
+				: path.at(-1)?.similarityToTarget ?? null;
+			return {
+				x1: previous.xPercent,
+				y1: previous.y,
+				x2: node.xPercent,
+				y2: node.y,
+				similarity: similarity !== null ? clampPercent(similarity) : null,
+				isGhost,
+				labelX: (previous.xPercent + node.xPercent) / 2,
+				labelY: Math.min(previous.y, node.y) - 3
+			};
+		});
+	}
+
+	function getNodeFill(node: GraphNode, index: number): string {
+		if (node.isTarget) {
+			return node.reached ? '#059669' : '#0ea5e9';
+		}
+		if (index === activeIndex) {
+			return '#f97316';
+		}
+		if (index === 0) {
+			return '#10b981';
+		}
+		return '#1d4ed8';
+	}
+
+	function getNodeStroke(node: GraphNode, index: number): string {
+		if (node.isTarget && !node.reached) {
+			return '#38bdf8';
+		}
+		if (index === activeIndex) {
+			return '#fb923c';
+		}
+		return '#0f172a';
+	}
+</script>
+
+<Header />
+<div class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-8">
+	<div class="mx-auto max-w-5xl">
+		<div class="mb-8 text-center">
+			<h1 class="text-5xl font-bold text-slate-900">Correlix</h1>
+			<p class="mt-3 text-lg text-slate-600">
+				Reliez progressivement <span class="font-semibold text-emerald-600">{startWord || '...'}</span>
+				a <span class="font-semibold text-sky-600">{targetWord || '...'}</span> avec des
+				mots suffisamment proches et de plus en plus corrélés.
+			</p>
+		</div>
+
+		<div class="mb-8 grid gap-4 md:grid-cols-3">
+			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+				<p class="text-sm uppercase tracking-wide text-slate-500">Mot de depart</p>
+				<p class="mt-2 text-3xl font-bold text-emerald-600">{startWord || '...'}</p>
+			</div>
+			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+				<p class="text-sm uppercase tracking-wide text-slate-500">Mot objectif</p>
+				<p class="mt-2 text-3xl font-bold text-sky-600">{targetWord || '...'}</p>
+			</div>
+			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+				<p class="text-sm uppercase tracking-wide text-slate-500">Essais</p>
+				<p class="mt-2 text-3xl font-bold text-slate-800">{attempts}</p>
+				<p class="text-xs text-slate-500">Lien minimal {minSimilarity}%</p>
+			</div>
+		</div>
+
+		{#if initializing}
+			<div class="flex items-center justify-center py-16">
+				<div class="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"></div>
+			</div>
+		{:else}
+			<div class="mb-8">
+				<form class="flex flex-col gap-3 md:flex-row" on:submit|preventDefault={sendGuess}>
+					<input
+						class="w-full rounded-xl border border-slate-200 px-6 py-4 text-lg text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+						type="text"
+						bind:value={userWord}
+						placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
+						autocomplete="off"
+						disabled={gameWon || isLoading || initializing}
+					/>
+					<button
+						type="submit"
+						class={`rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:from-emerald-600 hover:to-sky-600 ${
+							canSubmit ? '' : 'opacity-60 cursor-not-allowed'
+						}`}
+						disabled={!canSubmit}
+					>
+						{isLoading ? 'Verification...' : 'Valider'}
+					</button>
+				</form>
+			</div>
+
+			{#if path.length > 0}
+				<div class="mb-10 space-y-4">
+					{#each path as step, index}
+						<div
+							class={`rounded-xl border bg-white p-5 shadow-sm transition cursor-pointer ${
+								index === activeIndex
+									? 'border-emerald-400 ring-2 ring-emerald-100'
+									: 'border-slate-200 hover:border-slate-300'
+							}`}
+							role="button"
+							tabindex="0"
+							on:click={() => selectStep(index, true)}
+						>
+							<div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+								<div>
+									<p class="text-xs uppercase tracking-wide text-slate-500">
+										Etape {index}
+									</p>
+									<p class="mt-1 text-2xl font-semibold capitalize text-slate-900">{step.word}</p>
+								</div>
+								<div class="flex flex-wrap gap-3 text-sm">
+									<div class={`rounded-full border px-4 py-2 font-semibold ${getSimilarityBadge(step.similarityToTarget)}`}>
+										Vers objectif {formatPercent(step.similarityToTarget)}
+									</div>
+									{#if step.similarityFromPrevious !== null}
+										<div class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 font-medium text-slate-700">
+											Lien avec le mot précédent {formatPercent(step.similarityFromPrevious)}
+										</div>
+									{/if}
+									{#if index > 0}
+										<div class={`rounded-full bg-white px-4 py-2 font-semibold ${getDeltaColor(step.deltaToTarget)}`}>
+											{formatDelta(step.deltaToTarget)}
+										</div>
+									{/if}
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
+
+			{#if graphNodes.length > 0}
+				<div class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<h3 class="mb-4 text-lg font-semibold text-slate-900">Pont lexical</h3>
+					<svg class="h-48 w-full" viewBox="0 0 100 60" preserveAspectRatio="none">
+						<defs>
+							<linearGradient id="bridge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+								<stop offset="0%" stop-color="#34d399" />
+								<stop offset="100%" stop-color="#38bdf8" />
+							</linearGradient>
+						</defs>
+						{#each graphEdges as edge}
+							<line
+								x1={edge.x1}
+								y1={edge.y1}
+								x2={edge.x2}
+								y2={edge.y2}
+								stroke={edge.isGhost ? '#bae6fd' : 'url(#bridge-gradient)'}
+								stroke-width="1.8"
+								stroke-dasharray={edge.isGhost ? '5 3' : null}
+								stroke-linecap="round"
+							/>
+							{#if edge.similarity !== null}
+								<text
+									x={edge.labelX}
+									y={Math.max(edge.labelY, GRAPH_TOP + 2)}
+									text-anchor="middle"
+									class="fill-slate-500"
+									style="font-size:2.8px;font-weight:500;"
+								>
+									{formatPercent(edge.similarity)}
+								</text>
+							{/if}
+						{/each}
+						{#each graphNodes as node, index}
+							<circle
+								cx={node.xPercent}
+								cy={node.y}
+								r="3.5"
+								fill={getNodeFill(node, index)}
+								stroke={getNodeStroke(node, index)}
+								stroke-width={node.isTarget ? 1.6 : 1.2}
+							/>
+							<text
+								x={node.xPercent}
+								y={node.y - 5}
+								text-anchor="middle"
+								class="fill-slate-500"
+								style="font-size:2.6px;font-weight:600;"
+							>
+								{formatPercent(node.similarityToTarget)}
+							</text>
+							<text
+								x={node.xPercent}
+								y={GRAPH_BOTTOM + 8}
+								text-anchor="middle"
+								class={node.isTarget ? 'fill-sky-700' : 'fill-slate-700'}
+								style="font-size:3.2px;font-weight:600;"
+							>
+								{node.label}
+							</text>
+						{/each}
+					</svg>
+					<p class="mt-3 text-xs text-slate-500">
+						Hauteur proportionnelle à la proximité avec le mot objectif. La portion en pointillés représente
+						reste du pont jusqu'au but.
+					</p>
+				</div>
+			{/if}
+
+			{#if message}
+				<div class={`mb-8 rounded-xl border-2 p-5 text-center shadow-sm ${getMessageStyle()}`}>
+					<p class="text-base font-medium">{message}</p>
+				</div>
+			{/if}
+		{/if}
+
+		<div class="flex flex-col gap-4 md:flex-row">
+			<button
+				on:click={newGame}
+				class="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-4 font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+			>
+				🔄 Nouvelle partie
+			</button>
+			<button
+				class="flex-1 rounded-xl bg-gradient-to-r from-sky-600 to-emerald-600 px-6 py-4 font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-emerald-700"
+				disabled={!gameWon}
+			>
+				📤 Partager le pont
+			</button>
+		</div>
+
+		<div class="mt-10 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+			<h2 class="mb-4 text-2xl font-semibold text-slate-900">📖 Rappels du jeu</h2>
+			<ul class="space-y-3 text-sm text-slate-600">
+				<li>1. Chaque nouveau mot doit être à au moins {minSimilarity}% du précédent.</li>
+				<li>2. Vous pouvez cliquer sur n'importe quelle étape pour repartir de là.</li>
+				<li>3. Les mots inconnus du modèle ne sont pas acceptés.</li>
+				<li>4. Atteignez le mot objectif pour compléter le pont lexical.</li>
+			</ul>
+		</div>
+	</div>
+</div>
