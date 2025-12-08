@@ -3,12 +3,18 @@
 	import { onMount } from 'svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import type { challenge } from '$lib/models/challenge';
+	import type { hints } from '$lib/models/hints';
 
 	let userGuess = '';
 	let tabguess: string[] = [];
+	let sessionId: string = '';
 	let repbody: {
+		sessionId: string;
 		tabHiddenTitle: number[];
 		tabHiddenContent: number[];
+		hints: hints;
+		isWordInGame: boolean;
 	};
 
 	let repbodyStats: {
@@ -22,7 +28,6 @@
 	let tabContent: number[];
 	let tabContentTemp: number[] = [];
 	let nbEssai: number = 0;
-	let isWordExist = true;
 
 	let partiesJouees: number = 0;
 	let tauxReussite: number = 0;
@@ -36,12 +41,26 @@
 
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
+	
+	let lastChallenge: challenge | null = null;
+	let userHintReaveal: number = 0;
+
+	let hintsGame: hints;
+	let revealedIndice = [false, false, false];
+
+	let isWordInGame:boolean = true;
+	let isChallengeWinned: boolean = false;
+
+	function toggleReveal(index: number) {
+		revealedIndice[index] = !revealedIndice[index];
+	}
+
 
 	async function newGame() {
 		if (idUser) {
 			getStatistics();
 		}
-
+		isChallengeWinned = false;
 		isSurrender = true;
 		tabguess = [];
 		isLoading = true;
@@ -60,8 +79,10 @@
 			});
 			repbody = await response.json();
 			if (response.status == 201) {
+				sessionId = repbody.sessionId;
 				tabTitle = repbody.tabHiddenTitle;
 				tabContent = repbody.tabHiddenContent;
+				hintsGame = repbody.hints
 			}
 		} catch (error) {
 			console.error('Erreur de chargement:', error);
@@ -71,25 +92,7 @@
 	}
 
 	async function sendGuess() {
-		isWordExist = true;
-		try {
-			const response = await fetch('http://localhost:5000/api/check-word', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					word: userGuess
-				})
-			});
-			const data = await response.json();
-			if (!data.exists) {
-				isWordExist = false;
-				return null;
-			}
-		} catch (error) {
-			return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
-				status: 500
-			});
-		}
+		isWordInGame = true;
 		nbEssai++;
 		tabguess.push(userGuess);
 		tabguess = tabguess;
@@ -97,16 +100,19 @@
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				userGuess
+				userGuess,
+				sessionId
 			})
 		});
 		repbody = await response.json();
-		if (response.status == 201) {
+		if (response.status == 201) {	
 			tabTitleTemp = tabTitle;
 			tabContentTemp = tabContent;
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
+			isWordInGame = repbody.isWordInGame;
 		}
+		isWordInGame = repbody.isWordInGame;
 		if (tabTitle.every((item) => typeof item === 'string')) {
 			triggerVictory();
 		}
@@ -142,6 +148,21 @@
 						idUser
 					})
 				});
+				
+				if (lastChallenge){
+					if (lastChallenge.nbTry > 0){
+						if (nbEssai < lastChallenge.nbTry){
+							isChallengeWinned = true;
+							winChallenge()
+						}
+					}else if(lastChallenge.nbHint >= 0){
+						if (userHintReaveal < lastChallenge.nbHint){
+							isChallengeWinned = true;
+							winChallenge()
+						}
+					}
+				}
+				
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -190,9 +211,44 @@
 			throw error;
 		}
 	}
+	async function checkChallenge(){
+		try{
+			const response = await fetch('/api/challenge/checkChallenge',{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					gameName : 'pedantix'
+				})
+
+			})
+			const data = await response.json()
+			if (data){
+				lastChallenge = data.lastChallenge
+			}
+			
+		}catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
+	async function winChallenge(){
+		try{
+			await fetch('/api/challenge/updateWinChallenge',{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					idUser: idUser
+				})
+			})
+		}catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
 
 	onMount(() => {
 		newGame();
+		checkChallenge()
 	});
 </script>
 
@@ -206,6 +262,27 @@
 				<p class="mt-2 text-sm text-gray-500">NbEssai : {nbEssai}</p>
 			</div>
 		</div>
+		{#if isChallengeWinned}
+			<div class="flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6 mb-6">
+				<svg
+					class="h-6 w-6 flex-shrink-0 text-green-600"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+					/>
+				</svg>
+				<div>
+					<p class="font-semibold text-green-900">Défi relevé !</p>
+					<p class="text-sm text-green-700">Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !</p>
+				</div>
+			</div>
+		{/if}
 		{#if isLoading}
 			<div class="flex flex-col items-center justify-center py-12">
 				<div
@@ -214,7 +291,7 @@
 				<p class="font-medium text-gray-600">Chargement de la partie...</p>
 			</div>
 		{/if}
-		{#if !isWordExist}
+		{#if !isWordInGame}
 			<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6">
 				<svg
 					class="h-6 w-6 flex-shrink-0 text-amber-600"
@@ -231,7 +308,7 @@
 				</svg>
 				<div>
 					<p class="font-semibold text-amber-900">Mot introuvable</p>
-					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire</p>
+					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu</p>
 				</div>
 			</div>
 		{/if}
@@ -367,6 +444,55 @@
 					<p>Utilisez les indices pour vous rapprocher du mot cible</p>
 				</li>
 			</ul>
+		</div>
+		<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+			<div class="w-full max-w-md">
+				<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+					<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
+
+					<div class="space-y-4">
+						{#if !revealedIndice[0]}
+							<button
+								on:click={() => toggleReveal(0)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Premier Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Catégorie de la page Wikipedia :</h4>
+								<p class="text-gray-800">{hintsGame.categories[0]}</p>
+							</div>
+						{/if}
+						{#if !revealedIndice[1]}
+							<button
+								on:click={() => toggleReveal(1)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Deuxième Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Lien qui appartient a la page:</h4>
+								<p class="text-gray-800">{hintsGame.links}</p>
+							</div>
+						{/if}
+						{#if !revealedIndice[2]}
+							<button
+								on:click={() => toggleReveal(2)}
+								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+							>
+								Troisième Indice
+							</button>
+						{:else}
+							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+								<h4>Intro sans le titre de la page :</h4>
+								<p class="text-gray-800">{hintsGame.intro}</p>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</div>
 		</div>
 		{#if idUser}
 			<div class="rounded-lg bg-white p-6 shadow-sm">

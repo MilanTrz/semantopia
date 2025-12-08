@@ -3,6 +3,7 @@
 	import { sessionStore } from './store/sessionStore';
 	let session = sessionStore.get();
 	let pseudo: string | null = session ? session.pseudo : null;
+	let isAdmin: boolean | null = session ? session.isAdmin : null;
 	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
 	function logout() {
 		sessionStore.clear();
@@ -29,6 +30,12 @@
 				<li>
 					<a href="/achievements" class="text-gray-600 transition hover:text-purple-600">Badges</a>
 				</li>
+				{#if isAdmin}
+					<li>
+						<a href="/challenge" class="text-gray-600 transition hover:text-purple-600">Challenge</a
+						>
+					</li>
+				{/if}
 				<li><p>{pseudo}</p></li>
 				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />
 				<button

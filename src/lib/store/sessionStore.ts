@@ -5,6 +5,7 @@ export type sessionData = {
 	avatar: string;
 	email: string;
 	dateCreation: Date;
+	isAdmin: boolean;
 };
 function createSessionStore() {
 	const isBrowser = typeof window !== 'undefined';

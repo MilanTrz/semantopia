@@ -95,7 +95,7 @@
 				status: 500
 			});
 		}
-		
+
 		nbEssai++;
 		tabGuesses.update((g) => [
 			...g,
@@ -123,7 +123,7 @@
 			isDisabled = true;
 			return null;
 		}
-		
+
 		userGuess = '';
 	}
 	function getLetterClass(letter: string, index: number, guess: string[]) {
@@ -451,7 +451,7 @@
 						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
+						<p class="text-4xl font-bold text-green-600">{tauxReussite * 100}%</p>
 						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 					</div>
 					<div class="text-center">
