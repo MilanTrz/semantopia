@@ -62,23 +62,10 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	const cleanedInput = cleanInputWord(userWord);
-	if (!cleanedInput) {
-		return new Response(
-			JSON.stringify({
-				success: false,
-				error: 'invalid_input',
-				message: 'Veuillez proposer un mot valide.'
-			}),
-			{ status: 201 }
-		);
-	}
-
-	const anchorKey = normalizeForComparison(anchorWord);
 	let anchorIndex = gameState.path.length - 1;
-	if (anchorKey) {
+	if (anchorWord) {
 		const foundIndex = gameState.path.findIndex(
-			(step) => normalizeForComparison(step.word) === anchorKey
+			(step) => step.word === anchorWord
 		);
 		if (foundIndex !== -1) {
 			anchorIndex = foundIndex;
@@ -96,9 +83,8 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	const comparisonKey = normalizeForComparison(cleanedInput);
 	const scopePath = gameState.path.slice(0, anchorIndex + 1);
-	const alreadyUsed = scopePath.some((step) => normalizeForComparison(step.word) === comparisonKey);
+	const alreadyUsed = scopePath.some((step) => step.word === userWord);
 	if (alreadyUsed) {
 		return new Response(
 			JSON.stringify({
@@ -122,7 +108,7 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	const similarityToPrevious = await calculateSimilarityPercent(anchorStep.word, cleanedInput);
+	const similarityToPrevious = await calculateSimilarityPercent(anchorStep.word, userWord);
 	if (similarityToPrevious.status === 'missing') {
 		return new Response(
 			JSON.stringify({
@@ -157,7 +143,7 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	const similarityToTarget = await calculateSimilarityPercent(cleanedInput, gameState.targetWord);
+	const similarityToTarget = await calculateSimilarityPercent(userWord, gameState.targetWord);
 	if (similarityToTarget.status === 'missing') {
 		return new Response(
 			JSON.stringify({
@@ -184,7 +170,7 @@ export async function POST({ request }: RequestEvent) {
 	const delta = closeness - anchorStep.similarityToTarget;
 
 	const newStep: Step = {
-		word: cleanedInput,
+		word: userWord,
 		similarityToTarget: closeness,
 		similarityFromPrevious: linkSimilarity,
 		deltaToTarget: delta
@@ -192,7 +178,7 @@ export async function POST({ request }: RequestEvent) {
 	const trimmedPath = gameState.path.slice(0, anchorIndex + 1);
 	gameState.path = [...trimmedPath, newStep];
 
-	const isWinner = comparisonKey === normalizeForComparison(gameState.targetWord);
+	const isWinner = userWord === gameState.targetWord;
 	if (isWinner) {
 		gameState.active = false;
 	}
@@ -229,7 +215,7 @@ async function initialiseGame() {
 			continue;
 		}
 
-		if (normalizeForComparison(candidateStart) === normalizeForComparison(candidateTarget)) {
+		if (candidateStart === candidateTarget) {
 			continue;
 		}
 
@@ -270,7 +256,7 @@ async function getRandomWord(): Promise<string> {
 		throw new Error("Échec lors de la récupération d'un mot aléatoire");
 	}
 	const data = await response.json();
-	const cleaned = cleanInputWord(data.word);
+	const cleaned = data.word;
 	if (!cleaned) {
 		throw new Error('Mot aléatoire invalide');
 	}
@@ -318,30 +304,4 @@ async function calculateSimilarityPercent(
 		console.error('Erreur similarite Correlix:', error);
 		return { status: 'error' };
 	}
-}
-
-function cleanInputWord(word: string | undefined): string {
-	if (!word) {
-		return '';
-	}
-	return word
-		.trim()
-		.toLowerCase()
-		.replaceAll(/[^ -àâäçéèêëîïôöùûüÿœæ0-9\s-]/gu, '')
-		.replaceAll(/[\s]+/g, ' ')
-		.trim();
-}
-
-function normalizeForComparison(word: string | undefined): string {
-	if (!word) {
-		return '';
-	}
-	return word
-		.trim()
-		.toLowerCase()
-		.normalize('NFD')
-		.replaceAll(/[\u0300-\u036f]/g, '')
-		.replaceAll(/[^a-z0-9\s-]/g, '')
-		.replaceAll(/[\s]+/g, ' ')
-		.trim();
 }
