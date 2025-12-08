@@ -2,7 +2,6 @@ import type { hints } from '$lib/models/hints';
 import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
 
-// Stockage en mémoire des parties actives par ID de session
 const activeSessions: Map<string, {
 	titleWikiPage: string;
 	titleWikiPageSplit: string[];
@@ -39,10 +38,7 @@ export async function POST({ request }: RequestEvent) {
 				foundInContent = true;
 			}
 		});
-
-		// Si le mot est trouvé exactement dans le titre ou le contenu, c'est valide
 		if (foundInTitle || foundInContent) {
-			// Chercher tous les mots similaires
 			await Promise.all([
 				...contentsplice.map(async (word, index) => {
 					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
@@ -56,7 +52,6 @@ export async function POST({ request }: RequestEvent) {
 				})
 			]);
 
-			// Mettre à jour la session
 			session.tabHiddenTitle = tabHiddenTitle;
 			session.tabHiddenContent = tabHiddenContent;
 
@@ -70,7 +65,6 @@ export async function POST({ request }: RequestEvent) {
 			);
 		}
 
-		// Sinon, vérifier si le mot existe dans le vocabulaire word2vec
 		const isWordInGame = await checkWord(userGuess);
 
 		if (!isWordInGame) {
@@ -78,8 +72,6 @@ export async function POST({ request }: RequestEvent) {
 				status: 200
 			});
 		}
-
-		// Chercher les mots similaires
 		await Promise.all([
 			...contentsplice.map(async (word, index) => {
 				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
@@ -93,7 +85,6 @@ export async function POST({ request }: RequestEvent) {
 			})
 		]);
 
-		// Mettre à jour la session
 		session.tabHiddenTitle = tabHiddenTitle;
 		session.tabHiddenContent = tabHiddenContent;
 
@@ -138,7 +129,6 @@ export async function GET({ url }: RequestEvent) {
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
 
-	// Stocker la session
 	activeSessions.set(sessionId, {
 		titleWikiPage,
 		titleWikiPageSplit,
@@ -274,7 +264,6 @@ async function checkSimilarity(wordTab: string, wordGuess: string) {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	
-	// Vérifier d'abord l'égalité exacte (après normalisation)
 	if (newWord.toLowerCase() === newWordTab.toLowerCase()) {
 		return true;
 	}
@@ -295,7 +284,6 @@ async function checkSimilarity(wordTab: string, wordGuess: string) {
 		return false;
 	} catch (error) {
 		console.error('Erreur lors de la vérification de similarité:', error);
-		// Si le service échoue et que c'est une correspondance exacte, accepter quand même
 		return newWord.toLowerCase() === newWordTab.toLowerCase();
 	}
 }

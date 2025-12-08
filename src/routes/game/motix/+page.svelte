@@ -451,11 +451,11 @@
 						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-green-600">{tauxReussite * 100}%</p>
+						<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
 						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-blue-600">{nbEssaiMoyen}</p>
+						<p class="text-4xl font-bold text-blue-600">{Math.round(nbEssaiMoyen*100)/100}</p>
 						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
 					</div>
 					<div class="text-center">

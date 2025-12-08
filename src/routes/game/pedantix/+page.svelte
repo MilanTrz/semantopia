@@ -54,12 +54,16 @@
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
 	}
+	function resetIndices() {
+    revealedIndice = [false, false, false];
+}
 
 
 	async function newGame() {
 		if (idUser) {
 			getStatistics();
 		}
+		resetIndices();
 		isChallengeWinned = false;
 		isSurrender = true;
 		tabguess = [];
