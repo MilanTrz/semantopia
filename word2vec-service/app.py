@@ -91,6 +91,13 @@ ARTICLE_GROUPS = [
 ]
 
 
+def is_valid_word(word: str) -> bool:
+    """Vérifie que le mot contient uniquement des lettres (a-z) et des accents"""
+    if not word:
+        return False
+    return bool(re.fullmatch(r"[a-zA-Zàçéèêëïôùûü]+", word))
+
+
 def same_article_group(w1: str, w2: str) -> bool:
     nw1 = w1.lower().strip()
     nw2 = w2.lower().strip()
@@ -187,6 +194,7 @@ def get_random_word():
         words_filtered = [
             word for word in list(model.key_to_index.keys())[:10000]
             if '-' not in word and any(word.endswith(tag) for tag in INCLUDED_TAGS)
+            and is_valid_word(remove_postag(word))
         ]
 
         if not words_filtered:
@@ -229,7 +237,7 @@ def get_most_similar():
 
         for sim_word, sim_score in similar_words:
             word_without_tag = remove_postag(sim_word)
-            if word_without_tag not in seen_words:
+            if word_without_tag not in seen_words and is_valid_word(word_without_tag):
                 seen_words.add(word_without_tag)
                 result.append({
                     'word': word_without_tag,
