@@ -3,24 +3,24 @@
 	let nameChallenge = '';
 	let descriptionChallenge = '';
 	let gameNameChallenge = '';
-	let nbHintChallenge:number;
+	let nbHintChallenge: number;
 	let nbTryChallenge: number;
 
 	async function createChallenge() {
-		 await fetch('/challenge',{
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                nameChallenge,
-                descriptionChallenge,
-                gameNameChallenge,
-                nbHintChallenge,
-                nbTryChallenge
-             })
-        })
-         nameChallenge = '';
-         descriptionChallenge = '';
-         gameNameChallenge = '';
+		await fetch('/challenge', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				nameChallenge,
+				descriptionChallenge,
+				gameNameChallenge,
+				nbHintChallenge,
+				nbTryChallenge
+			})
+		});
+		nameChallenge = '';
+		descriptionChallenge = '';
+		gameNameChallenge = '';
 	}
 </script>
 

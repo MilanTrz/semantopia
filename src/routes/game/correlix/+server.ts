@@ -64,9 +64,7 @@ export async function POST({ request }: RequestEvent) {
 
 	let anchorIndex = gameState.path.length - 1;
 	if (anchorWord) {
-		const foundIndex = gameState.path.findIndex(
-			(step) => step.word === anchorWord
-		);
+		const foundIndex = gameState.path.findIndex((step) => step.word === anchorWord);
 		if (foundIndex !== -1) {
 			anchorIndex = foundIndex;
 		}

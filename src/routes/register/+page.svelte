@@ -2,9 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { sessionStore, type sessionData } from '$lib/store/sessionStore';
 
-	let pseudo:string = '';
-	let email:string = '';
-	let mdp:string = '';
+	let pseudo: string = '';
+	let email: string = '';
+	let mdp: string = '';
 	let errors: { [key: string]: string } = {};
 	let formValidation: boolean = true;
 	let rep: number = -1;

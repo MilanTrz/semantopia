@@ -7,9 +7,9 @@
 	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
 	async function logout() {
 		sessionStore.clear();
-		await fetch('/api/logout',{
+		await fetch('/api/logout', {
 			method: 'DELETE'
-		})
+		});
 		window.setTimeout(() => {
 			goto('/login');
 		});

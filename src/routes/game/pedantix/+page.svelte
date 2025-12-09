@@ -41,23 +41,22 @@
 
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
-	
+
 	let lastChallenge: challenge | null = null;
 	let userHintReaveal: number = 0;
 
 	let hintsGame: hints;
 	let revealedIndice = [false, false, false];
 
-	let isWordInGame:boolean = true;
+	let isWordInGame: boolean = true;
 	let isChallengeWinned: boolean = false;
 
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
 	}
 	function resetIndices() {
-    revealedIndice = [false, false, false];
-}
-
+		revealedIndice = [false, false, false];
+	}
 
 	async function newGame() {
 		if (idUser) {
@@ -86,7 +85,7 @@
 				sessionId = repbody.sessionId;
 				tabTitle = repbody.tabHiddenTitle;
 				tabContent = repbody.tabHiddenContent;
-				hintsGame = repbody.hints
+				hintsGame = repbody.hints;
 			}
 		} catch (error) {
 			console.error('Erreur de chargement:', error);
@@ -109,7 +108,7 @@
 			})
 		});
 		repbody = await response.json();
-		if (response.status == 201) {	
+		if (response.status == 201) {
 			tabTitleTemp = tabTitle;
 			tabContentTemp = tabContent;
 			tabTitle = repbody.tabHiddenTitle;
@@ -152,21 +151,20 @@
 						idUser
 					})
 				});
-				
-				if (lastChallenge){
-					if (lastChallenge.nbTry > 0){
-						if (nbEssai < lastChallenge.nbTry){
+
+				if (lastChallenge) {
+					if (lastChallenge.nbTry > 0) {
+						if (nbEssai < lastChallenge.nbTry) {
 							isChallengeWinned = true;
-							winChallenge()
+							winChallenge();
 						}
-					}else if(lastChallenge.nbHint >= 0){
-						if (userHintReaveal < lastChallenge.nbHint){
+					} else if (lastChallenge.nbHint >= 0) {
+						if (userHintReaveal < lastChallenge.nbHint) {
 							isChallengeWinned = true;
-							winChallenge()
+							winChallenge();
 						}
 					}
 				}
-				
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -215,36 +213,34 @@
 			throw error;
 		}
 	}
-	async function checkChallenge(){
-		try{
-			const response = await fetch('/api/challenge/checkChallenge',{
+	async function checkChallenge() {
+		try {
+			const response = await fetch('/api/challenge/checkChallenge', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					gameName : 'pedantix'
+					gameName: 'pedantix'
 				})
-
-			})
-			const data = await response.json()
-			if (data){
-				lastChallenge = data.lastChallenge
+			});
+			const data = await response.json();
+			if (data) {
+				lastChallenge = data.lastChallenge;
 			}
-			
-		}catch (error) {
+		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
 	}
-	async function winChallenge(){
-		try{
-			await fetch('/api/challenge/updateWinChallenge',{
+	async function winChallenge() {
+		try {
+			await fetch('/api/challenge/updateWinChallenge', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					idUser: idUser
 				})
-			})
-		}catch (error) {
+			});
+		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
@@ -252,7 +248,7 @@
 
 	onMount(() => {
 		newGame();
-		checkChallenge()
+		checkChallenge();
 	});
 </script>
 
@@ -267,7 +263,7 @@
 			</div>
 		</div>
 		{#if isChallengeWinned}
-			<div class="flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6 mb-6">
+			<div class="mb-6 flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6">
 				<svg
 					class="h-6 w-6 flex-shrink-0 text-green-600"
 					fill="none"
@@ -283,7 +279,9 @@
 				</svg>
 				<div>
 					<p class="font-semibold text-green-900">Défi relevé !</p>
-					<p class="text-sm text-green-700">Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !</p>
+					<p class="text-sm text-green-700">
+						Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !
+					</p>
 				</div>
 			</div>
 		{/if}
@@ -312,7 +310,9 @@
 				</svg>
 				<div>
 					<p class="font-semibold text-amber-900">Mot introuvable</p>
-					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu</p>
+					<p class="text-sm text-amber-700">
+						Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu
+					</p>
 				</div>
 			</div>
 		{/if}

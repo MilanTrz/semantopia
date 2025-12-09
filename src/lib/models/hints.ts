@@ -1,5 +1,5 @@
-export interface hints{   
-  categories: string[];
-  intro: string;
-  links: string[];
+export interface hints {
+	categories: string[];
+	intro: string;
+	links: string[];
 }
