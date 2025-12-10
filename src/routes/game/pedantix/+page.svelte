@@ -6,13 +6,15 @@
 	import type { challenge } from '$lib/models/challenge';
 	import type { hints } from '$lib/models/hints';
 
+	type MaskToken = number | string | { length: number; state: 'near'; score: number; word: string };
+
 	let userGuess = '';
 	let tabguess: string[] = [];
 	let sessionId: string = '';
 	let repbody: {
 		sessionId: string;
-		tabHiddenTitle: number[];
-		tabHiddenContent: number[];
+		tabHiddenTitle: MaskToken[];
+		tabHiddenContent: MaskToken[];
 		hints: hints;
 		isWordInGame: boolean;
 	};
@@ -23,10 +25,10 @@
 		tauxReussite: number;
 		serieActuelle: number;
 	};
-	let tabTitle: number[];
-	let tabTitleTemp: number[] = [];
-	let tabContent: number[];
-	let tabContentTemp: number[] = [];
+	let tabTitle: MaskToken[] = [];
+	let tabTitleTemp: MaskToken[] = [];
+	let tabContent: MaskToken[] = [];
+	let tabContentTemp: MaskToken[] = [];
 	let nbEssai: number = 0;
 
 	let partiesJouees: number = 0;
@@ -112,8 +114,8 @@
 		});
 		repbody = await response.json();
 		if (response.status == 201) {
-			tabTitleTemp = tabTitle;
-			tabContentTemp = tabContent;
+			tabTitleTemp = [...tabTitle];
+			tabContentTemp = [...tabContent];
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
 			isWordInGame = repbody.isWordInGame;
@@ -126,19 +128,32 @@
 	}
 
 	function isNewlyFoundTitle(index: number): boolean {
-		return (
-			typeof tabTitleTemp[index] === 'number' &&
-			typeof tabTitle[index] === 'string' &&
-			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabTitle[index] as string)
-		);
+		const previous = tabTitleTemp[index];
+		const current = tabTitle[index];
+		return typeof previous !== 'string' && typeof current === 'string' && !isPunctuation(current);
 	}
 	function isNewlyFoundContent(index: number): boolean {
-		return (
-			typeof tabContentTemp[index] === 'number' &&
-			typeof tabContent[index] === 'string' &&
-			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabContent[index] as string)
-		);
+		const previous = tabContentTemp[index];
+		const current = tabContent[index];
+		return typeof previous !== 'string' && typeof current === 'string' && !isPunctuation(current);
 	}
+
+	const isPunctuation = (token: MaskToken) => typeof token === 'string' && /^[.,!?;:()\[\]{}"'«»\-–—]$/.test(token);
+	const isNearMatch = (token: MaskToken): token is { length: number; state: 'near'; score: number; word: string } =>
+			typeof token === 'object' && token !== null && 'state' in token && token.state === 'near';
+
+	const maskedSquares = (length: number) => '■'.repeat(length);
+
+	const needsSpaceBefore = (token: MaskToken, index: number) => index > 0 && !isPunctuation(token);
+
+	const nearTextColor = (score?: number) => {
+		const safe = Math.min(Math.max(score ?? 0, 0), 1);
+		const hue = 50 - safe * 50; // yellow to red
+		const lightness = 65 + safe * 10; // slightly lighter when closer
+		return `hsl(${hue} 85% ${lightness}%)`;
+	};
+
+	const tooltipLabel = (len: number) => `${len} caractères`;
 
 	async function triggerVictory() {
 		isVictory = true;
@@ -350,20 +365,12 @@
 			</form>
 		</div>
 		<div class="mb-6 rounded-lg p-6">
-			<p class="mb-4 text-sm tracking-wide text-gray-600">
+			<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
 				{#each tabTitle as item, i}
-					{#if typeof item === 'number'}
-						<span class="group relative inline-block cursor-help">
-							{Array(item).fill('■').join('')}
-							<span
-								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{item}{' '}
-							</span>
-						</span>{' '}
-					{:else}
+					{#if typeof item === 'string'}
 						<span
 							class="inline-block"
+							class:ml-1={needsSpaceBefore(item, i)}
 							class:text-green-600={isNewlyFoundTitle(i)}
 							class:bg-green-100={isNewlyFoundTitle(i)}
 							class:border-2={isNewlyFoundTitle(i)}
@@ -371,25 +378,54 @@
 							class:rounded={isNewlyFoundTitle(i)}
 							class:px-1={isNewlyFoundTitle(i)}
 						>
-							{item}{' '}
+							{item}
+						</span>
+					{:else if isNearMatch(item)}
+						<span
+							class="group relative inline-flex items-center justify-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+							title="Proche, mais pas révélé"
+							style={`min-width: ${Math.max(item.length, item.word.length)}ch; min-height: 2.6em; padding-right: 0.1em;`}
+						>
+								<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; line-height: 1.25;">
+								{maskedSquares(item.length)}
+							</span>
+							<span
+								class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
+								style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
+							>
+								{item.word}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item.length)}
+							</span>
+						</span>
+					{:else}
+						<span
+							class="group relative inline-flex items-center justify-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+							style="min-height: 2.6em; padding-right: 0.1em;"
+						>
+							<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; line-height: 1.25;">
+								{maskedSquares(item as number)}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item as number)}
+							</span>
 						</span>
 					{/if}
 				{/each}
 			</p>
-			<p class="w-full tracking-wide focus:outline-none">
+			<p class="flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
 				{#each tabContent as item, i}
-					{#if typeof item === 'number'}
-						<span class="group relative inline-block cursor-help">
-							{Array(item).fill('■').join('')}
-							<span
-								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{item}{' '}
-							</span>
-						</span>{' '}
-					{:else}
+					{#if typeof item === 'string'}
 						<span
 							class="inline-block"
+							class:ml-1={needsSpaceBefore(item, i)}
 							class:text-green-600={isNewlyFoundContent(i)}
 							class:bg-green-100={isNewlyFoundContent(i)}
 							class:border-2={isNewlyFoundContent(i)}
@@ -397,8 +433,44 @@
 							class:rounded={isNewlyFoundContent(i)}
 							class:px-1={isNewlyFoundContent(i)}
 						>
-							{item}{' '}
-						</span>{' '}
+							{item}
+						</span>
+					{:else if isNearMatch(item)}
+						<span
+							class="group relative inline-flex items-center justify-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+							title="Proche, mais pas révélé"
+							style={`min-width: ${Math.max(item.length, item.word.length)}ch; padding-right: 0.1em;`}
+						>
+								<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; line-height: 1.25;">
+								{maskedSquares(item.length)}
+							</span>
+							<span
+								class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
+								style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
+							>
+								{item.word}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item.length)}
+							</span>
+						</span>
+					{:else}
+						<span
+							class="group relative inline-flex items-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+						>
+							<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; padding-right: 0.1em;">
+								{maskedSquares(item as number)}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item as number)}
+							</span>
+						</span>
 					{/if}
 				{/each}
 			</p>

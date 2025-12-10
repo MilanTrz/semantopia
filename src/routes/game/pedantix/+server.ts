@@ -2,14 +2,16 @@ import type { hints } from '$lib/models/hints';
 import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
 
+type MaskToken = number | string | { length: number; state: 'near'; score: number; word: string };
+
 const activeSessions: Map<
 	string,
 	{
 		titleWikiPage: string;
 		titleWikiPageSplit: string[];
 		contentsplice: string[];
-		tabHiddenTitle: (number | string)[];
-		tabHiddenContent: (number | string)[];
+		tabHiddenTitle: MaskToken[];
+		tabHiddenContent: MaskToken[];
 	}
 > = new Map();
 
@@ -28,31 +30,42 @@ export async function POST({ request }: RequestEvent) {
 	try {
 		const normalizedGuess = userGuess.toLowerCase().trim();
 
-		let foundInTitle = false;
-		let foundInContent = false;
+		const hasExactInTitle = titleWikiPageSplit.some(
+			(word) => word.toLowerCase() === normalizedGuess
+		);
+		const hasExactInContent = contentsplice.some((word) => word.toLowerCase() === normalizedGuess);
 
-		titleWikiPageSplit.forEach((word) => {
-			if (word.toLowerCase() === normalizedGuess) {
-				foundInTitle = true;
+		const checkAndMark = async (word: string, index: number, target: MaskToken[]) => {
+			const current = target[index];
+			if (typeof current === 'string') return;
+
+			const similarity = await checkSimilarity(word.toLowerCase(), normalizedGuess);
+			if (similarity >= 0.9) {
+				target[index] = word;
+				return;
 			}
-		});
-		contentsplice.forEach((word) => {
-			if (word.toLowerCase() === normalizedGuess) {
-				foundInContent = true;
+			if (similarity >= 0.6) {
+				const newNear = {
+					length: word.length,
+					state: 'near' as const,
+					score: similarity,
+					word: normalizedGuess
+				};
+				if (typeof current === 'number') {
+					target[index] = newNear;
+					return;
+				}
+				if (typeof current === 'object' && current !== null && 'score' in current) {
+					// Keep the best similarity seen so far
+					target[index] = similarity > (current as { score: number }).score ? newNear : current;
+				}
 			}
-		});
-		if (foundInTitle || foundInContent) {
+		};
+
+		if (hasExactInTitle || hasExactInContent) {
 			await Promise.all([
-				...contentsplice.map(async (word, index) => {
-					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-						tabHiddenContent[index] = word;
-					}
-				}),
-				...titleWikiPageSplit.map(async (word, index) => {
-					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-						tabHiddenTitle[index] = word;
-					}
-				})
+				...contentsplice.map((word, index) => checkAndMark(word, index, tabHiddenContent)),
+				...titleWikiPageSplit.map((word, index) => checkAndMark(word, index, tabHiddenTitle))
 			]);
 
 			session.tabHiddenTitle = tabHiddenTitle;
@@ -82,16 +95,8 @@ export async function POST({ request }: RequestEvent) {
 			);
 		}
 		await Promise.all([
-			...contentsplice.map(async (word, index) => {
-				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-					tabHiddenContent[index] = word;
-				}
-			}),
-			...titleWikiPageSplit.map(async (word, index) => {
-				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-					tabHiddenTitle[index] = word;
-				}
-			})
+			...contentsplice.map((word, index) => checkAndMark(word, index, tabHiddenContent)),
+			...titleWikiPageSplit.map((word, index) => checkAndMark(word, index, tabHiddenTitle))
 		]);
 
 		session.tabHiddenTitle = tabHiddenTitle;
@@ -268,12 +273,12 @@ function isValideTitle(title: string): boolean {
 	return true;
 }
 
-async function checkSimilarity(wordTab: string, wordGuess: string) {
+async function checkSimilarity(wordTab: string, wordGuess: string): Promise<number> {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 	if (newWord.toLowerCase() === newWordTab.toLowerCase()) {
-		return true;
+		return 1;
 	}
 
 	try {
@@ -286,13 +291,10 @@ async function checkSimilarity(wordTab: string, wordGuess: string) {
 			})
 		});
 		const data = await response.json();
-		if (data.similarity >= 0.8) {
-			return true;
-		}
-		return false;
+		return typeof data.similarity === 'number' ? data.similarity : 0;
 	} catch (error) {
 		console.error('Erreur lors de la vérification de similarité:', error);
-		return newWord.toLowerCase() === newWordTab.toLowerCase();
+		return newWord.toLowerCase() === newWordTab.toLowerCase() ? 1 : 0;
 	}
 }
 
