@@ -322,7 +322,8 @@ export async function PUT({ request }: RequestEvent) {
 		}
 
 		const revealWord = activeSessions.get(sessionId)?.titleWikiPage;
-		return new Response(JSON.stringify({ revealWord }), {
+		const revealContent = activeSessions.get(sessionId)?.contentsplice;
+		return new Response(JSON.stringify({ revealWord, revealContent }), {
 			status: 200
 		});
 	} catch (error) {

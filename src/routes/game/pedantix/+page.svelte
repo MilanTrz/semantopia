@@ -39,7 +39,7 @@
 	let isLoading = true;
 	let isVictory = false;
 
-	let isSurrender = true;
+	let isSurrender = false;
 
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
@@ -53,8 +53,6 @@
 	let isWordInGame: boolean = true;
 	let isChallengeWinned: boolean = false;
 
-	let revealWord: string = '';
-
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
 	}
@@ -67,14 +65,17 @@
 			getStatistics();
 		}
 		resetIndices();
-		revealWord = ""
 		isChallengeWinned = false;
-		isSurrender = true;
+		isSurrender = false;
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
 		nbEssai = 0;
 		userGuess = '';
+		tabTitle = [];
+		tabContent = [];
+		tabTitleTemp = [];
+		tabContentTemp = [];
 		if (idUser === null) {
 			console.error('idUser est null');
 			return;
@@ -192,7 +193,8 @@
 	}
 
 	async function surrenderGame() {
-		isSurrender = false;
+		console.log('Abandon de la partie...');
+		isSurrender = true;
 		isVictory = false;
 		try {
 			const response = await fetch('/game/pedantix', {
@@ -206,7 +208,20 @@
 				})
 			});
 			const data = await response.json();
-			revealWord = data.revealWord;
+			// Transform the revealed word string into MaskToken array
+			if (data.revealWord) {
+				const titleWords = data.revealWord
+					.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
+					.filter((s: string) => s.trim() !== '');
+				tabTitle = titleWords.map((word: string) => {
+					return /^[.,!?;:()[\]{}"'«»\-–—]$/.test(word) ? word : word;
+				});
+			}
+			console.log('Revealed Title:', tabTitle);
+			// Content is already an array of words
+			if (data.revealContent) {
+				tabContent = data.revealContent;
+			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -312,12 +327,12 @@
 				<p class="font-medium text-gray-600">Chargement de la partie...</p>
 			</div>
 		{/if}
-		{#if revealWord}
+		{#if isSurrender}
 			<div
 				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
 			>
 				<p class="text-3xl font-bold text-red-700">
-					Perdu, le mot était {revealWord}
+					Perdu, le mot était {tabTitle.filter((item) => typeof item === 'string').join(' ')}
 				</p>
 			</div>
 		{/if}
@@ -353,12 +368,12 @@
 					bind:value={userGuess}
 					placeholder="Tapez votre proposition..."
 					class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
-					disabled={isVictory}
+					disabled={isVictory || isSurrender}
 				/>
 				<button
 					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 					type="submit"
-					disabled={isVictory}
+					disabled={isVictory || isSurrender}
 				>
 					Envoyer
 				</button>
@@ -490,7 +505,7 @@
 		</div>
 
 		<div class="flex gap-4">
-			{#if !isSurrender}
+			{#if isSurrender || isVictory}
 				<button
 					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 					on:click={newGame}
