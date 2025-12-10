@@ -297,26 +297,32 @@ async function checkSimilarity(wordTab: string, wordGuess: string) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { nbEssai, isVictory, idUser } = await request.json();
+	const { nbEssai, isVictory, idUser, sessionId } = await request.json();
 
 	try {
-		const [row_max] = (await pool.query(
-			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
-			[idUser]
-		)) as [Array<{ ID: number }>, unknown];
-		const idMax = row_max[0].ID;
-		if (isVictory) {
-			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
-				[nbEssai, idUser, idMax, 'pedantix']
-			);
-		} else {
-			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
-				[nbEssai, idUser, idMax, 'pedantix']
-			);
+		if (idUser) {
+			const [row_max] = (await pool.query(
+				'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
+				[idUser]
+			)) as [Array<{ ID: number }>, unknown];
+			const idMax = row_max[0].ID;
+			if (isVictory) {
+				await pool.query(
+					'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
+					[nbEssai, idUser, idMax, 'pedantix']
+				);
+			} else {
+				await pool.query(
+					'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
+					[nbEssai, idUser, idMax, 'pedantix']
+				);
+			}
 		}
-		return new Response(null, { status: 204 });
+
+		const revealWord = activeSessions.get(sessionId)?.titleWikiPage;
+		return new Response(JSON.stringify({ revealWord }), {
+			status: 200
+		});
 	} catch (error) {
 		console.error('Erreur Server:', error);
 		throw error;
@@ -368,7 +374,7 @@ async function getHints(title: string, lang: string = 'fr'): Promise<hints> {
 	};
 
 	const pageId = Object.keys(catData.query.pages)[0];
-	
+
 	if (pageId === '-1') {
 		return {
 			categories: [],
@@ -382,28 +388,27 @@ async function getHints(title: string, lang: string = 'fr'): Promise<hints> {
 	const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	const titleRegex = new RegExp(escapedTitle, 'gi');
 	let censoredIntro = rawIntro.replace(titleRegex, '…');
-	
-	const titleWords = title.split(/\s+/).filter(w => w.length > 3); 
-	titleWords.forEach(word => {
+
+	const titleWords = title.split(/\s+/).filter((w) => w.length > 3);
+	titleWords.forEach((word) => {
 		const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 		const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
 		censoredIntro = censoredIntro.replace(wordRegex, '…');
 	});
 	censoredIntro = censoredIntro.replace(/…+/g, '…').trim();
 
-	const shortIntro = censoredIntro.length > 50 
-		? censoredIntro.slice(0, 50).trim() + '…' 
-		: censoredIntro;
+	const shortIntro =
+		censoredIntro.length > 50 ? censoredIntro.slice(0, 50).trim() + '…' : censoredIntro;
 
 	const allLinks = linksData.query.pages[pageId]?.links ?? [];
 	const filteredLinks = allLinks
-		.filter(link => {
+		.filter((link) => {
 			const linkLower = link.title.toLowerCase();
 			const titleLower = title.toLowerCase();
 			return !linkLower.includes(titleLower) && !titleLower.includes(linkLower);
 		})
 		.slice(0, 3)
-		.map(l => l.title);
+		.map((l) => l.title);
 
 	const allCategories = catData.query.pages[pageId]?.categories?.map((c) => c.title) ?? [];
 

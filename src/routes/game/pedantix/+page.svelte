@@ -51,6 +51,8 @@
 	let isWordInGame: boolean = true;
 	let isChallengeWinned: boolean = false;
 
+	let revealWord: string = '';
+
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
 	}
@@ -63,6 +65,7 @@
 			getStatistics();
 		}
 		resetIndices();
+		revealWord = ""
 		isChallengeWinned = false;
 		isSurrender = true;
 		tabguess = [];
@@ -177,17 +180,18 @@
 		isSurrender = false;
 		isVictory = false;
 		try {
-			if (idUser) {
-				await fetch('/game/pedantix', {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						nbEssai,
-						isVictory,
-						idUser
-					})
-				});
-			}
+			const response = await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser,
+					sessionId
+				})
+			});
+			const data = await response.json();
+			revealWord = data.revealWord;
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -291,6 +295,15 @@
 					class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
 				></div>
 				<p class="font-medium text-gray-600">Chargement de la partie...</p>
+			</div>
+		{/if}
+		{#if revealWord}
+			<div
+				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
+			>
+				<p class="text-3xl font-bold text-red-700">
+					Perdu, le mot était {revealWord}
+				</p>
 			</div>
 		{/if}
 		{#if !isWordInGame}
