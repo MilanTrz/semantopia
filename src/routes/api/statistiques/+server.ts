@@ -81,7 +81,8 @@ export async function GET({ url }: RequestEvent) {
 			[userId]
 		)) as [Array<{ NB_PARTIES_JOUES: number; TAUX_REUSSITE: number }>, unknown];
 		const nbParties = rows_game.reduce((acc, r) => acc + r.NB_PARTIES_JOUES, 0);
-		const tauxReussite = rows_game.map(r => Number(r.TAUX_REUSSITE)).reduce((a, b) => a + b, 0) / rows_game.length;
+		const tauxReussite =
+			rows_game.map((r) => Number(r.TAUX_REUSSITE)).reduce((a, b) => a + b, 0) / rows_game.length;
 		return new Response(
 			JSON.stringify({
 				nbParties,
