@@ -5,6 +5,7 @@ import {
 	fetchSimilarityPercent,
 	type SimilarityPercentResult
 } from '$lib/utils/word2vec';
+import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 
 type Step = {
 	word: string;
@@ -19,6 +20,7 @@ type CorrelixState = {
 	path: Step[];
 	active: boolean;
 	minLinkSimilarity: number;
+	userId?: number | null;
 };
 
 const MIN_LINK_SIMILARITY = 25;
@@ -31,9 +33,11 @@ const sessions = createServerSessionStore<CorrelixState>({
 	prefix: 'correlix'
 });
 
-export async function GET() {
+export async function GET({ url }: RequestEvent) {
 	try {
-		const state = await initialiseGame();
+		const rawUserId = url.searchParams.get('userId');
+		const userId = rawUserId ? Number(rawUserId) : null;
+		const state = await initialiseGame(userId);
 		const { id: sessionId } = sessions.create(state);
 		return new Response(
 			JSON.stringify({
@@ -41,6 +45,7 @@ export async function GET() {
 				targetWord: state.targetWord,
 				path: state.path,
 				minSimilarity: state.minLinkSimilarity,
+				userId,
 				sessionId,
 				message: "Construisez un pont lexical du mot de départ vers le mot d'arrivée."
 			}),
@@ -56,7 +61,7 @@ export async function GET() {
 }
 
 export async function POST({ request }: RequestEvent) {
-	const { userWord, anchorWord, sessionId } = await request.json();
+	const { userWord, anchorWord, sessionId, userId } = await request.json();
 
 	const entry = sessions.get(sessionId);
 	if (!entry || !entry.data.active) {
@@ -195,6 +200,11 @@ export async function POST({ request }: RequestEvent) {
 
 	sessions.update(sessionId, nextState);
 
+	if (isWinner) {
+		const resolvedUserId = userId ?? state.userId;
+		await endGameSession(resolvedUserId ?? null, 'correlix', nextPath.length - 1, true);
+	}
+
 	let feedback: string;
 	if (isWinner) {
 		feedback = 'Pont complet ! Vous avez atteint le mot objectif.';
@@ -219,7 +229,7 @@ export async function POST({ request }: RequestEvent) {
 	);
 }
 
-async function initialiseGame(): Promise<CorrelixState> {
+async function initialiseGame(userId: number | null): Promise<CorrelixState> {
 	for (let attempt = 0; attempt < MAX_SELECTION_ATTEMPTS; attempt++) {
 		const candidateStart = await fetchRandomWord();
 		const candidateTarget = await fetchRandomWord();
@@ -259,12 +269,17 @@ async function initialiseGame(): Promise<CorrelixState> {
 			deltaToTarget: null
 		};
 
+		if (userId) {
+			await startGameSession(userId, 'correlix');
+		}
+
 		return {
 			startWord: candidateStart,
 			targetWord: candidateTarget,
 			path: [startStep],
 			active: true,
-			minLinkSimilarity: MIN_LINK_SIMILARITY
+			minLinkSimilarity: MIN_LINK_SIMILARITY,
+			userId
 		};
 	}
 

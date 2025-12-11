@@ -1,5 +1,5 @@
 import type { hints } from '$lib/models/hints';
-import pool from '$lib/server/db';
+import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 import type { RequestEvent } from '@sveltejs/kit';
 
 type MaskToken = number | string | { length: number; state: 'near'; score: number; word: string };
@@ -150,12 +150,8 @@ export async function GET({ url }: RequestEvent) {
 		tabHiddenContent
 	});
 
-	const date = new Date();
 	if (userId !== 0) {
-		await pool.query(
-			'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
-			[date, userId]
-		);
+		await startGameSession(userId, 'pedantix');
 	}
 
 	try {
@@ -302,24 +298,7 @@ export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser, sessionId } = await request.json();
 
 	try {
-		if (idUser) {
-			const [row_max] = (await pool.query(
-				'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
-				[idUser]
-			)) as [Array<{ ID: number }>, unknown];
-			const idMax = row_max[0].ID;
-			if (isVictory) {
-				await pool.query(
-					'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
-					[nbEssai, idUser, idMax, 'pedantix']
-				);
-			} else {
-				await pool.query(
-					'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
-					[nbEssai, idUser, idMax, 'pedantix']
-				);
-			}
-		}
+		await endGameSession(idUser, 'pedantix', nbEssai, isVictory);
 
 		const revealWord = activeSessions.get(sessionId)?.titleWikiPage;
 		const revealContent = activeSessions.get(sessionId)?.contentsplice;

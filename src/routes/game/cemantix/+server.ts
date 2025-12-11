@@ -6,6 +6,7 @@ import {
 	fetchSimilarityPercent,
 	type SimilarityPercentResult
 } from '$lib/utils/word2vec';
+import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 
 type CemantixState = {
 	targetWord: string;
@@ -13,6 +14,7 @@ type CemantixState = {
 	attemptCounter: number;
 	topWords: string[];
 	active: boolean;
+	userId?: number | null;
 };
 
 const sessions = createServerSessionStore<CemantixState>({
@@ -21,7 +23,7 @@ const sessions = createServerSessionStore<CemantixState>({
 });
 
 export async function POST({ request }: RequestEvent) {
-	const { userGuess, sessionId } = await request.json();
+	const { userGuess, sessionId, userId } = await request.json();
 
 	if (!sessionId) {
 		return new Response(
@@ -100,6 +102,10 @@ export async function POST({ request }: RequestEvent) {
 
 		nextState.active = !isWinner;
 		sessions.update(sessionId, nextState);
+		if (isWinner) {
+			const resolvedUserId = userId ?? nextState.userId;
+			await endGameSession(resolvedUserId, 'cemantix', nextState.attemptCounter, true);
+		}
 
 		return new Response(
 			JSON.stringify({
@@ -118,17 +124,24 @@ export async function POST({ request }: RequestEvent) {
 	}
 }
 
-export async function GET() {
+export async function GET({ url }: RequestEvent) {
 	try {
 		const targetWord = await fetchRandomWord();
 		const topWords = await fetchMostSimilar(targetWord, 1000);
+		const rawUserId = url.searchParams.get('userId');
+		const userId = rawUserId ? Number(rawUserId) : null;
+
+		if (userId) {
+			await startGameSession(userId, 'cemantix');
+		}
 
 		const { id: sessionId } = sessions.create({
 			targetWord,
 			guesses: [],
 			attemptCounter: 0,
 			topWords,
-			active: true
+			active: true,
+			userId
 		});
 
 		return new Response(

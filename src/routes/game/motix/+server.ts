@@ -1,5 +1,5 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import pool from '$lib/server/db';
+import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 
 export async function POST({ request }: RequestEvent) {
 	const { sizeWord, userId } = await request.json();
@@ -13,13 +13,7 @@ export async function POST({ request }: RequestEvent) {
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
 			.split('');
-		const date = new Date();
-		if (userId) {
-			await pool.query(
-				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"motix",0,?) ',
-				[date, userId]
-			);
-		}
+		await startGameSession(userId, 'motix');
 
 		return new Response(
 			JSON.stringify({
@@ -39,22 +33,7 @@ export async function POST({ request }: RequestEvent) {
 export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser } = await request.json();
 	try {
-		const [row_max] = (await pool.query(
-			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
-			[idUser]
-		)) as [Array<{ ID: number }>, unknown];
-		const idMax = row_max[0].ID;
-		if (isVictory) {
-			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
-				[nbEssai, idUser, idMax, 'motix']
-			);
-		} else {
-			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
-				[nbEssai, idUser, idMax, 'motix']
-			);
-		}
+		await endGameSession(idUser, 'motix', nbEssai, Boolean(isVictory));
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		console.error('Erreur Server:', error);
