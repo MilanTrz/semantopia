@@ -1,18 +1,15 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import pool from '$lib/server/db';
-let findWord: string;
-let findCategorie: string;
-let tabWord: string[];
+
 export async function POST({ request }: RequestEvent) {
 	const { sizeWord, userId } = await request.json();
 
 	try {
 		const data = await getRandomWord(sizeWord);
-
-		findWord = data.name;
-		findCategorie = data.categorie;
-		const similarWord = await getSimmilarWord(findWord);
-		tabWord = findWord
+		const findWord = data.name;
+		const findCategorie = data.categorie;
+		const similarWord = await getSimilarWord(findWord);
+		const tabWord = findWord
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
 			.split('');
@@ -71,10 +68,9 @@ async function getRandomWord(sizeWord: number): Promise<{ name: string; categori
 		throw new Error('Erreur lors de la récupération du mot');
 	}
 	const data = await response.json();
-	console.log(data);
 	return data[0];
 }
-async function getSimmilarWord(word: string) {
+async function getSimilarWord(word: string) {
 	const response = await fetch('http://localhost:5000/api/most-similar', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

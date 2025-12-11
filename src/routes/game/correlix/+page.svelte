@@ -47,6 +47,7 @@
 	let graphEdges: GraphEdge[] = [];
 	let activeIndex = 0;
 	let canSubmit = false;
+	let sessionId = '';
 
 	const GRAPH_TOP = 10;
 	const GRAPH_BOTTOM = 50;
@@ -74,6 +75,7 @@
 		errorType = null;
 		userWord = '';
 		message = '';
+		sessionId = '';
 
 		try {
 			const response = await fetch('/game/correlix/', {
@@ -87,6 +89,7 @@
 				targetWord = data.targetWord;
 				path = data.path ?? [];
 				minSimilarity = data.minSimilarity ?? 30;
+				sessionId = data.sessionId ?? '';
 				attempts = Math.max(path.length - 1, 0);
 				activeIndex = Math.max(path.length - 1, 0);
 				message =
@@ -118,6 +121,12 @@
 			return;
 		}
 
+		if (!sessionId) {
+			message = 'Aucune partie active. Relancez une partie pour continuer.';
+			errorType = 'no_session';
+			return;
+		}
+
 		isLoading = true;
 
 		try {
@@ -126,11 +135,18 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					userWord: trimmedGuess,
-					anchorWord: path[activeIndex]?.word ?? null
+					anchorWord: path[activeIndex]?.word ?? null,
+					sessionId
 				})
 			});
 
 			const data = await response.json();
+
+			if (response.status === 400) {
+				message = data.message ?? 'Aucune partie active. Relancez une partie.';
+				errorType = data.error ?? 'no_game';
+				return;
+			}
 
 			if (!response.ok) {
 				message = data.message ?? 'Erreur serveur.';
