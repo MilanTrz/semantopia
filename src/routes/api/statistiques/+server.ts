@@ -69,21 +69,19 @@ export async function POST({ request }: RequestEvent) {
 export async function GET({ url }: RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
 	try {
-		const [row_game] = (await pool.query(
+		const [rows_game] = (await pool.query(
 			`
     SELECT
     COUNT(ID) AS NB_PARTIES_JOUES,
     SUM(WIN) / COUNT(ID) AS TAUX_REUSSITE
     FROM GAME_SESSION
-    WHERE USER_ID = ? 
-    GROUP BY USER_ID, TYPE
+    WHERE USER_ID = ? 	
     ORDER BY USER_ID, TYPE;
     `,
 			[userId]
 		)) as [Array<{ NB_PARTIES_JOUES: number; TAUX_REUSSITE: number }>, unknown];
-		const stats = row_game[0] ?? { NB_PARTIES_JOUES: 0, TAUX_REUSSITE: 0 };
-		const nbParties = stats.NB_PARTIES_JOUES ?? 0;
-		const tauxReussite = stats.TAUX_REUSSITE ?? 0;
+		const nbParties = rows_game.reduce((acc, r) => acc + r.NB_PARTIES_JOUES, 0);
+		const tauxReussite = rows_game.map(r => Number(r.TAUX_REUSSITE)).reduce((a, b) => a + b, 0) / rows_game.length;
 		return new Response(
 			JSON.stringify({
 				nbParties,

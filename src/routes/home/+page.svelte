@@ -3,7 +3,13 @@
 	import type { challenge } from '$lib/models/challenge';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
-	let lastChallenge: challenge = {};
+	let lastChallenge: challenge = {
+		name: '',
+		description: '',
+		gameName: '',
+		nbTry: 0,
+		nbHint: 0
+	};
 	let session = sessionStore.get();
 	let userId: number | null = session ? session.id : null;
 	async function getLastChallenge() {
@@ -72,7 +78,7 @@
 				</div>
 				<h4 class="mb-3 text-xl font-bold text-gray-800">Cémantix</h4>
 				<p class="text-sm text-gray-600">
-					Trouvez le mot mystère grâce aux associations sémantiques et à l'intelligence artificielle
+					Trouvez le mot mystère grâce aux associations sémantiques et à votre grande intellecte
 				</p>
 			</div>
 		</a>
@@ -109,7 +115,7 @@
 				</div>
 				<h4 class="mb-3 text-xl font-bold text-gray-800">Motix</h4>
 				<p class="text-sm text-gray-600">
-					Créez un maximum de mots avec les lettres proposées dans le temps imparti
+					Deviner le mot mystère en construisant d'autres mots du même nombre de lettres.
 				</p>
 			</div>
 		</a>

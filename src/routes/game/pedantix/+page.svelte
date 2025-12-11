@@ -139,9 +139,12 @@
 		return typeof previous !== 'string' && typeof current === 'string' && !isPunctuation(current);
 	}
 
-	const isPunctuation = (token: MaskToken) => typeof token === 'string' && /^[.,!?;:()\[\]{}"'«»\-–—]$/.test(token);
-	const isNearMatch = (token: MaskToken): token is { length: number; state: 'near'; score: number; word: string } =>
-			typeof token === 'object' && token !== null && 'state' in token && token.state === 'near';
+	const isPunctuation = (token: MaskToken) =>
+		typeof token === 'string' && /^[.,!?;:()\[\]{}"'«»\-–—]$/.test(token);
+	const isNearMatch = (
+		token: MaskToken
+	): token is { length: number; state: 'near'; score: number; word: string } =>
+		typeof token === 'object' && token !== null && 'state' in token && token.state === 'near';
 
 	const maskedSquares = (length: number) => '■'.repeat(length);
 
@@ -160,17 +163,21 @@
 		isVictory = true;
 		isSurrender = false;
 		try {
+			const response = await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser,
+					sessionId
+				})
+			});
+			const data = await response.json();
+			if (data.revealContent) {
+				tabContent = data.revealContent;
+			}
 			if (idUser) {
-				await fetch('/game/pedantix', {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						nbEssai,
-						isVictory,
-						idUser
-					})
-				});
-
 				if (lastChallenge) {
 					if (lastChallenge.nbTry > 0) {
 						if (nbEssai < lastChallenge.nbTry) {
@@ -208,7 +215,6 @@
 				})
 			});
 			const data = await response.json();
-			// Transform the revealed word string into MaskToken array
 			if (data.revealWord) {
 				const titleWords = data.revealWord
 					.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
@@ -218,7 +224,6 @@
 				});
 			}
 			console.log('Revealed Title:', tabTitle);
-			// Content is already an array of words
 			if (data.revealContent) {
 				tabContent = data.revealContent;
 			}
@@ -402,7 +407,10 @@
 							title="Proche, mais pas révélé"
 							style={`min-width: ${Math.max(item.length, item.word.length)}ch; min-height: 2.6em; padding-right: 0.1em;`}
 						>
-								<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; line-height: 1.25;">
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; line-height: 1.25;"
+							>
 								{maskedSquares(item.length)}
 							</span>
 							<span
@@ -412,7 +420,7 @@
 								{item.word}
 							</span>
 							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
 								{tooltipLabel(item.length)}
 							</span>
@@ -423,11 +431,14 @@
 							class:ml-1={needsSpaceBefore(item, i)}
 							style="min-height: 2.6em; padding-right: 0.1em;"
 						>
-							<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; line-height: 1.25;">
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; line-height: 1.25;"
+							>
 								{maskedSquares(item as number)}
 							</span>
 							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
 								{tooltipLabel(item as number)}
 							</span>
@@ -457,7 +468,10 @@
 							title="Proche, mais pas révélé"
 							style={`min-width: ${Math.max(item.length, item.word.length)}ch; padding-right: 0.1em;`}
 						>
-								<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; line-height: 1.25;">
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; line-height: 1.25;"
+							>
 								{maskedSquares(item.length)}
 							</span>
 							<span
@@ -467,7 +481,7 @@
 								{item.word}
 							</span>
 							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
 								{tooltipLabel(item.length)}
 							</span>
@@ -477,11 +491,14 @@
 							class="group relative inline-flex items-center"
 							class:ml-1={needsSpaceBefore(item, i)}
 						>
-							<span class="inline-block font-mono tracking-tight text-black" style="font-size: 1.5em; padding-right: 0.1em;">
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; padding-right: 0.1em;"
+							>
 								{maskedSquares(item as number)}
 							</span>
 							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
 							>
 								{tooltipLabel(item as number)}
 							</span>
@@ -609,11 +626,11 @@
 						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
+						<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
 						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-blue-600">{essaisMoyen}</p>
+						<p class="text-4xl font-bold text-blue-600">{Math.round(essaisMoyen * 100) / 100}</p>
 						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
 					</div>
 					<div class="text-center">
