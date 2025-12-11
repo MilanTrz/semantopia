@@ -209,10 +209,13 @@ async function initialiseGame() {
 		const candidateStart = await getRandomWord();
 		const candidateTarget = await getRandomWord();
 
-		if (candidateStart.length <=2 || candidateTarget.length <=2){
+		if (candidateStart.length <= 2 || candidateTarget.length <= 2) {
 			continue;
 		}
-		if (candidateStart.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/) || candidateTarget.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)){
+		if (
+			candidateStart.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/) ||
+			candidateTarget.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
+		) {
 			continue;
 		}
 
