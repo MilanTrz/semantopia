@@ -54,7 +54,7 @@
 			});
 			repbodyStats = await responseStats.json();
 			partiesJouees = repbodyStats.nbParties ?? 0;
-			tauxReussite = (repbodyStats.tauxReussite) * 100 ;
+			tauxReussite = repbodyStats.tauxReussite * 100;
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -229,7 +229,7 @@
 													class={`flex items-center gap-2 text-lg font-semibold
                 									${partie.WIN ? 'text-green-700' : 'text-red-700'}`}
 												>
-													{partie.TYPE.replace(/^./, c => c.toUpperCase())} 
+													{partie.TYPE.replace(/^./, (c) => c.toUpperCase())}
 												</p>
 												<p class="text-sm text-gray-500">
 													{new Date(partie.DATE_PARTIE).toLocaleDateString('fr-FR', {

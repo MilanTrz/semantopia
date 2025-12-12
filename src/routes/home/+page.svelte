@@ -140,8 +140,26 @@
 				</p>
 			</div>
 		</a>
+		<a
+			href="/game/lettrix"
+			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
+		>
+			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
+				>
+					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
+				</div>
+				<h4 class="mb-3 text-xl font-bold text-gray-800">Lettrix</h4>
+				<p class="text-sm text-gray-600">Trouvez un maximum d'annagrammes en 60 secondes</p>
+			</div>
+		</a>
 	</div>
 </section>
+<!----
+	-- implement later
+
+
 {#if userId}
 	<section class="mx-auto flex max-w-2xl flex-col gap-3 p-4">
 		<div class="rounded-lg bg-white p-4 shadow-md">
@@ -177,6 +195,8 @@
 		</div>
 	</section>
 {/if}
+-->
+
 <footer class="bg-gray-900 px-8 py-12 text-white">
 	<div class="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center">
 		<h3 class="text-2xl font-bold">🏠Sémantopia</h3>
