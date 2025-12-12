@@ -33,51 +33,50 @@ export async function GET({ url }: RequestEvent) {
 		});
 	}
 }
-export async function POST({request}){
-    const { userGuess, sessionId } = await request.json();
-    const session = activeSessions.get(sessionId);
-    if (!session) {
-        return new Response(
-            JSON.stringify({ message: 'Session introuvable.' }),
-            { status: 400 }
-        );
-    }
-    const { wordToFind } = session;
-    let isWin:boolean = false;
-    
-    if (normalizeString(userGuess) == normalizeString(wordToFind)){
-        const newWord:string = await randomWord();
-        const newWordShuffle:string = shuffleWord(newWord)
-        activeSessions.set(sessionId,{
-            wordToFind: newWord,
-            shuffleWordToFind: newWordShuffle
-        })
-        isWin = true;
-        return new Response(JSON.stringify({message:'C est le bon mot',newWordShuffle,isWin }), {
-			status: 200
-		});
-    }
-     return new Response(JSON.stringify({message:'Ce n est pas le bon mot',isWin }), {
-			status: 200
-		});
+export async function POST({ request }: RequestEvent) {
+	const { userGuess, sessionId } = await request.json();
+	const session = activeSessions.get(sessionId);
+	if (!session) {
+		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
+	}
+	const { wordToFind } = session;
+	let isWin: boolean = false;
 
+	if (areAnagrams(wordToFind,userGuess)) {
+		if (!checkWordExist(wordToFind)){
+			return new Response(JSON.stringify({ message: 'Ce n est pas le bon mot', isWin }), {
+			status: 200
+		});
+		}
+		
+		const newWord: string = await randomWord();
+		const newWordShuffle: string = shuffleWord(newWord);
+		activeSessions.set(sessionId, {
+			wordToFind: newWord,
+			shuffleWordToFind: newWordShuffle
+		});
+		isWin = true;
+		return new Response(JSON.stringify({ message: 'C est le bon mot', newWordShuffle, isWin }), {
+			status: 200
+		});
+	}
+	return new Response(JSON.stringify({ message: 'Ce n est pas le bon mot', isWin }), {
+		status: 200
+	});
 }
 
-export async function PUT({request}){
-    const { sessionId } = await request.json();
-    const session = activeSessions.get(sessionId);
-    if (!session) {
-        return new Response(
-            JSON.stringify({ message: 'Session introuvable.' }),
-            { status: 400 }
-        );
-    }
-    try{
-        const wordToFind = activeSessions.get(sessionId)?.wordToFind;
-         return new Response(JSON.stringify({wordToFind}), {
+export async function PUT({ request }: RequestEvent) {
+	const { sessionId } = await request.json();
+	const session = activeSessions.get(sessionId);
+	if (!session) {
+		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
+	}
+	try {
+		const wordToFind = activeSessions.get(sessionId)?.wordToFind;
+		return new Response(JSON.stringify({ wordToFind }), {
 			status: 200
 		});
-    } catch (error) {
+	} catch (error) {
 		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
 			status: 500
 		});
@@ -93,11 +92,12 @@ async function randomWord() {
 	if (
 		wordToFind.length < 5 ||
 		wordToFind.length > 10 ||
-		wordToFind.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
+		wordToFind.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/) 
+
 	) {
-		randomWord();
+		return randomWord();
 	}
-    console.log(wordToFind)
+	console.log(wordToFind);
 	return wordToFind;
 }
 function shuffleWord(word: string): string {
@@ -108,9 +108,32 @@ function shuffleWord(word: string): string {
 	}
 	return lettres.join('');
 }
-function normalizeString(string:string) {
-  return string
-    .toLowerCase()               
-    .normalize("NFD")           
-    .replace(/[\u0300-\u036f]/g, ""); 
+
+function areAnagrams(word1: string, word2: string): boolean {
+  const normalize = (str: string) => str.toLowerCase().trim();
+  
+  const str1 = normalize(word1);
+  const str2 = normalize(word2);
+  
+  if (str1.length !== str2.length) {
+    return false;
+  }
+  
+  const sorted1 = str1.split('').sort().join('');
+  const sorted2 = str2.split('').sort().join('');
+  
+  return sorted1 === sorted2;
+}
+
+async function checkWordExist(word:string){
+	const response = await fetch('http://localhost:5000/api/check-word', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+				word
+			})
+	});
+	const data = await response.json();
+	const isCorrectWord = data.exists
+	return isCorrectWord
 }
