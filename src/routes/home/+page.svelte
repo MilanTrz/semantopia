@@ -154,6 +154,22 @@
 				<p class="text-sm text-gray-600">Trouvez un maximum d'annagrammes en 60 secondes</p>
 			</div>
 		</a>
+		<a
+			href="/game/mimix"
+			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
+		>
+			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
+				>
+					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
+				</div>
+				<h4 class="mb-3 text-xl font-bold text-gray-800">Mimix</h4>
+				<p class="text-sm text-gray-600">
+					Trouvez le plus de fois l'intrus parmi les 4 propositions
+				</p>
+			</div>
+		</a>
 	</div>
 </section>
 <!----

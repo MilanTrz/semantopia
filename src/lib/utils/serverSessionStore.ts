@@ -1,19 +1,12 @@
 import { randomUUID } from 'crypto';
-import type {
-	SessionEntry,
-	SessionStore,
-	SessionStoreOptions,
-	UpdateFn
-} from '$lib/types/session';
+import type { SessionEntry, SessionStore, SessionStoreOptions, UpdateFn } from '$lib/types/session';
 
 function buildId(prefix?: string) {
 	const base = prefix ? `${prefix}-` : '';
 	return `${base}${randomUUID()}`;
 }
 
-export function createServerSessionStore<T>(
-	options: SessionStoreOptions = {}
-): SessionStore<T> {
+export function createServerSessionStore<T>(options: SessionStoreOptions = {}): SessionStore<T> {
 	const store = new Map<string, SessionEntry<T>>();
 	const ttlMs = options.ttlMs;
 	const prefix = options.prefix;
