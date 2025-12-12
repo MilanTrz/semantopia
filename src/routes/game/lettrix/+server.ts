@@ -41,14 +41,12 @@ export async function POST({ request }: RequestEvent) {
 	}
 	const { wordToFind } = session;
 	let isWin: boolean = false;
-
 	if (areAnagrams(wordToFind,userGuess)) {
-		if (!checkWordExist(wordToFind)){
+		if (await checkWordExist(userGuess) == false){
 			return new Response(JSON.stringify({ message: 'Ce n est pas le bon mot', isWin }), {
 			status: 200
 		});
 		}
-		
 		const newWord: string = await randomWord();
 		const newWordShuffle: string = shuffleWord(newWord);
 		activeSessions.set(sessionId, {
@@ -110,19 +108,33 @@ function shuffleWord(word: string): string {
 }
 
 function areAnagrams(word1: string, word2: string): boolean {
-  const normalize = (str: string) => str.toLowerCase().trim();
+  const normalize = (str: string) => 
+    str.toLowerCase()
+       .normalize("NFD")
+       .replace(/[\u0300-\u036f]/g, "")
+       .replace(/\s+/g, ""); 
   
   const str1 = normalize(word1);
   const str2 = normalize(word2);
-  
+
   if (str1.length !== str2.length) {
     return false;
   }
   
-  const sorted1 = str1.split('').sort().join('');
-  const sorted2 = str2.split('').sort().join('');
+  const charCount: Record<string, number> = {};
   
-  return sorted1 === sorted2;
+  for (const char of str1) {
+    charCount[char] = (charCount[char] || 0) + 1;
+  }
+  
+  for (const char of str2) {
+    if (!charCount[char]) {
+      return false;
+    }
+    charCount[char]--;
+  }
+  
+  return true;
 }
 
 async function checkWordExist(word:string){
@@ -135,5 +147,6 @@ async function checkWordExist(word:string){
 	});
 	const data = await response.json();
 	const isCorrectWord = data.exists
+	console.log(data + "  " + isCorrectWord)
 	return isCorrectWord
 }
