@@ -88,28 +88,33 @@
 		{/if}
 		{#if isGameOver}
 			<div
-				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
+				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6 mb-12"
 			>
 				<p class="text-3xl font-bold text-red-700">
 					Partie terminée, vous avez deviné {nbIntruderFind} intrus. Le dernier intrus était {wordIntruder}.
 				</p>
 			</div>
+
 		{/if}
 
 		<div class="mb-8">
 			{#if tabShuffleWord.length > 0}
 				<div class="mx-auto grid max-w-2xl grid-cols-2 gap-4">
-					{#each tabShuffleWord as word}
-						<button
-							onclick={() => sendGuess(word)}
-							class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
-						>
-							<div
-								class="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"
-							></div>
-							<span class="relative text-2xl font-bold tracking-wide">{word}</span>
-						</button>
-					{/each}
+					{#if !isLoading}
+						{#each tabShuffleWord as word}
+							<button
+								onclick={() => sendGuess(word)}
+								class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
+								disabled={isGameOver}
+								
+							>
+								<div
+									class="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"
+								></div>
+								<span class="relative text-2xl font-bold tracking-wide">{word}</span>
+							</button>
+						{/each}
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -134,11 +139,11 @@
 			<ul class="space-y-3 text-sm text-gray-600">
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Trouver le mot en déchiffrant l'annagramme</p>
+					<p>Trouvez le plus de fois l'intrus parmi les 4 propositions</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Vous gagnez du temps ou en perdez en fonction de votre réponse</p>
+					<p>Au fur et à mesure les mots sont de moins en moins proches </p>
 				</li>
 			</ul>
 		</div>
@@ -193,6 +198,13 @@
 				>
 					<a href="/game/cemantix">
 						<h5 class="font-medium text-gray-700">📝Motix</h5>
+					</a>
+				</div>
+				<div
+					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
+				>
+					<a href="/game/lettix">
+						<h5 class="font-medium text-gray-700">📝Lettix</h5>
 					</a>
 				</div>
 			</div>

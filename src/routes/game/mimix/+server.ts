@@ -18,11 +18,17 @@ export async function GET() {
 		const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 		const wordBasic: string = await randomWord();
 		let wordIntruder: string = '';
+		let isValid = false;
 		do {
 			wordIntruder = await randomWord();
 		} while ((await calculateSimilarity(wordBasic, wordIntruder)) > 20);
 
-		const tabSimilarWord: string[] = await fetchMostSimilar(wordBasic, 2);
+		let tabSimilarWord: string[] = [];
+
+		while (!isValid) {
+			tabSimilarWord = await fetchMostSimilar(wordBasic, 2);
+			isValid = checkWordsValidity(wordBasic, wordIntruder, tabSimilarWord[0], tabSimilarWord[1]);
+		}
 
 		activeSessions.set(sessionId, {
 			wordBasic: wordBasic,
@@ -56,18 +62,22 @@ export async function POST({ request }: RequestEvent) {
 	}
 	const { wordIntruder, totalIntruderFound } = session;
 	let isWin: boolean = false;
-	console.log(word + '   ' + wordIntruder);
 	if (word == wordIntruder) {
 		isWin = true;
 		const newWordBasic: string = await randomWord();
 		let newWordIntruder: string = '';
+		let isValid = false;
 		do {
 			newWordIntruder = await randomWord();
 		} while (
 			(await calculateSimilarity(newWordBasic, newWordIntruder)) >
 			Math.max(20 + totalIntruderFound, 80)
 		);
-		const newTabSimilarWord: string[] = await fetchMostSimilar(newWordBasic, 2);
+		let newTabSimilarWord: string[] = [];
+		while (!isValid) {
+			newTabSimilarWord = await fetchMostSimilar(newWordBasic, 2);
+			isValid = checkWordsValidity(newWordBasic, wordIntruder, newTabSimilarWord[0], newTabSimilarWord[1]);
+		}
 		activeSessions.set(sessionId, {
 			wordBasic: newWordBasic,
 			wordIntruder: newWordIntruder,
@@ -145,4 +155,39 @@ function shuffleArray(arr: string[]): string[] {
 		[result[i], result[j]] = [result[j], result[i]];
 	}
 	return result;
+}
+function checkWordsValidity(
+	wordBasic: string,
+	wordIntruder: string,
+	word1: string,
+	word2: string
+): boolean {
+	const normalize = (word: string): string => {
+		return word
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.trim()
+			.toLowerCase()
+			.replace(/s/,'')
+	};
+
+	if (!word1 || !word2 || word1.length === 0 || word2.length === 0) {
+		return false;
+	}
+	if (normalize(word1) === normalize(word2)) {
+		return false;
+	}
+
+	if (normalize(word1) === normalize(wordBasic) || normalize(word2) === normalize(wordBasic)) {
+		return false;
+	}
+
+	if (
+		normalize(word1) === normalize(wordIntruder) ||
+		normalize(word2) === normalize(wordIntruder)
+	) {
+		return false;
+	}
+
+	return true;
 }
