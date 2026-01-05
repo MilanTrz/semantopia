@@ -10,12 +10,12 @@
 	let isGameOver: boolean = false;
 	let tabShuffleWord: string[] = [];
 	let wordIntruder: string = '';
-    let foundIntruder:boolean;
+	let foundIntruder: boolean;
 
 	async function newGame() {
 		isLoading = true;
 		isGameOver = false;
-        nbIntruderFind = 0
+		nbIntruderFind = 0;
 		if (idUser === null) {
 			console.error('idUser est null');
 			return;
@@ -41,18 +41,18 @@
 		});
 
 		const data = await response.json();
-        console.log("data" + data)
-        foundIntruder = data.isWin
-        if (foundIntruder){
-            nbIntruderFind++;
-            tabShuffleWord =  data.newTabShuffleWord
-        }else{
-            gameOver()
-        }
+		console.log('data' + data);
+		foundIntruder = data.isWin;
+		if (foundIntruder) {
+			nbIntruderFind++;
+			tabShuffleWord = data.newTabShuffleWord;
+		} else {
+			gameOver();
+		}
 	}
-    async function gameOver(){
-        isGameOver = true;
-        const response = await fetch('/game/mimix', {
+	async function gameOver() {
+		isGameOver = true;
+		const response = await fetch('/game/mimix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -61,7 +61,7 @@
 		});
 		const data = await response.json();
 		wordIntruder = data.wordIntruder;
-    }
+	}
 
 	onMount(() => {
 		newGame();
@@ -75,6 +75,7 @@
 			<div class="mb-8">
 				<h2 class="text-4xl font-bold text-gray-900">Mimix</h2>
 				<p class="mt-1 text-gray-600">Trouvez le plus de fois l'intrus parmi les 4 propositions</p>
+				<p>Nombre d'intrus trouvés : {nbIntruderFind}</p>
 			</div>
 		</div>
 		{#if isLoading}
@@ -95,20 +96,23 @@
 			</div>
 		{/if}
 
-		<div>
-        {#if tabShuffleWord.length > 0}
-            <div class="flex flex-wrap gap-2 justify-center">
-                {#each tabShuffleWord as word}
-                    <button 
-                        onclick={() => sendGuess(word)}
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors duration-200 font-medium shadow-sm"
-                    >
-                        {word}
-                    </button>
-                {/each}
-            </div>
-        {/if}
-    </div>
+		<div class="mb-8">
+			{#if tabShuffleWord.length > 0}
+				<div class="mx-auto grid max-w-2xl grid-cols-2 gap-4">
+					{#each tabShuffleWord as word}
+						<button
+							onclick={() => sendGuess(word)}
+							class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
+						>
+							<div
+								class="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"
+							></div>
+							<span class="relative text-2xl font-bold tracking-wide">{word}</span>
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
 
 		<div class="flex gap-4">
 			<button
@@ -138,7 +142,7 @@
 				</li>
 			</ul>
 		</div>
-        <!---
+		<!---
         	{#if idUser}
 			<div class="rounded-lg bg-white p-6 shadow-sm">
 				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
@@ -159,7 +163,6 @@
 			</div>
 		{/if}
         -->
-	
 
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>

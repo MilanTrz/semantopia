@@ -37,7 +37,7 @@
 			console.error('idUser est null');
 			return;
 		}
-		const url = `/game/lettrix?userId=${encodeURIComponent(idUser)}`;
+		const url = `/game/lettix?userId=${encodeURIComponent(idUser)}`;
 		const response = await fetch(url, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -59,7 +59,7 @@
 		}, 1000);
 	}
 	async function sendGuess() {
-		const response = await fetch('/game/lettrix', {
+		const response = await fetch('/game/lettix', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -84,7 +84,7 @@
 	}
 	async function gameOver() {
 		isGameOver = true;
-		const response = await fetch('/game/lettrix', {
+		const response = await fetch('/game/lettix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -113,7 +113,7 @@
 	<div class="mx-auto max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">
-				<h2 class="text-4xl font-bold text-gray-900">Lettrix</h2>
+				<h2 class="text-4xl font-bold text-gray-900">Lettix</h2>
 				<p class="mt-1 text-gray-600">Trouvez un maximum d'annagrammes en 60 secondes</p>
 				<h2 class="text-1xl font-semibold">Mot a déchiffrer : {wordShuffleFind}</h2>
 				<div class="flex items-center gap-4">

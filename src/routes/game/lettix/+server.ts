@@ -20,7 +20,7 @@ export async function GET({ url }: RequestEvent) {
 		const date = new Date();
 		if (userId !== 0) {
 			await pool.query(
-				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"lettrix",0,?) ',
+				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"lettix",0,?) ',
 				[date, userId]
 			);
 		}

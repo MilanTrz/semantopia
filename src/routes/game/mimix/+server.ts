@@ -13,7 +13,7 @@ const activeSessions: Map<
 > = new Map();
 
 export async function GET() {
-	 //const userId = Number(url.searchParams.get('userId'));
+	//const userId = Number(url.searchParams.get('userId'));
 	try {
 		const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 		const wordBasic: string = await randomWord();
@@ -56,7 +56,7 @@ export async function POST({ request }: RequestEvent) {
 	}
 	const { wordIntruder, totalIntruderFound } = session;
 	let isWin: boolean = false;
-    console.log(word + "   " + wordIntruder)
+	console.log(word + '   ' + wordIntruder);
 	if (word == wordIntruder) {
 		isWin = true;
 		const newWordBasic: string = await randomWord();
@@ -93,29 +93,22 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-    const { sessionId } = await request.json();
-    const session = activeSessions.get(sessionId);
-    if (!session) {
-        return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
-    }
-    try {
-        const wordIntruder = activeSessions.get(sessionId)?.wordIntruder;
-        return new Response(JSON.stringify({ wordIntruder }), {
-            status: 200
-        });
-    } catch (error) {
-        return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
-            status: 500
-        });
-    }
+	const { sessionId } = await request.json();
+	const session = activeSessions.get(sessionId);
+	if (!session) {
+		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
+	}
+	try {
+		const wordIntruder = activeSessions.get(sessionId)?.wordIntruder;
+		return new Response(JSON.stringify({ wordIntruder }), {
+			status: 200
+		});
+	} catch (error) {
+		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
+			status: 500
+		});
+	}
 }
-
-
-
-
-
-
-
 
 async function randomWord() {
 	const response = await fetch('http://localhost:5000/api/random-word', {
