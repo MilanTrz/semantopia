@@ -47,13 +47,15 @@
 	let graphEdges: GraphEdge[] = [];
 	let activeIndex = 0;
 	let canSubmit = false;
+	let sessionId = '';
 
 	const GRAPH_TOP = 10;
 	const GRAPH_BOTTOM = 50;
 
 	$: graphNodes = buildGraphNodes();
 	$: graphEdges = buildGraphEdges(graphNodes);
-	$: canSubmit = Boolean(userWord.trim()) && !gameWon && !isLoading && !initializing && path.length > 0;
+	$: canSubmit =
+		Boolean(userWord.trim()) && !gameWon && !isLoading && !initializing && path.length > 0;
 	$: {
 		if (!path.length && activeIndex !== 0) {
 			activeIndex = 0;
@@ -73,6 +75,7 @@
 		errorType = null;
 		userWord = '';
 		message = '';
+		sessionId = '';
 
 		try {
 			const response = await fetch('/game/correlix/', {
@@ -86,6 +89,7 @@
 				targetWord = data.targetWord;
 				path = data.path ?? [];
 				minSimilarity = data.minSimilarity ?? 30;
+				sessionId = data.sessionId ?? '';
 				attempts = Math.max(path.length - 1, 0);
 				activeIndex = Math.max(path.length - 1, 0);
 				message =
@@ -117,6 +121,12 @@
 			return;
 		}
 
+		if (!sessionId) {
+			message = 'Aucune partie active. Relancez une partie pour continuer.';
+			errorType = 'no_session';
+			return;
+		}
+
 		isLoading = true;
 
 		try {
@@ -125,11 +135,18 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					userWord: trimmedGuess,
-					anchorWord: path[activeIndex]?.word ?? null
+					anchorWord: path[activeIndex]?.word ?? null,
+					sessionId
 				})
 			});
 
 			const data = await response.json();
+
+			if (response.status === 400) {
+				message = data.message ?? 'Aucune partie active. Relancez une partie.';
+				errorType = data.error ?? 'no_game';
+				return;
+			}
 
 			if (!response.ok) {
 				message = data.message ?? 'Erreur serveur.';
@@ -344,7 +361,7 @@
 			const isGhost = pathIndex >= path.length;
 			const similarity = pathStep
 				? pathStep.similarityFromPrevious
-				: path.at(-1)?.similarityToTarget ?? null;
+				: (path.at(-1)?.similarityToTarget ?? null);
 			return {
 				x1: previous.xPercent,
 				y1: previous.y,
@@ -388,23 +405,25 @@
 		<div class="mb-8 text-center">
 			<h1 class="text-5xl font-bold text-slate-900">Correlix</h1>
 			<p class="mt-3 text-lg text-slate-600">
-				Reliez progressivement <span class="font-semibold text-emerald-600">{startWord || '...'}</span>
-				a <span class="font-semibold text-sky-600">{targetWord || '...'}</span> avec des
-				mots suffisamment proches et de plus en plus corrélés.
+				Reliez progressivement <span class="font-semibold text-emerald-600"
+					>{startWord || '...'}</span
+				>
+				a <span class="font-semibold text-sky-600">{targetWord || '...'}</span> avec des mots suffisamment
+				proches et de plus en plus corrélés.
 			</p>
 		</div>
 
 		<div class="mb-8 grid gap-4 md:grid-cols-3">
 			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-				<p class="text-sm uppercase tracking-wide text-slate-500">Mot de depart</p>
+				<p class="text-sm tracking-wide text-slate-500 uppercase">Mot de depart</p>
 				<p class="mt-2 text-3xl font-bold text-emerald-600">{startWord || '...'}</p>
 			</div>
 			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-				<p class="text-sm uppercase tracking-wide text-slate-500">Mot objectif</p>
+				<p class="text-sm tracking-wide text-slate-500 uppercase">Mot objectif</p>
 				<p class="mt-2 text-3xl font-bold text-sky-600">{targetWord || '...'}</p>
 			</div>
 			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-				<p class="text-sm uppercase tracking-wide text-slate-500">Essais</p>
+				<p class="text-sm tracking-wide text-slate-500 uppercase">Essais</p>
 				<p class="mt-2 text-3xl font-bold text-slate-800">{attempts}</p>
 				<p class="text-xs text-slate-500">Lien minimal {minSimilarity}%</p>
 			</div>
@@ -412,13 +431,15 @@
 
 		{#if initializing}
 			<div class="flex items-center justify-center py-16">
-				<div class="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"></div>
+				<div
+					class="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"
+				></div>
 			</div>
 		{:else}
 			<div class="mb-8">
 				<form class="flex flex-col gap-3 md:flex-row" on:submit|preventDefault={sendGuess}>
 					<input
-						class="w-full rounded-xl border border-slate-200 px-6 py-4 text-lg text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+						class="w-full rounded-xl border border-slate-200 px-6 py-4 text-lg text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 focus:outline-none"
 						type="text"
 						bind:value={userWord}
 						placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
@@ -428,7 +449,7 @@
 					<button
 						type="submit"
 						class={`rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:from-emerald-600 hover:to-sky-600 ${
-							canSubmit ? '' : 'opacity-60 cursor-not-allowed'
+							canSubmit ? '' : 'cursor-not-allowed opacity-60'
 						}`}
 						disabled={!canSubmit}
 					>
@@ -441,7 +462,7 @@
 				<div class="mb-10 space-y-4">
 					{#each path as step, index}
 						<div
-							class={`rounded-xl border bg-white p-5 shadow-sm transition cursor-pointer ${
+							class={`cursor-pointer rounded-xl border bg-white p-5 shadow-sm transition ${
 								index === activeIndex
 									? 'border-emerald-400 ring-2 ring-emerald-100'
 									: 'border-slate-200 hover:border-slate-300'
@@ -452,22 +473,28 @@
 						>
 							<div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
 								<div>
-									<p class="text-xs uppercase tracking-wide text-slate-500">
+									<p class="text-xs tracking-wide text-slate-500 uppercase">
 										Etape {index}
 									</p>
-									<p class="mt-1 text-2xl font-semibold capitalize text-slate-900">{step.word}</p>
+									<p class="mt-1 text-2xl font-semibold text-slate-900 capitalize">{step.word}</p>
 								</div>
 								<div class="flex flex-wrap gap-3 text-sm">
-									<div class={`rounded-full border px-4 py-2 font-semibold ${getSimilarityBadge(step.similarityToTarget)}`}>
+									<div
+										class={`rounded-full border px-4 py-2 font-semibold ${getSimilarityBadge(step.similarityToTarget)}`}
+									>
 										Vers objectif {formatPercent(step.similarityToTarget)}
 									</div>
 									{#if step.similarityFromPrevious !== null}
-										<div class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 font-medium text-slate-700">
+										<div
+											class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 font-medium text-slate-700"
+										>
 											Lien avec le mot précédent {formatPercent(step.similarityFromPrevious)}
 										</div>
 									{/if}
 									{#if index > 0}
-										<div class={`rounded-full bg-white px-4 py-2 font-semibold ${getDeltaColor(step.deltaToTarget)}`}>
+										<div
+											class={`rounded-full bg-white px-4 py-2 font-semibold ${getDeltaColor(step.deltaToTarget)}`}
+										>
 											{formatDelta(step.deltaToTarget)}
 										</div>
 									{/if}
@@ -541,8 +568,8 @@
 						{/each}
 					</svg>
 					<p class="mt-3 text-xs text-slate-500">
-						Hauteur proportionnelle à la proximité avec le mot objectif. La portion en pointillés représente
-						reste du pont jusqu'au but.
+						Hauteur proportionnelle à la proximité avec le mot objectif. La portion en pointillés
+						représente reste du pont jusqu'au but.
 					</p>
 				</div>
 			{/if}

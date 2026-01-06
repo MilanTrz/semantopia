@@ -54,6 +54,7 @@
 		"@tailwindcss/line-clamp": "^0.4.4",
 		"bcrypt": "^6.0.0",
 		"canvas-confetti": "^1.9.3",
+		"gender-detection": "^0.1.0",
 		"js-levenshtein": "^1.1.6",
 		"jsonwebtoken": "^9.0.2",
 		"mysql2": "^3.15.2"

@@ -6,13 +6,15 @@
 	import type { challenge } from '$lib/models/challenge';
 	import type { hints } from '$lib/models/hints';
 
+	type MaskToken = number | string | { length: number; state: 'near'; score: number; word: string };
+
 	let userGuess = '';
 	let tabguess: string[] = [];
 	let sessionId: string = '';
 	let repbody: {
 		sessionId: string;
-		tabHiddenTitle: number[];
-		tabHiddenContent: number[];
+		tabHiddenTitle: MaskToken[];
+		tabHiddenContent: MaskToken[];
 		hints: hints;
 		isWordInGame: boolean;
 	};
@@ -23,10 +25,10 @@
 		tauxReussite: number;
 		serieActuelle: number;
 	};
-	let tabTitle: number[];
-	let tabTitleTemp: number[] = [];
-	let tabContent: number[];
-	let tabContentTemp: number[] = [];
+	let tabTitle: MaskToken[] = [];
+	let tabTitleTemp: MaskToken[] = [];
+	let tabContent: MaskToken[] = [];
+	let tabContentTemp: MaskToken[] = [];
 	let nbEssai: number = 0;
 
 	let partiesJouees: number = 0;
@@ -37,36 +39,43 @@
 	let isLoading = true;
 	let isVictory = false;
 
-	let isSurrender = true;
+	let isSurrender = false;
 
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
-	
+
 	let lastChallenge: challenge | null = null;
 	let userHintReaveal: number = 0;
 
 	let hintsGame: hints;
 	let revealedIndice = [false, false, false];
 
-	let isWordInGame:boolean = true;
+	let isWordInGame: boolean = true;
 	let isChallengeWinned: boolean = false;
 
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
 	}
-
+	function resetIndices() {
+		revealedIndice = [false, false, false];
+	}
 
 	async function newGame() {
 		if (idUser) {
 			getStatistics();
 		}
+		resetIndices();
 		isChallengeWinned = false;
-		isSurrender = true;
+		isSurrender = false;
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
 		nbEssai = 0;
 		userGuess = '';
+		tabTitle = [];
+		tabContent = [];
+		tabTitleTemp = [];
+		tabContentTemp = [];
 		if (idUser === null) {
 			console.error('idUser est null');
 			return;
@@ -82,7 +91,7 @@
 				sessionId = repbody.sessionId;
 				tabTitle = repbody.tabHiddenTitle;
 				tabContent = repbody.tabHiddenContent;
-				hintsGame = repbody.hints
+				hintsGame = repbody.hints;
 			}
 		} catch (error) {
 			console.error('Erreur de chargement:', error);
@@ -105,9 +114,9 @@
 			})
 		});
 		repbody = await response.json();
-		if (response.status == 201) {	
-			tabTitleTemp = tabTitle;
-			tabContentTemp = tabContent;
+		if (response.status == 201) {
+			tabTitleTemp = [...tabTitle];
+			tabContentTemp = [...tabContent];
 			tabTitle = repbody.tabHiddenTitle;
 			tabContent = repbody.tabHiddenContent;
 			isWordInGame = repbody.isWordInGame;
@@ -120,49 +129,68 @@
 	}
 
 	function isNewlyFoundTitle(index: number): boolean {
-		return (
-			typeof tabTitleTemp[index] === 'number' &&
-			typeof tabTitle[index] === 'string' &&
-			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabTitle[index] as string)
-		);
+		const previous = tabTitleTemp[index];
+		const current = tabTitle[index];
+		return typeof previous !== 'string' && typeof current === 'string' && !isPunctuation(current);
 	}
 	function isNewlyFoundContent(index: number): boolean {
-		return (
-			typeof tabContentTemp[index] === 'number' &&
-			typeof tabContent[index] === 'string' &&
-			!/^[.,!?;:()\[\]{}"'«»\-–—]$/.test(tabContent[index] as string)
-		);
+		const previous = tabContentTemp[index];
+		const current = tabContent[index];
+		return typeof previous !== 'string' && typeof current === 'string' && !isPunctuation(current);
 	}
+
+	const isPunctuation = (token: MaskToken) =>
+		typeof token === 'string' && /^[.,!?;:()\[\]{}"'«»\-–—]$/.test(token);
+	const isNearMatch = (
+		token: MaskToken
+	): token is { length: number; state: 'near'; score: number; word: string } =>
+		typeof token === 'object' && token !== null && 'state' in token && token.state === 'near';
+
+	const maskedSquares = (length: number) => '■'.repeat(length);
+
+	const needsSpaceBefore = (token: MaskToken, index: number) => index > 0 && !isPunctuation(token);
+
+	const nearTextColor = (score?: number) => {
+		const safe = Math.min(Math.max(score ?? 0, 0), 1);
+		const hue = 50 - safe * 50; // yellow to red
+		const lightness = 65 + safe * 10; // slightly lighter when closer
+		return `hsl(${hue} 85% ${lightness}%)`;
+	};
+
+	const tooltipLabel = (len: number) => `${len} caractères`;
 
 	async function triggerVictory() {
 		isVictory = true;
 		isSurrender = false;
 		try {
+			const response = await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser,
+					sessionId
+				})
+			});
+			const data = await response.json();
+			if (data.revealContent) {
+				tabContent = data.revealContent;
+			}
 			if (idUser) {
-				await fetch('/game/pedantix', {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						nbEssai,
-						isVictory,
-						idUser
-					})
-				});
-				
-				if (lastChallenge){
-					if (lastChallenge.nbTry > 0){
-						if (nbEssai < lastChallenge.nbTry){
+				if (lastChallenge) {
+					if (lastChallenge.nbTry > 0) {
+						if (nbEssai < lastChallenge.nbTry) {
 							isChallengeWinned = true;
-							winChallenge()
+							winChallenge();
 						}
-					}else if(lastChallenge.nbHint >= 0){
-						if (userHintReaveal < lastChallenge.nbHint){
+					} else if (lastChallenge.nbHint >= 0) {
+						if (userHintReaveal < lastChallenge.nbHint) {
 							isChallengeWinned = true;
-							winChallenge()
+							winChallenge();
 						}
 					}
 				}
-				
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -172,19 +200,32 @@
 	}
 
 	async function surrenderGame() {
-		isSurrender = false;
+		console.log('Abandon de la partie...');
+		isSurrender = true;
 		isVictory = false;
 		try {
-			if (idUser) {
-				await fetch('/game/pedantix', {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						nbEssai,
-						isVictory,
-						idUser
-					})
+			const response = await fetch('/game/pedantix', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nbEssai,
+					isVictory,
+					idUser,
+					sessionId
+				})
+			});
+			const data = await response.json();
+			if (data.revealWord) {
+				const titleWords = data.revealWord
+					.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
+					.filter((s: string) => s.trim() !== '');
+				tabTitle = titleWords.map((word: string) => {
+					return /^[.,!?;:()[\]{}"'«»\-–—]$/.test(word) ? word : word;
 				});
+			}
+			console.log('Revealed Title:', tabTitle);
+			if (data.revealContent) {
+				tabContent = data.revealContent;
 			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -211,36 +252,34 @@
 			throw error;
 		}
 	}
-	async function checkChallenge(){
-		try{
-			const response = await fetch('/api/challenge/checkChallenge',{
+	async function checkChallenge() {
+		try {
+			const response = await fetch('/api/challenge/checkChallenge', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					gameName : 'pedantix'
+					gameName: 'pedantix'
 				})
-
-			})
-			const data = await response.json()
-			if (data){
-				lastChallenge = data.lastChallenge
+			});
+			const data = await response.json();
+			if (data) {
+				lastChallenge = data.lastChallenge;
 			}
-			
-		}catch (error) {
+		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
 	}
-	async function winChallenge(){
-		try{
-			await fetch('/api/challenge/updateWinChallenge',{
+	async function winChallenge() {
+		try {
+			await fetch('/api/challenge/updateWinChallenge', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					idUser: idUser
 				})
-			})
-		}catch (error) {
+			});
+		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
@@ -248,7 +287,7 @@
 
 	onMount(() => {
 		newGame();
-		checkChallenge()
+		checkChallenge();
 	});
 </script>
 
@@ -263,7 +302,7 @@
 			</div>
 		</div>
 		{#if isChallengeWinned}
-			<div class="flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6 mb-6">
+			<div class="mb-6 flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6">
 				<svg
 					class="h-6 w-6 flex-shrink-0 text-green-600"
 					fill="none"
@@ -279,7 +318,9 @@
 				</svg>
 				<div>
 					<p class="font-semibold text-green-900">Défi relevé !</p>
-					<p class="text-sm text-green-700">Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !</p>
+					<p class="text-sm text-green-700">
+						Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !
+					</p>
 				</div>
 			</div>
 		{/if}
@@ -289,6 +330,15 @@
 					class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
 				></div>
 				<p class="font-medium text-gray-600">Chargement de la partie...</p>
+			</div>
+		{/if}
+		{#if isSurrender}
+			<div
+				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
+			>
+				<p class="text-3xl font-bold text-red-700">
+					Perdu, le mot était {tabTitle.filter((item) => typeof item === 'string').join(' ')}
+				</p>
 			</div>
 		{/if}
 		{#if !isWordInGame}
@@ -308,7 +358,9 @@
 				</svg>
 				<div>
 					<p class="font-semibold text-amber-900">Mot introuvable</p>
-					<p class="text-sm text-amber-700">Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu</p>
+					<p class="text-sm text-amber-700">
+						Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu
+					</p>
 				</div>
 			</div>
 		{/if}
@@ -321,32 +373,24 @@
 					bind:value={userGuess}
 					placeholder="Tapez votre proposition..."
 					class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
-					disabled={isVictory}
+					disabled={isVictory || isSurrender}
 				/>
 				<button
 					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 					type="submit"
-					disabled={isVictory}
+					disabled={isVictory || isSurrender}
 				>
 					Envoyer
 				</button>
 			</form>
 		</div>
 		<div class="mb-6 rounded-lg p-6">
-			<p class="mb-4 text-sm tracking-wide text-gray-600">
+			<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
 				{#each tabTitle as item, i}
-					{#if typeof item === 'number'}
-						<span class="group relative inline-block cursor-help">
-							{Array(item).fill('■').join('')}
-							<span
-								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{item}{' '}
-							</span>
-						</span>{' '}
-					{:else}
+					{#if typeof item === 'string'}
 						<span
 							class="inline-block"
+							class:ml-1={needsSpaceBefore(item, i)}
 							class:text-green-600={isNewlyFoundTitle(i)}
 							class:bg-green-100={isNewlyFoundTitle(i)}
 							class:border-2={isNewlyFoundTitle(i)}
@@ -354,25 +398,60 @@
 							class:rounded={isNewlyFoundTitle(i)}
 							class:px-1={isNewlyFoundTitle(i)}
 						>
-							{item}{' '}
+							{item}
+						</span>
+					{:else if isNearMatch(item)}
+						<span
+							class="group relative inline-flex items-center justify-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+							title="Proche, mais pas révélé"
+							style={`min-width: ${Math.max(item.length, item.word.length)}ch; min-height: 2.6em; padding-right: 0.1em;`}
+						>
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; line-height: 1.25;"
+							>
+								{maskedSquares(item.length)}
+							</span>
+							<span
+								class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
+								style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
+							>
+								{item.word}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item.length)}
+							</span>
+						</span>
+					{:else}
+						<span
+							class="group relative inline-flex items-center justify-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+							style="min-height: 2.6em; padding-right: 0.1em;"
+						>
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; line-height: 1.25;"
+							>
+								{maskedSquares(item as number)}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item as number)}
+							</span>
 						</span>
 					{/if}
 				{/each}
 			</p>
-			<p class="w-full tracking-wide focus:outline-none">
+			<p class="flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
 				{#each tabContent as item, i}
-					{#if typeof item === 'number'}
-						<span class="group relative inline-block cursor-help">
-							{Array(item).fill('■').join('')}
-							<span
-								class="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{item}{' '}
-							</span>
-						</span>{' '}
-					{:else}
+					{#if typeof item === 'string'}
 						<span
 							class="inline-block"
+							class:ml-1={needsSpaceBefore(item, i)}
 							class:text-green-600={isNewlyFoundContent(i)}
 							class:bg-green-100={isNewlyFoundContent(i)}
 							class:border-2={isNewlyFoundContent(i)}
@@ -380,8 +459,50 @@
 							class:rounded={isNewlyFoundContent(i)}
 							class:px-1={isNewlyFoundContent(i)}
 						>
-							{item}{' '}
-						</span>{' '}
+							{item}
+						</span>
+					{:else if isNearMatch(item)}
+						<span
+							class="group relative inline-flex items-center justify-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+							title="Proche, mais pas révélé"
+							style={`min-width: ${Math.max(item.length, item.word.length)}ch; padding-right: 0.1em;`}
+						>
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; line-height: 1.25;"
+							>
+								{maskedSquares(item.length)}
+							</span>
+							<span
+								class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
+								style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
+							>
+								{item.word}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item.length)}
+							</span>
+						</span>
+					{:else}
+						<span
+							class="group relative inline-flex items-center"
+							class:ml-1={needsSpaceBefore(item, i)}
+						>
+							<span
+								class="inline-block font-mono tracking-tight text-black"
+								style="font-size: 1.5em; padding-right: 0.1em;"
+							>
+								{maskedSquares(item as number)}
+							</span>
+							<span
+								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+							>
+								{tooltipLabel(item as number)}
+							</span>
+						</span>
 					{/if}
 				{/each}
 			</p>
@@ -401,7 +522,7 @@
 		</div>
 
 		<div class="flex gap-4">
-			{#if !isSurrender}
+			{#if isSurrender || isVictory}
 				<button
 					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 					on:click={newGame}
@@ -505,11 +626,11 @@
 						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-green-600">{tauxReussite}%</p>
+						<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
 						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 					</div>
 					<div class="text-center">
-						<p class="text-4xl font-bold text-blue-600">{essaisMoyen}</p>
+						<p class="text-4xl font-bold text-blue-600">{Math.round(essaisMoyen * 100) / 100}</p>
 						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
 					</div>
 					<div class="text-center">

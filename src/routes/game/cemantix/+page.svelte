@@ -14,6 +14,7 @@
 	let targetWord = '';
 	let wordLength = 0;
 	let message = '';
+	let sessionId = '';
 
 	async function newGame() {
 		nbEssai = 0;
@@ -22,6 +23,7 @@
 		targetWord = '';
 		userGuess = '';
 		message = '';
+		sessionId = '';
 
 		try {
 			const response = await fetch('/game/cemantix/', {
@@ -31,8 +33,11 @@
 
 			const data = await response.json();
 			if (response.status === 201) {
+				sessionId = data.sessionId;
 				wordLength = data.wordLength;
 				message = 'Nouvelle partie créée ! Trouvez le mot mystère.';
+			} else {
+				message = data.message ?? 'Impossible de créer une partie.';
 			}
 		} catch (error) {
 			message = 'Erreur lors de la création de la partie.';
@@ -54,16 +59,28 @@
 			return;
 		}
 
+		if (!sessionId) {
+			message = 'Aucune partie active. Relancez une partie pour jouer.';
+			userGuess = '';
+			return;
+		}
+
 		nbEssai++;
 
 		try {
 			const response = await fetch('/game/cemantix/', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userGuess: userGuess.trim() })
+				body: JSON.stringify({ userGuess: userGuess.trim(), sessionId })
 			});
 
 			const data = await response.json();
+
+			if (response.status === 400) {
+				message = data.message ?? 'Aucune partie active. Relancez une partie.';
+				nbEssai--;
+				return;
+			}
 
 			if (response.status === 201) {
 				if (data.notInVocabulary) {

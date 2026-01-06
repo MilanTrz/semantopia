@@ -5,8 +5,11 @@
 	let pseudo: string | null = session ? session.pseudo : null;
 	let isAdmin: boolean | null = session ? session.isAdmin : null;
 	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
-	function logout() {
+	async function logout() {
 		sessionStore.clear();
+		await fetch('/api/logout', {
+			method: 'DELETE'
+		});
 		window.setTimeout(() => {
 			goto('/login');
 		});
@@ -24,7 +27,6 @@
 	</div>
 	<div>
 		<ul class="flex items-center gap-6">
-			<li><a href="/login" class="text-gray-600 transition hover:text-purple-600">A propos</a></li>
 			{#if pseudo}
 				<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 				<li>

@@ -2,12 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { sessionStore, type sessionData } from '$lib/store/sessionStore';
 
-	let pseudo = '';
-	let email = '';
-	let mdp = '';
+	let pseudo: string = '';
+	let email: string = '';
+	let mdp: string = '';
 	let errors: { [key: string]: string } = {};
-	let formValidation = true;
-	let rep = -1;
+	let formValidation: boolean = true;
+	let rep: number = -1;
 	let repbody: {
 		message: string;
 		userId: number;
@@ -93,6 +93,8 @@
 					bind:value={pseudo}
 					placeholder="Votre pseudo"
 					class="w-full rounded-lg border border-gray-300 px-4 py-3 transition outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+					minlength="4"
+					maxlength="12"
 				/>
 			</div>
 
@@ -120,6 +122,8 @@
 						bind:value={mdp}
 						placeholder="••••••••"
 						class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 transition outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+						minlength="4"
+						maxlength="30"
 					/>
 				</div>
 			</div>
