@@ -76,7 +76,12 @@ export async function POST({ request }: RequestEvent) {
 		let newTabSimilarWord: string[] = [];
 		while (!isValid) {
 			newTabSimilarWord = await fetchMostSimilar(newWordBasic, 2);
-			isValid = checkWordsValidity(newWordBasic, wordIntruder, newTabSimilarWord[0], newTabSimilarWord[1]);
+			isValid = checkWordsValidity(
+				newWordBasic,
+				wordIntruder,
+				newTabSimilarWord[0],
+				newTabSimilarWord[1]
+			);
 		}
 		activeSessions.set(sessionId, {
 			wordBasic: newWordBasic,
@@ -168,7 +173,7 @@ function checkWordsValidity(
 			.replace(/[\u0300-\u036f]/g, '')
 			.trim()
 			.toLowerCase()
-			.replace(/s/,'')
+			.replace(/s/, '');
 	};
 
 	if (!word1 || !word2 || word1.length === 0 || word2.length === 0) {

@@ -170,6 +170,22 @@
 				</p>
 			</div>
 		</a>
+		<a
+			href="/game/panix"
+			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
+		>
+			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
+				>
+					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
+				</div>
+				<h4 class="mb-3 text-xl font-bold text-gray-800">Panix</h4>
+				<p class="text-sm text-gray-600">
+					Créer un mot avec des lettres imposés et qui doivent etre collées en 60 secondes
+				</p>
+			</div>
+		</a>
 	</div>
 </section>
 <!----
