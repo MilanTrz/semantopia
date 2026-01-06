@@ -20,7 +20,7 @@ export async function GET({ url }: RequestEvent) {
 		const date = new Date();
 		if (userId !== 0) {
 			await pool.query(
-				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"lettrix",0,?) ',
+				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"lettix",0,?) ',
 				[date, userId]
 			);
 		}
@@ -41,11 +41,11 @@ export async function POST({ request }: RequestEvent) {
 	}
 	const { wordToFind } = session;
 	let isWin: boolean = false;
-	if (areAnagrams(wordToFind,userGuess)) {
-		if (await checkWordExist(userGuess) == false){
+	if (areAnagrams(wordToFind, userGuess)) {
+		if ((await checkWordExist(userGuess)) == false) {
 			return new Response(JSON.stringify({ message: 'Ce n est pas le bon mot', isWin }), {
-			status: 200
-		});
+				status: 200
+			});
 		}
 		const newWord: string = await randomWord();
 		const newWordShuffle: string = shuffleWord(newWord);
@@ -90,8 +90,7 @@ async function randomWord() {
 	if (
 		wordToFind.length < 5 ||
 		wordToFind.length > 10 ||
-		wordToFind.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/) 
-
+		wordToFind.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
 	) {
 		return randomWord();
 	}
@@ -108,45 +107,46 @@ function shuffleWord(word: string): string {
 }
 
 function areAnagrams(word1: string, word2: string): boolean {
-  const normalize = (str: string) => 
-    str.toLowerCase()
-       .normalize("NFD")
-       .replace(/[\u0300-\u036f]/g, "")
-       .replace(/\s+/g, ""); 
-  
-  const str1 = normalize(word1);
-  const str2 = normalize(word2);
+	const normalize = (str: string) =>
+		str
+			.toLowerCase()
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.replace(/\s+/g, '');
 
-  if (str1.length !== str2.length) {
-    return false;
-  }
-  
-  const charCount: Record<string, number> = {};
-  
-  for (const char of str1) {
-    charCount[char] = (charCount[char] || 0) + 1;
-  }
-  
-  for (const char of str2) {
-    if (!charCount[char]) {
-      return false;
-    }
-    charCount[char]--;
-  }
-  
-  return true;
+	const str1 = normalize(word1);
+	const str2 = normalize(word2);
+
+	if (str1.length !== str2.length) {
+		return false;
+	}
+
+	const charCount: Record<string, number> = {};
+
+	for (const char of str1) {
+		charCount[char] = (charCount[char] || 0) + 1;
+	}
+
+	for (const char of str2) {
+		if (!charCount[char]) {
+			return false;
+		}
+		charCount[char]--;
+	}
+
+	return true;
 }
 
-async function checkWordExist(word:string){
+async function checkWordExist(word: string) {
 	const response = await fetch('http://localhost:5000/api/check-word', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
-				word
-			})
+			word
+		})
 	});
 	const data = await response.json();
-	const isCorrectWord = data.exists
-	console.log(data + "  " + isCorrectWord)
-	return isCorrectWord
+	const isCorrectWord = data.exists;
+	console.log(data + '  ' + isCorrectWord);
+	return isCorrectWord;
 }
