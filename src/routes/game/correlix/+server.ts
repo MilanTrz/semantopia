@@ -1,4 +1,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
+import { createServerSessionStore } from '$lib/utils/serverSessionStore';
+import {
+	fetchRandomWord,
+	fetchSimilarityPercent,
+	type SimilarityPercentResult
+} from '$lib/utils/word2vec';
+import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 
 type Step = {
 	word: string;
@@ -7,34 +14,39 @@ type Step = {
 	deltaToTarget: number | null;
 };
 
-const MIN_LINK_SIMILARITY = 25;
-const TARGET_SIMILARITY_MIN = 6;
-const TARGET_SIMILARITY_MAX = 24;
-const MAX_SELECTION_ATTEMPTS = 64;
-
-let gameState: {
+type CorrelixState = {
 	startWord: string;
 	targetWord: string;
 	path: Step[];
 	active: boolean;
 	minLinkSimilarity: number;
-} = {
-	startWord: '',
-	targetWord: '',
-	path: [],
-	active: false,
-	minLinkSimilarity: MIN_LINK_SIMILARITY
+	userId?: number | null;
 };
 
-export async function GET() {
+const MIN_LINK_SIMILARITY = 25;
+const TARGET_SIMILARITY_MIN = 6;
+const TARGET_SIMILARITY_MAX = 24;
+const MAX_SELECTION_ATTEMPTS = 64;
+
+const sessions = createServerSessionStore<CorrelixState>({
+	ttlMs: 1000 * 60 * 60,
+	prefix: 'correlix'
+});
+
+export async function GET({ url }: RequestEvent) {
 	try {
-		await initialiseGame();
+		const rawUserId = url.searchParams.get('userId');
+		const userId = rawUserId ? Number(rawUserId) : null;
+		const state = await initialiseGame(userId);
+		const { id: sessionId } = sessions.create(state);
 		return new Response(
 			JSON.stringify({
-				startWord: gameState.startWord,
-				targetWord: gameState.targetWord,
-				path: gameState.path,
-				minSimilarity: gameState.minLinkSimilarity,
+				startWord: state.startWord,
+				targetWord: state.targetWord,
+				path: state.path,
+				minSimilarity: state.minLinkSimilarity,
+				userId,
+				sessionId,
 				message: "Construisez un pont lexical du mot de départ vers le mot d'arrivée."
 			}),
 			{ status: 201 }
@@ -49,9 +61,10 @@ export async function GET() {
 }
 
 export async function POST({ request }: RequestEvent) {
-	const { userWord, anchorWord } = await request.json();
+	const { userWord, anchorWord, sessionId, userId } = await request.json();
 
-	if (!gameState.active) {
+	const entry = sessions.get(sessionId);
+	if (!entry || !entry.data.active) {
 		return new Response(
 			JSON.stringify({
 				success: false,
@@ -62,11 +75,11 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	let anchorIndex = gameState.path.length - 1;
+	const state = entry.data;
+
+	let anchorIndex = state.path.length - 1;
 	if (anchorWord) {
-		const foundIndex = gameState.path.findIndex(
-			(step) => step.word === anchorWord
-		);
+		const foundIndex = state.path.findIndex((step) => step.word === anchorWord);
 		if (foundIndex !== -1) {
 			anchorIndex = foundIndex;
 		}
@@ -83,7 +96,7 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	const scopePath = gameState.path.slice(0, anchorIndex + 1);
+	const scopePath = state.path.slice(0, anchorIndex + 1);
 	const alreadyUsed = scopePath.some((step) => step.word === userWord);
 	if (alreadyUsed) {
 		return new Response(
@@ -96,7 +109,7 @@ export async function POST({ request }: RequestEvent) {
 		);
 	}
 
-	const anchorStep = gameState.path[anchorIndex];
+	const anchorStep = state.path[anchorIndex];
 	if (!anchorStep) {
 		return new Response(
 			JSON.stringify({
@@ -132,18 +145,18 @@ export async function POST({ request }: RequestEvent) {
 	}
 
 	const linkSimilarity = similarityToPrevious.similarity;
-	if (linkSimilarity < gameState.minLinkSimilarity) {
+	if (linkSimilarity < state.minLinkSimilarity) {
 		return new Response(
 			JSON.stringify({
 				success: false,
 				error: 'too_far',
-				message: `Le mot doit être à au moins ${gameState.minLinkSimilarity}% du précédent (actuel: ${linkSimilarity.toFixed(1)}%).`
+				message: `Le mot doit être à au moins ${state.minLinkSimilarity}% du précédent (actuel: ${linkSimilarity.toFixed(1)}%).`
 			}),
 			{ status: 201 }
 		);
 	}
 
-	const similarityToTarget = await calculateSimilarityPercent(userWord, gameState.targetWord);
+	const similarityToTarget = await calculateSimilarityPercent(userWord, state.targetWord);
 	if (similarityToTarget.status === 'missing') {
 		return new Response(
 			JSON.stringify({
@@ -175,12 +188,21 @@ export async function POST({ request }: RequestEvent) {
 		similarityFromPrevious: linkSimilarity,
 		deltaToTarget: delta
 	};
-	const trimmedPath = gameState.path.slice(0, anchorIndex + 1);
-	gameState.path = [...trimmedPath, newStep];
+	const trimmedPath = state.path.slice(0, anchorIndex + 1);
+	const nextPath = [...trimmedPath, newStep];
 
-	const isWinner = userWord === gameState.targetWord;
+	const isWinner = userWord === state.targetWord;
+	const nextState: CorrelixState = {
+		...state,
+		path: nextPath,
+		active: isWinner ? false : state.active
+	};
+
+	sessions.update(sessionId, nextState);
+
 	if (isWinner) {
-		gameState.active = false;
+		const resolvedUserId = userId ?? state.userId;
+		await endGameSession(resolvedUserId ?? null, 'correlix', nextPath.length - 1, true);
 	}
 
 	let feedback: string;
@@ -197,19 +219,30 @@ export async function POST({ request }: RequestEvent) {
 	return new Response(
 		JSON.stringify({
 			success: true,
-			path: gameState.path,
+			path: nextPath,
 			isWinner,
 			anchorWord: anchorStep.word,
-			message: feedback
+			message: feedback,
+			sessionId
 		}),
 		{ status: 201 }
 	);
 }
 
-async function initialiseGame() {
+async function initialiseGame(userId: number | null): Promise<CorrelixState> {
 	for (let attempt = 0; attempt < MAX_SELECTION_ATTEMPTS; attempt++) {
-		const candidateStart = await getRandomWord();
-		const candidateTarget = await getRandomWord();
+		const candidateStart = await fetchRandomWord();
+		const candidateTarget = await fetchRandomWord();
+
+		if (candidateStart.length <= 2 || candidateTarget.length <= 2) {
+			continue;
+		}
+		if (
+			candidateStart.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/) ||
+			candidateTarget.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
+		) {
+			continue;
+		}
 
 		if (!candidateStart || !candidateTarget) {
 			continue;
@@ -236,72 +269,30 @@ async function initialiseGame() {
 			deltaToTarget: null
 		};
 
-		gameState = {
+		if (userId) {
+			await startGameSession(userId, 'correlix');
+		}
+
+		return {
 			startWord: candidateStart,
 			targetWord: candidateTarget,
 			path: [startStep],
 			active: true,
-			minLinkSimilarity: MIN_LINK_SIMILARITY
+			minLinkSimilarity: MIN_LINK_SIMILARITY,
+			userId
 		};
-
-		return;
 	}
 
 	throw new Error('Impossible de générer une combinaison de mots pour Correlix.');
 }
 
-async function getRandomWord(): Promise<string> {
-	const response = await fetch('http://localhost:5000/api/random-word');
-	if (!response.ok) {
-		throw new Error("Échec lors de la récupération d'un mot aléatoire");
-	}
-	const data = await response.json();
-	const cleaned = data.word;
-	if (!cleaned) {
-		throw new Error('Mot aléatoire invalide');
-	}
-	return cleaned;
-}
-
 async function calculateSimilarityPercent(
 	word1: string,
 	word2: string
-): Promise<
-	| {
-			status: 'ok';
-			similarity: number;
-	  }
-	| {
-			status: 'missing';
-	  }
-	| {
-			status: 'error';
-	  }
-> {
-	try {
-		const response = await fetch('http://localhost:5000/api/similarity', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ word1, word2 })
-		});
-
-		if (!response.ok) {
-			return { status: 'error' };
-		}
-
-		const data = await response.json();
-
-		if (data.code === 1) {
-			return { status: 'missing' };
-		}
-
-		if (typeof data.similarity !== 'number') {
-			return { status: 'error' };
-		}
-
-		return { status: 'ok', similarity: data.similarity * 100 };
-	} catch (error) {
-		console.error('Erreur similarite Correlix:', error);
-		return { status: 'error' };
+): Promise<SimilarityPercentResult> {
+	if (word1.toLowerCase() === word2.toLowerCase()) {
+		return { status: 'ok', similarity: 100 };
 	}
+
+	return fetchSimilarityPercent(word1, word2);
 }

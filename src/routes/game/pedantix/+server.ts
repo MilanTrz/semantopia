@@ -1,15 +1,19 @@
 import type { hints } from '$lib/models/hints';
-import pool from '$lib/server/db';
+import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 import type { RequestEvent } from '@sveltejs/kit';
 
-// Stockage en mémoire des parties actives par ID de session
-const activeSessions: Map<string, {
-	titleWikiPage: string;
-	titleWikiPageSplit: string[];
-	contentsplice: string[];
-	tabHiddenTitle: (number | string)[];
-	tabHiddenContent: (number | string)[];
-}> = new Map();
+type MaskToken = number | string | { length: number; state: 'near'; score: number; word: string };
+
+const activeSessions: Map<
+	string,
+	{
+		titleWikiPage: string;
+		titleWikiPageSplit: string[];
+		contentsplice: string[];
+		tabHiddenTitle: MaskToken[];
+		tabHiddenContent: MaskToken[];
+	}
+> = new Map();
 
 export async function POST({ request }: RequestEvent) {
 	const { userGuess, sessionId } = await request.json();
@@ -26,37 +30,44 @@ export async function POST({ request }: RequestEvent) {
 	try {
 		const normalizedGuess = userGuess.toLowerCase().trim();
 
-		let foundInTitle = false;
-		let foundInContent = false;
+		const hasExactInTitle = titleWikiPageSplit.some(
+			(word) => word.toLowerCase() === normalizedGuess
+		);
+		const hasExactInContent = contentsplice.some((word) => word.toLowerCase() === normalizedGuess);
 
-		titleWikiPageSplit.forEach((word) => {
-			if (word.toLowerCase() === normalizedGuess) {
-				foundInTitle = true;
-			}
-		});
-		contentsplice.forEach((word) => {
-			if (word.toLowerCase() === normalizedGuess) {
-				foundInContent = true;
-			}
-		});
+		const checkAndMark = async (word: string, index: number, target: MaskToken[]) => {
+			const current = target[index];
+			if (typeof current === 'string') return;
 
-		// Si le mot est trouvé exactement dans le titre ou le contenu, c'est valide
-		if (foundInTitle || foundInContent) {
-			// Chercher tous les mots similaires
+			const similarity = await checkSimilarity(word.toLowerCase(), normalizedGuess);
+			if (similarity >= 0.9) {
+				target[index] = word;
+				return;
+			}
+			if (similarity >= 0.6) {
+				const newNear = {
+					length: word.length,
+					state: 'near' as const,
+					score: similarity,
+					word: normalizedGuess
+				};
+				if (typeof current === 'number') {
+					target[index] = newNear;
+					return;
+				}
+				if (typeof current === 'object' && current !== null && 'score' in current) {
+					// Keep the best similarity seen so far
+					target[index] = similarity > (current as { score: number }).score ? newNear : current;
+				}
+			}
+		};
+
+		if (hasExactInTitle || hasExactInContent) {
 			await Promise.all([
-				...contentsplice.map(async (word, index) => {
-					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-						tabHiddenContent[index] = word;
-					}
-				}),
-				...titleWikiPageSplit.map(async (word, index) => {
-					if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-						tabHiddenTitle[index] = word;
-					}
-				})
+				...contentsplice.map((word, index) => checkAndMark(word, index, tabHiddenContent)),
+				...titleWikiPageSplit.map((word, index) => checkAndMark(word, index, tabHiddenTitle))
 			]);
 
-			// Mettre à jour la session
 			session.tabHiddenTitle = tabHiddenTitle;
 			session.tabHiddenContent = tabHiddenContent;
 
@@ -64,36 +75,30 @@ export async function POST({ request }: RequestEvent) {
 				JSON.stringify({
 					tabHiddenTitle,
 					tabHiddenContent,
-					isWordInGame : true
+					isWordInGame: true
 				}),
 				{ status: 201 }
 			);
 		}
 
-		// Sinon, vérifier si le mot existe dans le vocabulaire word2vec
 		const isWordInGame = await checkWord(userGuess);
 
 		if (!isWordInGame) {
-			return new Response(JSON.stringify({ message: 'Le mot n existe pas ou n est pas présent dans le titre ou le contenu', isWordInGame: false }), {
-				status: 200
-			});
+			return new Response(
+				JSON.stringify({
+					message: 'Le mot n existe pas ou n est pas présent dans le titre ou le contenu',
+					isWordInGame: false
+				}),
+				{
+					status: 200
+				}
+			);
 		}
-
-		// Chercher les mots similaires
 		await Promise.all([
-			...contentsplice.map(async (word, index) => {
-				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-					tabHiddenContent[index] = word;
-				}
-			}),
-			...titleWikiPageSplit.map(async (word, index) => {
-				if (await checkSimilarity(word.toLowerCase(), userGuess.toLowerCase())) {
-					tabHiddenTitle[index] = word;
-				}
-			})
+			...contentsplice.map((word, index) => checkAndMark(word, index, tabHiddenContent)),
+			...titleWikiPageSplit.map((word, index) => checkAndMark(word, index, tabHiddenTitle))
 		]);
 
-		// Mettre à jour la session
 		session.tabHiddenTitle = tabHiddenTitle;
 		session.tabHiddenContent = tabHiddenContent;
 
@@ -101,7 +106,7 @@ export async function POST({ request }: RequestEvent) {
 			JSON.stringify({
 				tabHiddenTitle,
 				tabHiddenContent,
-				isWordInGame : true
+				isWordInGame: true
 			}),
 			{ status: 201 }
 		);
@@ -115,21 +120,20 @@ export async function POST({ request }: RequestEvent) {
 export async function GET({ url }: RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
 	const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-	let hints : hints;
+	let hints: hints;
 	let titleWikiPage: string;
 	let titleWikiPageSplit: string[];
 	let contentsplice: string[];
-	
-	do{
+
+	do {
 		titleWikiPage = await getRandomTitlePage();
 		hints = await getHints(titleWikiPage);
 		titleWikiPageSplit = titleWikiPage
-		.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
-		.filter((s) => s.trim() !== '');
-	contentsplice = await getContentPage(titleWikiPage);
-	}while (contentsplice.length == 0);
-	
-	
+			.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
+			.filter((s) => s.trim() !== '');
+		contentsplice = await getContentPage(titleWikiPage);
+	} while (contentsplice.length == 0);
+
 	const tabHiddenTitle = titleWikiPageSplit.map((str) =>
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
@@ -138,7 +142,6 @@ export async function GET({ url }: RequestEvent) {
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
 
-	// Stocker la session
 	activeSessions.set(sessionId, {
 		titleWikiPage,
 		titleWikiPageSplit,
@@ -147,12 +150,8 @@ export async function GET({ url }: RequestEvent) {
 		tabHiddenContent
 	});
 
-	const date = new Date();
 	if (userId !== 0) {
-		await pool.query(
-			'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"pedantix",0,?) ',
-			[date, userId]
-		);
+		await startGameSession(userId, 'pedantix');
 	}
 
 	try {
@@ -239,7 +238,7 @@ async function getContentPage(
 	const text = firstLines.join(' ');
 	const words = text
 		.replace(/([.,!?;:()[\]{}"'«»\-–—])/g, ' $1 ')
-		.split(/\s+/) 
+		.split(/\s+/)
 		.filter((word: string) => word !== '');
 
 	return words;
@@ -270,15 +269,14 @@ function isValideTitle(title: string): boolean {
 	return true;
 }
 
-async function checkSimilarity(wordTab: string, wordGuess: string) {
+async function checkSimilarity(wordTab: string, wordGuess: string): Promise<number> {
 	const newWord = wordGuess.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 	const newWordTab = wordTab.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-	
-	// Vérifier d'abord l'égalité exacte (après normalisation)
+
 	if (newWord.toLowerCase() === newWordTab.toLowerCase()) {
-		return true;
+		return 1;
 	}
-	
+
 	try {
 		const response = await fetch('http://localhost:5000/api/similarity', {
 			method: 'POST',
@@ -289,113 +287,141 @@ async function checkSimilarity(wordTab: string, wordGuess: string) {
 			})
 		});
 		const data = await response.json();
-		if (data.similarity >= 0.8) {
-			return true;
-		}
-		return false;
+		return typeof data.similarity === 'number' ? data.similarity : 0;
 	} catch (error) {
 		console.error('Erreur lors de la vérification de similarité:', error);
-		// Si le service échoue et que c'est une correspondance exacte, accepter quand même
-		return newWord.toLowerCase() === newWordTab.toLowerCase();
+		return newWord.toLowerCase() === newWordTab.toLowerCase() ? 1 : 0;
 	}
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { nbEssai, isVictory, idUser } = await request.json();
+	const { nbEssai, isVictory, idUser, sessionId } = await request.json();
 
 	try {
-		const [row_max] = (await pool.query(
-			'SELECT MAX(ID) AS ID FROM GAME_SESSION WHERE USER_ID = ?',
-			[idUser]
-		)) as [Array<{ ID: number }>, unknown];
-		const idMax = row_max[0].ID;
-		if (isVictory) {
-			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 1  WHERE USER_ID = ?  AND ID = ? AND TYPE = ? ',
-				[nbEssai, idUser, idMax, 'pedantix']
-			);
-		} else {
-			await pool.query(
-				'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = 0 WHERE USER_ID = ? AND ID= ? AND TYPE = ?',
-				[nbEssai, idUser, idMax, 'pedantix']
-			);
-		}
-		return new Response(null, { status: 204 });
+		await endGameSession(idUser, 'pedantix', nbEssai, isVictory);
+
+		const revealWord = activeSessions.get(sessionId)?.titleWikiPage;
+		const revealContent = activeSessions.get(sessionId)?.contentsplice;
+		return new Response(JSON.stringify({ revealWord, revealContent }), {
+			status: 200
+		});
 	} catch (error) {
 		console.error('Erreur Server:', error);
 		throw error;
 	}
 }
 
-async function getHints(title: string, lang: string = "fr"): Promise<hints> {
-    const base = `https://${lang}.wikipedia.org/w/api.php`;
+async function getHints(title: string, lang: string = 'fr'): Promise<hints> {
+	const base = `https://${lang}.wikipedia.org/w/api.php`;
 
-    const makeUrl = (extra: Record<string, string>) =>
-        base +
-        "?" +
-        new URLSearchParams({
-            format: "json",
-            origin: "*",
-            action: "query",
-            titles: title,
-            ...extra
-        });
+	const makeUrl = (extra: Record<string, string>) =>
+		base +
+		'?' +
+		new URLSearchParams({
+			format: 'json',
+			origin: '*',
+			action: 'query',
+			titles: title,
+			...extra
+		});
 
-    const [catRes, introRes, linksRes] = await Promise.all([
-        fetch(makeUrl({ prop: "categories" })),
-        fetch(makeUrl({ prop: "extracts", exintro: "true", explaintext: "true" })),
-        fetch(makeUrl({ prop: "links", pllimit: "10" }))
-    ]);
+	const [catRes, introRes, linksRes] = await Promise.all([
+		fetch(makeUrl({ prop: 'categories', cllimit: '50' })),
+		fetch(makeUrl({ prop: 'extracts', exintro: 'true', explaintext: 'true' })),
+		fetch(makeUrl({ prop: 'links', pllimit: '10' }))
+	]);
 
-    const catData = await catRes.json() as {
-        query: { pages: Record<string, { categories?: { title: string }[] }> }
-    };
+	const irrelevantPatterns = [
+		/^Catégorie:Article/,
+		/^Catégorie:Bon/i,
+		/^Catégorie:Page/i,
+		/^Catégorie:Portail:/,
+		/^Catégorie:Catégorie Commons/,
+		/^Catégorie:Projet:/,
+		/^Catégorie:Wikipédia:/,
+		/géolocalisé/i,
+		/Wikidata/i,
+		/Infobox/i
+	];
 
-    const introData = await introRes.json() as {
-        query: { pages: Record<string, { extract?: string }> }
-    };
+	const catData = (await catRes.json()) as {
+		query: { pages: Record<string, { categories?: { title: string }[] }> };
+	};
+	const introData = (await introRes.json()) as {
+		query: { pages: Record<string, { extract?: string }> };
+	};
 
-    const linksData = await linksRes.json() as {
-        query: { pages: Record<string, { links?: { title: string }[] }> }
-    };
+	const linksData = (await linksRes.json()) as {
+		query: { pages: Record<string, { links?: { title: string }[] }> };
+	};
 
-    const pageId = Object.keys(catData.query.pages)[0];
+	const pageId = Object.keys(catData.query.pages)[0];
 
-    const rawIntro = introData.query.pages[pageId].extract ?? "";
+	if (pageId === '-1') {
+		return {
+			categories: [],
+			intro: '',
+			links: []
+		};
+	}
 
-    const titleRegex = new RegExp(title, "gi");
-    const censoredIntro = rawIntro.replace(titleRegex, "…");
+	const rawIntro = introData.query.pages[pageId]?.extract ?? '';
 
-	  const shortIntro = censoredIntro.length > 50
-        ? censoredIntro.slice(0, 50) + "…"
-        : censoredIntro;
+	const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const titleRegex = new RegExp(escapedTitle, 'gi');
+	let censoredIntro = rawIntro.replace(titleRegex, '…');
 
-		const links = linksData.query.pages[pageId].links?.slice(0, 3).map(l => l.title) ?? [];
+	const titleWords = title.split(/\s+/).filter((w) => w.length > 3);
+	titleWords.forEach((word) => {
+		const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
+		censoredIntro = censoredIntro.replace(wordRegex, '…');
+	});
+	censoredIntro = censoredIntro.replace(/…+/g, '…').trim();
 
-    return {
-        categories: catData.query.pages[pageId].categories?.map(c => c.title) ?? [],
-        intro: shortIntro,
-        links: links
-    };
+	const shortIntro =
+		censoredIntro.length > 50 ? censoredIntro.slice(0, 50).trim() + '…' : censoredIntro;
+
+	const allLinks = linksData.query.pages[pageId]?.links ?? [];
+	const filteredLinks = allLinks
+		.filter((link) => {
+			const linkLower = link.title.toLowerCase();
+			const titleLower = title.toLowerCase();
+			return !linkLower.includes(titleLower) && !titleLower.includes(linkLower);
+		})
+		.slice(0, 3)
+		.map((l) => l.title);
+
+	const allCategories = catData.query.pages[pageId]?.categories?.map((c) => c.title) ?? [];
+
+	const relevantCategories = allCategories
+		.filter((title) => !irrelevantPatterns.some((pattern) => pattern.test(title)))
+		.map((cat) => cat.replace(/^Catégorie:/, ''));
+
+	return {
+		categories: relevantCategories,
+		intro: shortIntro,
+		links: filteredLinks
+	};
 }
 
-async function checkWord(word: string){
+async function checkWord(word: string) {
 	let isWordExist = true;
-    try{
-        	const response = await globalThis.fetch('http://localhost:5000/api/check-word', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					word: word
-				})
-			});
-			const data = await response.json();
-			if (!data.exists) {
-                isWordExist = false;
-				return isWordExist;
-			}
-			return isWordExist;	
-    }catch (error) {
+	try {
+		const response = await globalThis.fetch('http://localhost:5000/api/check-word', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				word: word
+			})
+		});
+		const data = await response.json();
+		if (!data.exists) {
+			isWordExist = false;
+			return isWordExist;
+		}
+		return isWordExist;
+	} catch (error) {
 		console.error('Erreur lors de la vérification du mot:', error);
 		return false;
 	}

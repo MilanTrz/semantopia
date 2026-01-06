@@ -3,20 +3,26 @@
 	import type { challenge } from '$lib/models/challenge';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
-	let lastChallenge : challenge = {};
+	let lastChallenge: challenge = {
+		name: '',
+		description: '',
+		gameName: '',
+		nbTry: 0,
+		nbHint: 0
+	};
 	let session = sessionStore.get();
 	let userId: number | null = session ? session.id : null;
-	async function getLastChallenge(){
-		const response = await fetch('/home',{
+	async function getLastChallenge() {
+		const response = await fetch('/home', {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
-		})
+		});
 		const data = await response.json();
 		lastChallenge = data.lastChallenge;
 	}
 
 	onMount(() => {
-		getLastChallenge();
+		//getLastChallenge();
 	});
 </script>
 
@@ -72,7 +78,7 @@
 				</div>
 				<h4 class="mb-3 text-xl font-bold text-gray-800">Cémantix</h4>
 				<p class="text-sm text-gray-600">
-					Trouvez le mot mystère grâce aux associations sémantiques et à l'intelligence artificielle
+					Trouvez le mot mystère grâce aux associations sémantiques et à votre grande intellecte
 				</p>
 			</div>
 		</a>
@@ -109,7 +115,7 @@
 				</div>
 				<h4 class="mb-3 text-xl font-bold text-gray-800">Motix</h4>
 				<p class="text-sm text-gray-600">
-					Créez un maximum de mots avec les lettres proposées dans le temps imparti
+					Deviner le mot mystère en construisant d'autres mots du même nombre de lettres.
 				</p>
 			</div>
 		</a>
@@ -134,37 +140,79 @@
 				</p>
 			</div>
 		</a>
-	</div>
-</section>
-{#if userId}
-<section class="flex flex-col gap-3 p-4 max-w-2xl mx-auto ">
-	<div class="bg-white rounded-lg shadow-md p-4">
-		<div class="flex items-center gap-2 mb-2">
-			<span class="text-xl">🏆</span>
-			<h3 class="text-lg font-bold text-gray-800">Défi du Jour</h3>
-		</div>
-		<p class="text-xs text-gray-500 mb-3">{new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-
-		<h4 class="text-base font-semibold text-gray-800 mb-2">Défi {lastChallenge.name} Spécial</h4>
-		<p class="text-sm text-gray-600 mb-4">{lastChallenge.description}</p>
-
-		<a href="/pedantix">
-			<button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
-				<span>🔄</span>
-				Relever le défi maintenant
-			</button>
+		<a
+			href="/game/lettix"
+			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
+		>
+			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
+				>
+					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
+				</div>
+				<h4 class="mb-3 text-xl font-bold text-gray-800">Lettix</h4>
+				<p class="text-sm text-gray-600">Trouvez un maximum d'annagrammes en 60 secondes</p>
+			</div>
+		</a>
+		<a
+			href="/game/mimix"
+			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
+		>
+			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
+				>
+					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
+				</div>
+				<h4 class="mb-3 text-xl font-bold text-gray-800">Mimix</h4>
+				<p class="text-sm text-gray-600">
+					Trouvez le plus de fois l'intrus parmi les 4 propositions
+				</p>
+			</div>
 		</a>
 	</div>
-
-	<div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-white text-center">
-		<div class="mb-3">
-			<span class="text-4xl">🎯</span>
-		</div>
-		<h3 class="text-xl font-bold mb-2">Défi Quotidien</h3>
-		<p class="text-xs opacity-90">Un nouveau challenge chaque jour pour tester vos limites</p>
-	</div>
 </section>
-	{/if}
+<!----
+	-- implement later
+
+
+{#if userId}
+	<section class="mx-auto flex max-w-2xl flex-col gap-3 p-4">
+		<div class="rounded-lg bg-white p-4 shadow-md">
+			<div class="mb-2 flex items-center gap-2">
+				<span class="text-xl">🏆</span>
+				<h3 class="text-lg font-bold text-gray-800">Défi du Jour</h3>
+			</div>
+			<p class="mb-3 text-xs text-gray-500">
+				{new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+			</p>
+
+			<h4 class="mb-2 text-base font-semibold text-gray-800">Défi {lastChallenge.name} Spécial</h4>
+			<p class="mb-4 text-sm text-gray-600">{lastChallenge.description}</p>
+
+			<a href="/pedantix">
+				<button
+					class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+				>
+					<span>🔄</span>
+					Relever le défi maintenant
+				</button>
+			</a>
+		</div>
+
+		<div
+			class="flex flex-col items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-center text-white shadow-md"
+		>
+			<div class="mb-3">
+				<span class="text-4xl">🎯</span>
+			</div>
+			<h3 class="mb-2 text-xl font-bold">Défi Quotidien</h3>
+			<p class="text-xs opacity-90">Un nouveau challenge chaque jour pour tester vos limites</p>
+		</div>
+	</section>
+{/if}
+-->
+
 <footer class="bg-gray-900 px-8 py-12 text-white">
 	<div class="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center">
 		<h3 class="text-2xl font-bold">🏠Sémantopia</h3>

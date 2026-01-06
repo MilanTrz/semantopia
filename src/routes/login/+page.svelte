@@ -3,11 +3,11 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import type { sessionData } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
-	let email = '';
-	let mdp = '';
+	let email: string = '';
+	let mdp: string = '';
 	let errors: { [key: string]: string } = {};
-	let seSouvenir = false;
-	let rep = -1;
+	let seSouvenir: boolean = false;
+	let rep: number = -1;
 	let repbody: {
 		message: string;
 		userId: number;
