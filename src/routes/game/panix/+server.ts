@@ -1,4 +1,5 @@
 import pool from '$lib/server/db';
+import { endGameSession } from '$lib/utils/gameSession';
 import type { RequestEvent } from '@sveltejs/kit';
 const activeSessions: Map<
 	string,
@@ -63,7 +64,7 @@ export async function GET({ url }: RequestEvent) {
 		const date = new Date();
 		if (userId !== 0) {
 			await pool.query(
-				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"lettix",0,?) ',
+				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"panix",0,?) ',
 				[date, userId]
 			);
 		}
@@ -104,15 +105,14 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { sessionId } = await request.json();
+	const { sessionId, idUser,nbEssai } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
-		return new Response(JSON.stringify({ message: 'Partie terminée' }), {
-			status: 200
-		});
+        await endGameSession(idUser, 'panix', nbEssai, true);
+        return new Response(null, { status: 204 });
 	} catch (error) {
 		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
 			status: 500
@@ -123,7 +123,7 @@ export async function PUT({ request }: RequestEvent) {
 function syllabesGenerate(): string[] {
 	const resultat: string[] = [];
 
-	while (resultat.length < 250) {
+	while (resultat.length < 50) {
 		const c = consonnes[Math.floor(Math.random() * consonnes.length)];
 		const v = voyelles[Math.floor(Math.random() * voyelles.length)];
 		const syllabe = Math.random() < 0.5 ? c + v : c + v + c;

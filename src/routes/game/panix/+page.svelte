@@ -2,6 +2,7 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { get } from 'http';
 
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
@@ -18,6 +19,8 @@
 	let timeChangeValue: number = 0;
 	let count = 60;
 	let imposedLetters: string = '';
+    let totalGamePlayed:number = 0;
+    let wordCreateAverage:number = 0;
 
 	async function newGame() {
 		userGuess = '';
@@ -88,7 +91,9 @@
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				sessionId
+				sessionId,
+                idUser,
+                nbEssai: nbWordCreate
 			})
 		});
 	}
@@ -100,9 +105,26 @@
 			showTimeAnimation = false;
 		}, 1000);
 	}
+    async function getStats() {
+		if (idUser) {
+			const response = await fetch('/api/statistiques/', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					gameType: 'panix'
+				})
+			});
+			const data = await response.json();
+			totalGamePlayed= data.nbParties ?? 0;
+			wordCreateAverage = data.nbEssaiMoyen ?? 0;
+
+		}
+	}
 
 	onMount(() => {
 		newGame();
+        getStats();
 	});
 </script>
 
@@ -227,7 +249,6 @@
 			</ul>
 		</div>
 
-		<!----
         {#if idUser}
 			<div class="rounded-lg bg-white p-6 shadow-sm">
 				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
@@ -240,14 +261,14 @@
 					</div>
 					<div class="text-center">
 						<p class="text-4xl font-bold text-blue-600">
-							{Math.round(findAnagramsAverage * 100) / 100}
+							{Math.round(wordCreateAverage * 100) / 100}
 						</p>
-						<p class="mt-1 text-sm text-gray-600">Nombre d'annagrammes trouvés en moyenne</p>
+						<p class="mt-1 text-sm text-gray-600">Nombre de mots créés en moyenne</p>
 					</div>
 				</div>
 			</div>
 		{/if}
-        -->
+      
 
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
