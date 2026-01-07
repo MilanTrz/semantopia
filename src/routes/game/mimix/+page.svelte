@@ -88,13 +88,12 @@
 		{/if}
 		{#if isGameOver}
 			<div
-				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6 mb-12"
+				class="mb-12 flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
 			>
 				<p class="text-3xl font-bold text-red-700">
 					Partie terminée, vous avez deviné {nbIntruderFind} intrus. Le dernier intrus était {wordIntruder}.
 				</p>
 			</div>
-
 		{/if}
 
 		<div class="mb-8">
@@ -106,7 +105,6 @@
 								onclick={() => sendGuess(word)}
 								class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
 								disabled={isGameOver}
-								
 							>
 								<div
 									class="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"
@@ -143,7 +141,7 @@
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Au fur et à mesure les mots sont de moins en moins proches </p>
+					<p>Au fur et à mesure les mots sont de moins en moins proches</p>
 				</li>
 			</ul>
 		</div>
