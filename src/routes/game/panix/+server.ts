@@ -80,8 +80,17 @@ export async function GET({ url }: RequestEvent) {
 }
 
 export async function POST({ request }: RequestEvent) {
-	const { userGuess, sessionId } = await request.json();
+	const { userGuess, sessionId, action } = await request.json();
 	const session = activeSessions.get(sessionId);
+	if (action === 'skipLetters'){
+		const imposedLetters = randomSyllabe();
+		activeSessions.set(sessionId, {
+			imposedLetters: imposedLetters
+		});
+		return new Response(JSON.stringify({ message: 'Lettres changer', imposedLetters }), {
+			status: 200
+		});
+	}
 	let winTime: number = 0;
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
@@ -99,6 +108,7 @@ export async function POST({ request }: RequestEvent) {
 			status: 200
 		});
 	}
+	
 	return new Response(JSON.stringify({ message: 'Mot invalide', isWin }), {
 		status: 200
 	});

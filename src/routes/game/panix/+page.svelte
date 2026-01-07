@@ -2,7 +2,7 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
-	import { get } from 'http';
+
 
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
@@ -60,12 +60,19 @@
 		}, 1000);
 	}
 	async function sendGuess() {
+		if (tabCreateWord.includes(userGuess)){
+			count -= 5;
+			triggerTimeAnimation(-5);
+			userGuess = ''
+			return null;
+		}
 		const response = await fetch('/game/panix', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				userGuess,
-				sessionId
+				sessionId,
+				action : 'sendGuess'
 			})
 		});
 
@@ -120,6 +127,20 @@
 			wordCreateAverage = data.nbEssaiMoyen ?? 0;
 
 		}
+	}
+	async function skipLetters(){
+		const response = await fetch('/game/panix', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				sessionId,
+				action : 'skipLetters'
+			})
+		});
+		const data = await response.json();
+		imposedLetters = data.imposedLetters;
+		count -= 5;
+		triggerTimeAnimation(-5);
 	}
 
 	onMount(() => {
@@ -187,10 +208,16 @@
 					Envoyer
 				</button>
 			</form>
+			<button
+					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					type="submit"
+					disabled={isSurrender}
+					on:click={skipLetters}
+				>
+					Changer de lettres
+				</button>
 		</div>
-		<div class="mb-6 rounded-lg p-6">
-			<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800"></p>
-		</div>
+		
 
 		<div>
 			{#if tabCreateWord.length > 0}
@@ -245,6 +272,14 @@
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
 					<p>Vous ne pouvez pas mettre le meme mot que celui qu'est dans les lettres imposées</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Vous ne pouvez pas proposez plusieurs fois le même mot</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Vous pouvez changer les lettres imposées mais cela vous fera perdre 5 secondes</p>
 				</li>
 			</ul>
 		</div>
