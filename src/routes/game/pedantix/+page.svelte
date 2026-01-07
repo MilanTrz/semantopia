@@ -44,9 +44,6 @@
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
 
-	let lastChallenge: challenge | null = null;
-	let userHintReaveal: number = 0;
-
 	let hintsGame: hints;
 	let revealedIndice = [false, false, false];
 
@@ -177,21 +174,6 @@
 			if (data.revealContent) {
 				tabContent = data.revealContent;
 			}
-			if (idUser) {
-				if (lastChallenge) {
-					if (lastChallenge.nbTry > 0) {
-						if (nbEssai < lastChallenge.nbTry) {
-							isChallengeWinned = true;
-							winChallenge();
-						}
-					} else if (lastChallenge.nbHint >= 0) {
-						if (userHintReaveal < lastChallenge.nbHint) {
-							isChallengeWinned = true;
-							winChallenge();
-						}
-					}
-				}
-			}
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
@@ -252,42 +234,8 @@
 			throw error;
 		}
 	}
-	async function checkChallenge() {
-		try {
-			const response = await fetch('/api/challenge/checkChallenge', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					gameName: 'pedantix'
-				})
-			});
-			const data = await response.json();
-			if (data) {
-				lastChallenge = data.lastChallenge;
-			}
-		} catch (error) {
-			console.error('Erreur Server:', error);
-			throw error;
-		}
-	}
-	async function winChallenge() {
-		try {
-			await fetch('/api/challenge/updateWinChallenge', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					idUser: idUser
-				})
-			});
-		} catch (error) {
-			console.error('Erreur Server:', error);
-			throw error;
-		}
-	}
-
 	onMount(() => {
 		newGame();
-		checkChallenge();
 	});
 </script>
 

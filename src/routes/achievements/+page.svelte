@@ -6,11 +6,13 @@
 	let userAllAchievements = 0;
 	let userAllRareAchievements = 0;
 	let userMissingAchievements = 0;
+	let userAllAchievementsUnlock: number[] = [];
 
 	let repbodyAchievements: {
 		AllAchievements: number;
 		AllRareAchievements: number;
 		AllMissingAchievements: number;
+		achievementsIds: number[];
 	};
 
 	async function getInformationAchievements() {
@@ -26,10 +28,71 @@
 			userAllAchievements = repbodyAchievements.AllAchievements ?? 0;
 			userAllRareAchievements = repbodyAchievements.AllRareAchievements ?? 0;
 			userMissingAchievements = repbodyAchievements.AllMissingAchievements ?? 0;
+			userAllAchievementsUnlock = repbodyAchievements.achievementsIds ?? [];
+			applyAchievementsStyles();
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
+	}
+
+	function applyAchievementsStyles() {
+		const achievements = document.querySelectorAll<HTMLElement>('.achievement');
+
+		achievements.forEach((achievement) => {
+			const id = Number(achievement.dataset.id);
+			const card = achievement.closest('.rounded-lg') as HTMLElement;
+			const status = card.querySelector<HTMLElement>('.achievement-status');
+			const icon = card.querySelector<HTMLElement>('.rounded-full');
+			const description = card.querySelector<HTMLElement>('.text-sm.text-gray-600');
+			const isUnlocked = userAllAchievementsUnlock.includes(id);
+
+			if (!isUnlocked) {
+				card.classList.add('bg-gray-200');
+				card.classList.remove('bg-white');
+
+				achievement.classList.add('text-gray-500');
+				achievement.classList.remove('text-gray-900');
+
+				if (icon) {
+					icon.classList.add('bg-gray-400');
+					icon.classList.remove('bg-gray-700');
+				}
+
+				if (description) {
+					description.classList.add('text-gray-500');
+					description.classList.remove('text-gray-600');
+				}
+
+				if (status) {
+					status.textContent = 'Non obtenu';
+					status.classList.add('text-gray-500');
+					status.classList.remove('text-green-600');
+				}
+			} else {
+				card.classList.add('bg-white');
+				card.classList.remove('bg-gray-200');
+
+				achievement.classList.add('text-gray-900');
+				achievement.classList.remove('text-gray-500');
+
+				if (icon) {
+					icon.classList.add('bg-gray-700');
+					icon.classList.remove('bg-gray-400');
+				}
+
+				if (description) {
+					description.classList.add('text-gray-600');
+					description.classList.remove('text-gray-500');
+				}
+
+				if (status) {
+					status.textContent = 'Obtenu';
+					status.classList.add('text-green-600');
+					status.classList.remove('text-gray-500');
+				}
+			}
+		});
 	}
 	onMount(() => {
 		getInformationAchievements();
@@ -112,9 +175,9 @@
 						class="h-8 w-8"
 					/>
 				</div>
-				<p class="mb-2 font-semibold text-gray-900">Premier pas</p>
+				<p data-id="1" class="achievement mb-2 font-semibold text-gray-900">Premier pas</p>
 				<p class="mb-3 text-sm text-gray-600">Jouer votre première partie</p>
-				<p class="text-xs text-gray-500">Non obtenu</p>
+				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
 			</div>
 
 			<div class="rounded-lg bg-white p-6 text-center shadow">
@@ -127,9 +190,9 @@
 						class="h-8 w-8"
 					/>
 				</div>
-				<p class="mb-2 font-semibold text-gray-900">Jouer confirmée</p>
+				<p data-id="2" class="achievement mb-2 font-semibold text-gray-900">Jouer confirmée</p>
 				<p class="mb-3 text-sm text-gray-600">Jouer 10 parties</p>
-				<p class="text-xs text-gray-500">Non Obtenu</p>
+				<p class="achievement-status text-xs text-gray-500">Non Obtenu</p>
 			</div>
 
 			<div class="rounded-lg bg-white p-6 text-center shadow">
@@ -142,9 +205,11 @@
 						class="h-8 w-8"
 					/>
 				</div>
-				<p class="mb-2 font-semibold text-gray-900">Divinité de Sémantopia</p>
+				<p data-id="3" class="achievement mb-2 font-semibold text-gray-900">
+					Divinité de Sémantopia
+				</p>
 				<p class="mb-3 text-sm text-gray-600">Jouer 50 parties</p>
-				<p class="text-xs text-gray-500">Non obtenu</p>
+				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
 			</div>
 		</div>
 	</section>

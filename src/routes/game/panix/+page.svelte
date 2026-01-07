@@ -3,7 +3,6 @@
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
 
-
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
 	let userGuess: string = '';
@@ -19,8 +18,8 @@
 	let timeChangeValue: number = 0;
 	let count = 60;
 	let imposedLetters: string = '';
-    let totalGamePlayed:number = 0;
-    let wordCreateAverage:number = 0;
+	let totalGamePlayed: number = 0;
+	let wordCreateAverage: number = 0;
 
 	async function newGame() {
 		userGuess = '';
@@ -60,10 +59,10 @@
 		}, 1000);
 	}
 	async function sendGuess() {
-		if (tabCreateWord.includes(userGuess)){
+		if (tabCreateWord.includes(userGuess)) {
 			count -= 5;
 			triggerTimeAnimation(-5);
-			userGuess = ''
+			userGuess = '';
 			return null;
 		}
 		const response = await fetch('/game/panix', {
@@ -72,7 +71,7 @@
 			body: JSON.stringify({
 				userGuess,
 				sessionId,
-				action : 'sendGuess'
+				action: 'sendGuess'
 			})
 		});
 
@@ -99,8 +98,8 @@
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				sessionId,
-                idUser,
-                nbEssai: nbWordCreate
+				idUser,
+				nbEssai: nbWordCreate
 			})
 		});
 	}
@@ -112,7 +111,7 @@
 			showTimeAnimation = false;
 		}, 1000);
 	}
-    async function getStats() {
+	async function getStats() {
 		if (idUser) {
 			const response = await fetch('/api/statistiques/', {
 				method: 'POST',
@@ -123,18 +122,17 @@
 				})
 			});
 			const data = await response.json();
-			totalGamePlayed= data.nbParties ?? 0;
+			totalGamePlayed = data.nbParties ?? 0;
 			wordCreateAverage = data.nbEssaiMoyen ?? 0;
-
 		}
 	}
-	async function skipLetters(){
+	async function skipLetters() {
 		const response = await fetch('/game/panix', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				sessionId,
-				action : 'skipLetters'
+				action: 'skipLetters'
 			})
 		});
 		const data = await response.json();
@@ -145,7 +143,7 @@
 
 	onMount(() => {
 		newGame();
-        getStats();
+		getStats();
 	});
 </script>
 
@@ -209,15 +207,14 @@
 				</button>
 			</form>
 			<button
-					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					type="submit"
-					disabled={isSurrender}
-					on:click={skipLetters}
-				>
-					Changer de lettres
-				</button>
+				class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+				type="submit"
+				disabled={isSurrender}
+				on:click={skipLetters}
+			>
+				Changer de lettres
+			</button>
 		</div>
-		
 
 		<div>
 			{#if tabCreateWord.length > 0}
@@ -284,7 +281,7 @@
 			</ul>
 		</div>
 
-        {#if idUser}
+		{#if idUser}
 			<div class="rounded-lg bg-white p-6 shadow-sm">
 				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
 					📊 Vos statistiques
@@ -303,7 +300,6 @@
 				</div>
 			</div>
 		{/if}
-      
 
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
@@ -336,14 +332,14 @@
 						<h5 class="font-medium text-gray-700">📝Motix</h5>
 					</a>
 				</div>
-                <div
+				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
 					<a href="/game/lettix">
 						<h5 class="font-medium text-gray-700">📝Lettix</h5>
 					</a>
 				</div>
-                <div
+				<div
 					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
 				>
 					<a href="/game/mimix">
