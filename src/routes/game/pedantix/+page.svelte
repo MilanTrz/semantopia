@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import OtherGames from '$lib/OtherGames.svelte';
 	import { onMount } from 'svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
@@ -292,380 +293,362 @@
 </script>
 
 <Header />
-<div class="row flex min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-3xl">
-		<div class="mb-6">
-			<div class="mb-8">
-				<h2 class="text-4xl font-bold text-gray-900">Pédantix</h2>
-				<p class="mt-1 text-gray-600">Trouvez le mot mystère grâce à la proximité sémantique</p>
-				<p class="mt-2 text-sm text-gray-500">NbEssai : {nbEssai}</p>
-			</div>
-		</div>
-		{#if isChallengeWinned}
-			<div class="mb-6 flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6">
-				<svg
-					class="h-6 w-6 flex-shrink-0 text-green-600"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-					/>
-				</svg>
-				<div>
-					<p class="font-semibold text-green-900">Défi relevé !</p>
-					<p class="text-sm text-green-700">
-						Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !
-					</p>
+<div class="min-h-screen bg-gray-50 p-8">
+	<div class="mx-auto max-w-7xl flex gap-12">
+		<!-- Contenu principal -->
+		<div class="flex-1 max-w-3xl">
+			<div class="mb-6">
+				<div class="mb-8">
+					<h1 class="text-4xl font-bold text-gray-900 mb-2">
+						<i class="fa-solid fa-book-open text-blue-700 mr-3" aria-hidden="true"></i>
+						Pédantix
+					</h1>
+					<p class="mt-1 text-gray-600">Découvrez l'article Wikipédia caché mot par mot</p>
+					<p class="mt-2 text-sm text-gray-500">Essais : {nbEssai}</p>
 				</div>
 			</div>
-		{/if}
-		{#if isLoading}
-			<div class="flex flex-col items-center justify-center py-12">
+			{#if isChallengeWinned}
+				<div class="mb-6 flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6">
+					<svg
+						class="h-6 w-6 flex-shrink-0 text-green-600"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+						/>
+					</svg>
+					<div>
+						<p class="font-semibold text-green-900">Défi relevé !</p>
+						<p class="text-sm text-green-700">
+							Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !
+						</p>
+					</div>
+				</div>
+			{/if}
+			{#if isLoading}
+				<div class="flex flex-col items-center justify-center py-12">
+					<div
+						class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
+					></div>
+					<p class="font-medium text-gray-600">Chargement de la partie...</p>
+				</div>
+			{/if}
+			{#if isSurrender}
 				<div
-					class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
-				></div>
-				<p class="font-medium text-gray-600">Chargement de la partie...</p>
+					class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
+				>
+					<p class="text-3xl font-bold text-red-700">
+						Perdu, le mot était {tabTitle.filter((item) => typeof item === 'string').join(' ')}
+					</p>
+				</div>
+			{/if}
+			{#if !isWordInGame}
+				<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6">
+					<svg
+						class="h-6 w-6 flex-shrink-0 text-amber-600"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+						/>
+					</svg>
+					<div>
+						<p class="font-semibold text-amber-900">Mot introuvable</p>
+						<p class="text-sm text-amber-700">
+							Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu
+						</p>
+					</div>
+				</div>
+			{/if}
+
+			<div class="row relative mb-6">
+				<form on:submit|preventDefault={sendGuess} class="row flex">
+					<input
+						id="guess"
+						type="text"
+						bind:value={userGuess}
+						placeholder="Tapez votre proposition..."
+						class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+						disabled={isVictory || isSurrender}
+					/>
+					<button
+						class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						type="submit"
+						disabled={isVictory || isSurrender}
+					>
+						Envoyer
+					</button>
+				</form>
 			</div>
-		{/if}
-		{#if isSurrender}
-			<div
-				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
-			>
-				<p class="text-3xl font-bold text-red-700">
-					Perdu, le mot était {tabTitle.filter((item) => typeof item === 'string').join(' ')}
+			<div class="mb-6 rounded-lg p-6">
+				<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
+					{#each tabTitle as item, i}
+						{#if typeof item === 'string'}
+							<span
+								class="inline-block"
+								class:ml-1={needsSpaceBefore(item, i)}
+								class:text-green-600={isNewlyFoundTitle(i)}
+								class:bg-green-100={isNewlyFoundTitle(i)}
+								class:border-2={isNewlyFoundTitle(i)}
+								class:border-green-500={isNewlyFoundTitle(i)}
+								class:rounded={isNewlyFoundTitle(i)}
+								class:px-1={isNewlyFoundTitle(i)}
+							>
+								{item}
+							</span>
+						{:else if isNearMatch(item)}
+							<span
+								class="group relative inline-flex items-center justify-center"
+								class:ml-1={needsSpaceBefore(item, i)}
+								title="Proche, mais pas révélé"
+								style={`min-width: ${Math.max(item.length, item.word.length)}ch; min-height: 2.6em; padding-right: 0.1em;`}
+							>
+								<span
+									class="inline-block font-mono tracking-tight text-black"
+									style="font-size: 1.5em; line-height: 1.25;"
+								>
+									{maskedSquares(item.length)}
+								</span>
+								<span
+									class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
+									style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
+								>
+									{item.word}
+								</span>
+								<span
+									class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+								>
+									{tooltipLabel(item.length)}
+								</span>
+							</span>
+						{:else}
+							<span
+								class="group relative inline-flex items-center justify-center"
+								class:ml-1={needsSpaceBefore(item, i)}
+								style="min-height: 2.6em; padding-right: 0.1em;"
+							>
+								<span
+									class="inline-block font-mono tracking-tight text-black"
+									style="font-size: 1.5em; line-height: 1.25;"
+								>
+									{maskedSquares(item as number)}
+								</span>
+								<span
+									class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+								>
+									{tooltipLabel(item as number)}
+								</span>
+							</span>
+						{/if}
+					{/each}
+				</p>
+				<p class="flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
+					{#each tabContent as item, i}
+						{#if typeof item === 'string'}
+							<span
+								class="inline-block"
+								class:ml-1={needsSpaceBefore(item, i)}
+								class:text-green-600={isNewlyFoundContent(i)}
+								class:bg-green-100={isNewlyFoundContent(i)}
+								class:border-2={isNewlyFoundContent(i)}
+								class:border-green-500={isNewlyFoundContent(i)}
+								class:rounded={isNewlyFoundContent(i)}
+								class:px-1={isNewlyFoundContent(i)}
+							>
+								{item}
+							</span>
+						{:else if isNearMatch(item)}
+							<span
+								class="group relative inline-flex items-center justify-center"
+								class:ml-1={needsSpaceBefore(item, i)}
+								title="Proche, mais pas révélé"
+								style={`min-width: ${Math.max(item.length, item.word.length)}ch; padding-right: 0.1em;`}
+							>
+								<span
+									class="inline-block font-mono tracking-tight text-black"
+									style="font-size: 1.5em; line-height: 1.25;"
+								>
+									{maskedSquares(item.length)}
+								</span>
+								<span
+									class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
+									style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
+								>
+									{item.word}
+								</span>
+								<span
+									class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+								>
+									{tooltipLabel(item.length)}
+								</span>
+							</span>
+						{:else}
+							<span
+								class="group relative inline-flex items-center"
+								class:ml-1={needsSpaceBefore(item, i)}
+							>
+								<span
+									class="inline-block font-mono tracking-tight text-black"
+									style="font-size: 1.5em; padding-right: 0.1em;"
+								>
+									{maskedSquares(item as number)}
+								</span>
+								<span
+									class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
+								>
+									{tooltipLabel(item as number)}
+								</span>
+							</span>
+						{/if}
+					{/each}
 				</p>
 			</div>
-		{/if}
-		{#if !isWordInGame}
-			<div class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6">
-				<svg
-					class="h-6 w-6 flex-shrink-0 text-amber-600"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-					/>
-				</svg>
-				<div>
-					<p class="font-semibold text-amber-900">Mot introuvable</p>
-					<p class="text-sm text-amber-700">
-						Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu
-					</p>
-				</div>
-			</div>
-		{/if}
-
-		<div class="row relative mb-6">
-			<form on:submit|preventDefault={sendGuess} class="row flex">
-				<input
-					id="guess"
-					type="text"
-					bind:value={userGuess}
-					placeholder="Tapez votre proposition..."
-					class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
-					disabled={isVictory || isSurrender}
-				/>
-				<button
-					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					type="submit"
-					disabled={isVictory || isSurrender}
-				>
-					Envoyer
-				</button>
-			</form>
-		</div>
-		<div class="mb-6 rounded-lg p-6">
-			<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
-				{#each tabTitle as item, i}
-					{#if typeof item === 'string'}
-						<span
-							class="inline-block"
-							class:ml-1={needsSpaceBefore(item, i)}
-							class:text-green-600={isNewlyFoundTitle(i)}
-							class:bg-green-100={isNewlyFoundTitle(i)}
-							class:border-2={isNewlyFoundTitle(i)}
-							class:border-green-500={isNewlyFoundTitle(i)}
-							class:rounded={isNewlyFoundTitle(i)}
-							class:px-1={isNewlyFoundTitle(i)}
-						>
-							{item}
-						</span>
-					{:else if isNearMatch(item)}
-						<span
-							class="group relative inline-flex items-center justify-center"
-							class:ml-1={needsSpaceBefore(item, i)}
-							title="Proche, mais pas révélé"
-							style={`min-width: ${Math.max(item.length, item.word.length)}ch; min-height: 2.6em; padding-right: 0.1em;`}
-						>
-							<span
-								class="inline-block font-mono tracking-tight text-black"
-								style="font-size: 1.5em; line-height: 1.25;"
-							>
-								{maskedSquares(item.length)}
-							</span>
-							<span
-								class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
-								style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
-							>
-								{item.word}
-							</span>
-							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{tooltipLabel(item.length)}
-							</span>
-						</span>
-					{:else}
-						<span
-							class="group relative inline-flex items-center justify-center"
-							class:ml-1={needsSpaceBefore(item, i)}
-							style="min-height: 2.6em; padding-right: 0.1em;"
-						>
-							<span
-								class="inline-block font-mono tracking-tight text-black"
-								style="font-size: 1.5em; line-height: 1.25;"
-							>
-								{maskedSquares(item as number)}
-							</span>
-							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{tooltipLabel(item as number)}
-							</span>
-						</span>
-					{/if}
-				{/each}
-			</p>
-			<p class="flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
-				{#each tabContent as item, i}
-					{#if typeof item === 'string'}
-						<span
-							class="inline-block"
-							class:ml-1={needsSpaceBefore(item, i)}
-							class:text-green-600={isNewlyFoundContent(i)}
-							class:bg-green-100={isNewlyFoundContent(i)}
-							class:border-2={isNewlyFoundContent(i)}
-							class:border-green-500={isNewlyFoundContent(i)}
-							class:rounded={isNewlyFoundContent(i)}
-							class:px-1={isNewlyFoundContent(i)}
-						>
-							{item}
-						</span>
-					{:else if isNearMatch(item)}
-						<span
-							class="group relative inline-flex items-center justify-center"
-							class:ml-1={needsSpaceBefore(item, i)}
-							title="Proche, mais pas révélé"
-							style={`min-width: ${Math.max(item.length, item.word.length)}ch; padding-right: 0.1em;`}
-						>
-							<span
-								class="inline-block font-mono tracking-tight text-black"
-								style="font-size: 1.5em; line-height: 1.25;"
-							>
-								{maskedSquares(item.length)}
-							</span>
-							<span
-								class="pointer-events-none absolute inset-0 flex items-center justify-center px-1 text-xs font-semibold sm:text-sm"
-								style={`color:${nearTextColor(item.score)}; text-shadow: 0 0 6px rgba(0,0,0,0.4);`}
-							>
-								{item.word}
-							</span>
-							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{tooltipLabel(item.length)}
-							</span>
-						</span>
-					{:else}
-						<span
-							class="group relative inline-flex items-center"
-							class:ml-1={needsSpaceBefore(item, i)}
-						>
-							<span
-								class="inline-block font-mono tracking-tight text-black"
-								style="font-size: 1.5em; padding-right: 0.1em;"
-							>
-								{maskedSquares(item as number)}
-							</span>
-							<span
-								class="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 rounded bg-gray-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100"
-							>
-								{tooltipLabel(item as number)}
-							</span>
-						</span>
-					{/if}
-				{/each}
-			</p>
-		</div>
-
-		<div
-			class="mb-6 rounded-lg border-2 border-blue-400 bg-gradient-to-br from-purple-50 to-pink-50 p-6"
-		>
-			<div class="grid grid-cols-2 gap-x-8 gap-y-2">
-				{#each tabguess as guess, index}
-					<li class="text-gray-700">
-						<span class="font-medium">{index + 1}.</span>
-						{guess}
-					</li>
-				{/each}
-			</div>
-		</div>
-
-		<div class="flex gap-4">
-			{#if isSurrender || isVictory}
-				<button
-					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					on:click={newGame}
-				>
-					🔄 Nouvelle partie
-				</button>
-			{:else}
-				<button
-					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					on:click={surrenderGame}
-				>
-					🔄 Abandonner la Partie
-				</button>
-			{/if}
-			<button
-				class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
+			<div
+				class="mb-6 rounded-lg border-2 border-blue-400 bg-gradient-to-br from-purple-50 to-pink-50 p-6"
 			>
-				📤 Partager résultat
-			</button>
+				<div class="grid grid-cols-2 gap-x-8 gap-y-2">
+					{#each tabguess as guess, index}
+						<li class="text-gray-700">
+							<span class="font-medium">{index + 1}.</span>
+							{guess}
+						</li>
+					{/each}
+				</div>
+			</div>
+
+			<div class="flex gap-4">
+				{#if isSurrender || isVictory}
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						on:click={newGame}
+					>
+						🔄 Nouvelle partie
+					</button>
+				{:else}
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						on:click={surrenderGame}
+					>
+						🔄 Abandonner la Partie
+					</button>
+				{/if}
+				<button
+					class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
+				>
+					📤 Partager résultat
+				</button>
+			</div>
+		</div>
+		<!-- Sidebar -->
+		<div class="w-80 shrink-0 space-y-6">
+				<div class="rounded-lg bg-white p-6 shadow-sm">
+					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
+					<ul class="space-y-3 text-sm text-gray-600">
+						<li class="flex items-start">
+							<span class="mr-2">•</span>
+							<p>Trouvez le mot mystère en vous aidant de la proximité sémantique</p>
+						</li>
+						<li class="flex items-start">
+							<span class="mr-2">•</span>
+							<p>Plus votre proposition est proche du mot, plus le pourcentage est élevé</p>
+						</li>
+						<li class="flex items-start">
+							<span class="mr-2">•</span>
+							<p>Chaque bonne proposition révèle des mots dans l'extrait Wikipedia</p>
+						</li>
+						<li class="flex items-start">
+							<span class="mr-2">•</span>
+							<p>Utilisez les indices pour vous rapprocher du mot cible</p>
+						</li>
+					</ul>
+				</div>
+				<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+					<div class="w-full max-w-md">
+						<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+							<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
+
+							<div class="space-y-4">
+								{#if !revealedIndice[0]}
+									<button
+										on:click={() => toggleReveal(0)}
+										class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+									>
+										Premier Indice
+									</button>
+								{:else}
+									<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+										<h4>Catégorie de la page Wikipedia :</h4>
+										<p class="text-gray-800">{hintsGame.categories[0]}</p>
+									</div>
+								{/if}
+								{#if !revealedIndice[1]}
+									<button
+										on:click={() => toggleReveal(1)}
+										class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+									>
+										Deuxième Indice
+									</button>
+								{:else}
+									<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+										<h4>Lien qui appartient a la page:</h4>
+										<p class="text-gray-800">{hintsGame.links}</p>
+									</div>
+								{/if}
+								{#if !revealedIndice[2]}
+									<button
+										on:click={() => toggleReveal(2)}
+										class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+									>
+										Troisième Indice
+									</button>
+								{:else}
+									<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+										<h4>Intro sans le titre de la page :</h4>
+										<p class="text-gray-800">{hintsGame.intro}</p>
+									</div>
+								{/if}
+							</div>
+						</div>
+					</div>
+				</div>
+				{#if idUser}
+					<div class="rounded-lg bg-white p-6 shadow-sm">
+						<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+							📊 Vos statistiques
+						</h4>
+						<div class="grid grid-cols-2 gap-6">
+							<div class="text-center">
+								<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
+								<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
+							</div>
+							<div class="text-center">
+								<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
+								<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
+							</div>
+							<div class="text-center">
+								<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
+								<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
+							</div>
+							<div class="text-center">
+								<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
+								<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
+							</div>
+						</div>
+					</div>
+				{/if}
+
+				<!-- Autres jeux -->
+				<OtherGames exclude="pedantix" />
+			</div>
 		</div>
 	</div>
-	<div class="w-80 space-y-6">
-		<div class="rounded-lg bg-white p-6 shadow-sm">
-			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
-			<ul class="space-y-3 text-sm text-gray-600">
-				<li class="flex items-start">
-					<span class="mr-2">•</span>
-					<p>Trouvez le mot mystère en vous aidant de la proximité sémantique</p>
-				</li>
-				<li class="flex items-start">
-					<span class="mr-2">•</span>
-					<p>Plus votre proposition est proche du mot, plus le pourcentage est élevé</p>
-				</li>
-				<li class="flex items-start">
-					<span class="mr-2">•</span>
-					<p>Chaque bonne proposition révèle des mots dans l'extrait Wikipedia</p>
-				</li>
-				<li class="flex items-start">
-					<span class="mr-2">•</span>
-					<p>Utilisez les indices pour vous rapprocher du mot cible</p>
-				</li>
-			</ul>
-		</div>
-		<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-			<div class="w-full max-w-md">
-				<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
-					<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
-
-					<div class="space-y-4">
-						{#if !revealedIndice[0]}
-							<button
-								on:click={() => toggleReveal(0)}
-								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
-							>
-								Premier Indice
-							</button>
-						{:else}
-							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
-								<h4>Catégorie de la page Wikipedia :</h4>
-								<p class="text-gray-800">{hintsGame.categories[0]}</p>
-							</div>
-						{/if}
-						{#if !revealedIndice[1]}
-							<button
-								on:click={() => toggleReveal(1)}
-								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
-							>
-								Deuxième Indice
-							</button>
-						{:else}
-							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
-								<h4>Lien qui appartient a la page:</h4>
-								<p class="text-gray-800">{hintsGame.links}</p>
-							</div>
-						{/if}
-						{#if !revealedIndice[2]}
-							<button
-								on:click={() => toggleReveal(2)}
-								class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
-							>
-								Troisième Indice
-							</button>
-						{:else}
-							<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
-								<h4>Intro sans le titre de la page :</h4>
-								<p class="text-gray-800">{hintsGame.intro}</p>
-							</div>
-						{/if}
-					</div>
-				</div>
-			</div>
-		</div>
-		{#if idUser}
-			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-					📊 Vos statistiques
-				</h4>
-				<div class="grid grid-cols-2 gap-6">
-					<div class="text-center">
-						<p class="text-4xl font-bold text-purple-600">{partiesJouees}</p>
-						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
-						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-blue-600">{Math.round(essaisMoyen * 100) / 100}</p>
-						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-orange-600">{serieActuelle}</p>
-						<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
-					</div>
-				</div>
-			</div>
-		{/if}
-
-		<div class="rounded-lg bg-white p-6 shadow-sm">
-			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
-			<div class="space-y-3">
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">📝Motix</h5>
-					</a>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>

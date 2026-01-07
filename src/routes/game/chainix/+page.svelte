@@ -12,14 +12,15 @@ import OtherGames from '$lib/OtherGames.svelte';
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
 	let sessionId: string = '';
-	let createWordValid: boolean;
-	let tabCreateWord: string[] = [];
+	let isWordValid: boolean;
+	let chainWords: string[] = [];
+	let guessedWords: Set<string> = new Set();
 	let isGameOver: boolean = false;
 	let interval: ReturnType<typeof setInterval> | null = null;
 	let showTimeAnimation: boolean = false;
 	let timeChangeValue: number = 0;
 	let count = 60;
-	let imposedLetters: string = '';
+	let startingWord: string = '';
     let totalGamePlayed:number = 0;
     let wordCreateAverage:number = 0;
 
@@ -30,7 +31,8 @@ import OtherGames from '$lib/OtherGames.svelte';
 		isLoading = true;
 		isGameOver = false;
 		isSurrender = false;
-		tabCreateWord = [];
+		chainWords = [];
+		guessedWords = new Set();
 		showTimeAnimation = false;
 		if (interval !== null) {
 			clearInterval(interval);
@@ -39,13 +41,14 @@ import OtherGames from '$lib/OtherGames.svelte';
 			console.error('idUser est null');
 			return;
 		}
-		const url = `/game/panix?userId=${encodeURIComponent(idUser)}`;
+		const url = `/game/chainix?userId=${encodeURIComponent(idUser)}`;
 		const response = await fetch(url, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
 		});
 		const data = await response.json();
-		imposedLetters = data.imposedLetters;
+		startingWord = data.startingWord;
+		chainWords = [startingWord];
 		sessionId = data.sessionId;
 		isLoading = false;
 
@@ -60,32 +63,43 @@ import OtherGames from '$lib/OtherGames.svelte';
 			}
 		}, 1000);
 	}
+	const normalizeWord = (word: string) =>
+		word
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.trim()
+			.toLowerCase();
+
 	async function sendGuess() {
-		if (tabCreateWord.includes(userGuess)){
+		const cleanGuess = userGuess.trim();
+		if (!cleanGuess) return;
+
+		const normalizedGuess = normalizeWord(cleanGuess);
+		if (guessedWords.has(normalizedGuess)) {
 			count -= 5;
 			triggerTimeAnimation(-5);
-			userGuess = ''
+			userGuess = '';
 			return null;
 		}
-		const response = await fetch('/game/panix', {
+		const response = await fetch('/game/chainix', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				userGuess,
+				userGuess: cleanGuess,
 				sessionId,
-				action : 'sendGuess'
+				currentLastWord: chainWords[chainWords.length - 1]
 			})
 		});
 
 		const data = await response.json();
-		createWordValid = data.isWin;
-		if (createWordValid) {
+		isWordValid = data.isValid;
+		if (isWordValid) {
 			nbWordCreate++;
-			tabCreateWord = [...tabCreateWord, userGuess];
-			imposedLetters = data.imposedLetters;
-			let time = data.winTime;
-			count += time;
-			triggerTimeAnimation(time);
+			chainWords = [...chainWords, cleanGuess];
+			guessedWords.add(normalizedGuess);
+			let timeBonus = data.timeBonus;
+			count += timeBonus;
+			triggerTimeAnimation(timeBonus);
 		} else {
 			count -= 5;
 			triggerTimeAnimation(-5);
@@ -95,13 +109,13 @@ import OtherGames from '$lib/OtherGames.svelte';
 	async function gameOver() {
 		isGameOver = true;
 		isSurrender = true;
-		await fetch('/game/panix', {
+		await fetch('/game/chainix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				sessionId,
                 idUser,
-                nbEssai: nbWordCreate
+                chainLength: chainWords.length - 1
 			})
 		});
 	}
@@ -120,7 +134,7 @@ import OtherGames from '$lib/OtherGames.svelte';
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					userId: idUser,
-					gameType: 'panix'
+					gameType: 'chainix'
 				})
 			});
 			const data = await response.json();
@@ -128,20 +142,6 @@ import OtherGames from '$lib/OtherGames.svelte';
 			wordCreateAverage = data.nbEssaiMoyen ?? 0;
 
 		}
-	}
-	async function skipLetters(){
-		const response = await fetch('/game/panix', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				sessionId,
-				action : 'skipLetters'
-			})
-		});
-		const data = await response.json();
-		imposedLetters = data.imposedLetters;
-		count -= 5;
-		triggerTimeAnimation(-5);
 	}
 
 	onMount(() => {
@@ -158,13 +158,13 @@ import OtherGames from '$lib/OtherGames.svelte';
 		<div class="mb-6">
 			<div class="mb-8">
 				<h1 class="text-4xl font-bold text-gray-900 mb-2">
-					<i class="fa-solid fa-shuffle text-lime-600 mr-3" aria-hidden="true"></i>
-					Panix
+					<i class="fa-solid fa-link text-teal-600 mr-3" aria-hidden="true"></i>
+					Chainix
 				</h1>
 				<p class="mt-1 text-gray-600">
-					Créer un maximum de mots en 60 secondes avec des lettres imposées collées
+					Créer la plus longue chaîne en 60 secondes. Chaque fin de mot devient le début du suivant.
 				</p>
-				<h2 class="text-1xl font-semibold">Lettres imposées : {imposedLetters}</h2>
+				<h2 class="text-1xl font-semibold">Mot actuel : <span class="text-purple-600">{chainWords[chainWords.length - 1]}</span></h2>
 				{#if !isGameOver}
 					<div class="flex items-center gap-4">
 						<h2 class="text-1xl font-semibold">Temps restants : {count}</h2>
@@ -194,7 +194,7 @@ import OtherGames from '$lib/OtherGames.svelte';
 				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
 			>
 				<p class="text-3xl font-bold text-red-700">
-					Partie terminée, vous avez créer {nbWordCreate} mots valides.
+					Partie terminée, chaîne de {chainWords.length - 1} mots.
 				</p>
 			</div>
 		{/if}
@@ -216,30 +216,24 @@ import OtherGames from '$lib/OtherGames.svelte';
 					Envoyer
 				</button>
 			</form>
-			<button
-					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					type="submit"
-					disabled={isSurrender}
-					on:click={skipLetters}
-				>
-					Changer de lettres
-				</button>
 		</div>
 		
 
 		<div>
-			{#if tabCreateWord.length > 0}
+			{#if chainWords.length > 1}
 				<div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
 					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-						✅ Mots valides crées ({tabCreateWord.length})
+						✅ Chaîne de mots ({chainWords.length - 1})
 					</h4>
-					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-						{#each tabCreateWord as word, index}
-							<div
-								class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2"
-							>
-								<span class="text-sm font-medium text-green-700">#{index + 1}</span>
-								<span class="font-semibold text-green-900">{word}</span>
+					<div class="flex flex-wrap items-center gap-2">
+						{#each chainWords as word, index}
+							<div class="flex items-center gap-2">
+								<div class="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 font-semibold text-purple-900">
+									{word}
+								</div>
+								{#if index < chainWords.length - 1}
+									<span class="text-lg font-bold text-purple-600">→</span>
+								{/if}
 							</div>
 						{/each}
 					</div>
@@ -267,27 +261,31 @@ import OtherGames from '$lib/OtherGames.svelte';
 			<ul class="space-y-3 text-sm text-gray-600">
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Créer un maximum de mots en 60 secondes avec des lettres imposées collées</p>
+					<p>Créer la plus longue chaîne de mots en 60 secondes</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>La longueur des lettres imposées sont de 2 à 3 lettres</p>
+					<p>Chaque mot doit commencer par les 2 ou 3 dernières lettres du mot précédent</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Vous gagnez du temps ou en perdez en fonction de la longueur du mots créer</p>
+					<p>Les mots doivent exister dans le dictionnaire</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Vous ne pouvez pas mettre le meme mot que celui qu'est dans les lettres imposées</p>
+					<p>Vous gagnez du temps (2-4s) pour chaque mot trouvé</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Vous ne pouvez pas proposez plusieurs fois le même mot</p>
+					<p>Vous perdez 5 secondes pour chaque mot invalide</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Vous pouvez changer les lettres imposées mais cela vous fera perdre 5 secondes</p>
+					<p>Vous ne pouvez pas utiliser deux fois le même mot</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Chaque partie démarre avec un nouveau mot de départ</p>
 				</li>
 			</ul>
 		</div>
@@ -306,15 +304,14 @@ import OtherGames from '$lib/OtherGames.svelte';
 						<p class="text-4xl font-bold text-blue-600">
 							{Math.round(wordCreateAverage * 100) / 100}
 						</p>
-						<p class="mt-1 text-sm text-gray-600">Nombre de mots créés en moyenne</p>
+						<p class="mt-1 text-sm text-gray-600">Longueur moyenne de la chaîne</p>
 					</div>
 				</div>
 			</div>
 		{/if}
       
 
-
-		<OtherGames exclude="panix" />
+		<OtherGames exclude="chainix" />
 	</div>
 </div>
 </div>

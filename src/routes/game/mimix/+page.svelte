@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import OtherGames from '$lib/OtherGames.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
 	let nbIntruderFind: number = 0;
@@ -69,11 +70,16 @@
 </script>
 
 <Header />
-<div class="row flex min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-3xl">
+<div class="min-h-screen bg-gray-50 p-8">
+	<div class="mx-auto max-w-7xl flex gap-12">
+		<!-- Contenu principal -->
+		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">
-				<h2 class="text-4xl font-bold text-gray-900">Mimix</h2>
+				<h1 class="text-4xl font-bold text-gray-900 mb-2">
+					<i class="fa-solid fa-question text-rose-700 mr-3" aria-hidden="true"></i>
+					Mimix
+				</h1>
 				<p class="mt-1 text-gray-600">Trouvez le plus de fois l'intrus parmi les 4 propositions</p>
 				<p>Nombre d'intrus trouvés : {nbIntruderFind}</p>
 			</div>
@@ -131,7 +137,9 @@
 			</button>
 		</div>
 	</div>
-	<div class="w-80 space-y-6">
+
+	<!-- Sidebar droite -->
+	<div class="w-80 shrink-0 space-y-6">
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
 			<ul class="space-y-3 text-sm text-gray-600">
@@ -145,67 +153,9 @@
 				</li>
 			</ul>
 		</div>
-		<!---
-        	{#if idUser}
-			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-					📊 Vos statistiques
-				</h4>
-				<div class="grid grid-cols-2 gap-6">
-					<div class="text-center">
-						<p class="text-4xl font-bold text-purple-600">{totalGamePlayed}</p>
-						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-blue-600">
-							{Math.round(findAnagramsAverage * 100) / 100}
-						</p>
-						<p class="mt-1 text-sm text-gray-600">Nombre d'annagrammes trouvés en moyenne</p>
-					</div>
-				</div>
-			</div>
-		{/if}
-        -->
 
-		<div class="rounded-lg bg-white p-6 shadow-sm">
-			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
-			<div class="space-y-3">
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/pemantix">
-						<h5 class="font-medium text-gray-700">🧩Pédantix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">📝Motix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/lettix">
-						<h5 class="font-medium text-gray-700">📝Lettix</h5>
-					</a>
-				</div>
-			</div>
-		</div>
+		<!-- Autres jeux -->
+		<OtherGames exclude="mimix" />
 	</div>
+</div>
 </div>

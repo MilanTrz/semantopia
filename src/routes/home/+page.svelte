@@ -3,6 +3,8 @@
 	import type { challenge } from '$lib/models/challenge';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { GAMES } from '$lib/gameConfig';
+
 	let lastChallenge: challenge = {
 		name: '',
 		description: '',
@@ -61,131 +63,24 @@
 	<p class="mb-12 text-center text-gray-600">Quatre jeux innovants pour tous les niveaux</p>
 
 	<div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-4">
-		<a
-			href="/game/cemantix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-pink-100"
-				>
-					<img
-						src="/src/lib/assets/logo_Cémantix.png"
-						alt="Logo du site web"
-						width="40"
-						height="40"
-					/>
+		{#each GAMES as game (game.slug)}
+			<a
+				href="/game/{game.slug}"
+				class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
+			>
+				<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
+					<div
+						class={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${game.gradient} text-white`}
+					>
+						<i class={`fa-solid ${game.icon} text-2xl`} aria-hidden="true"></i>
+					</div>
+					<h4 class="mb-3 text-xl font-bold text-gray-800">{game.label}</h4>
+					<p class="text-sm text-gray-600">
+						{game.description}
+					</p>
 				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Cémantix</h4>
-				<p class="text-sm text-gray-600">
-					Trouvez le mot mystère grâce aux associations sémantiques et à votre grande intellecte
-				</p>
-			</div>
-		</a>
-		<a
-			href="/game/pedantix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100"
-				>
-					<img
-						src="/src/lib/assets/logo_Pédantix.png"
-						alt="Logo du site web"
-						width="40"
-						height="40"
-					/>
-				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Pédantix</h4>
-				<p class="text-sm text-gray-600">
-					Découvrez l'article Wikipédia caché mot par mot dans ce jeu de déduction
-				</p>
-			</div>
-		</a>
-		<a
-			href="/game/motix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
-				>
-					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
-				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Motix</h4>
-				<p class="text-sm text-gray-600">
-					Deviner le mot mystère en construisant d'autres mots du même nombre de lettres.
-				</p>
-			</div>
-		</a>
-		<a
-			href="/game/correlix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
-				>
-					<img
-						src="/src/lib/assets/logo_Correlix.png"
-						alt="Logo du site web"
-						width="40"
-						height="40"
-					/>
-				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Corrélix</h4>
-				<p class="text-sm text-gray-600">
-					Trouvez les mots liés par des corrélations surprenantes et logiques
-				</p>
-			</div>
-		</a>
-		<a
-			href="/game/lettix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
-				>
-					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
-				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Lettix</h4>
-				<p class="text-sm text-gray-600">Trouvez un maximum d'annagrammes en 60 secondes</p>
-			</div>
-		</a>
-		<a
-			href="/game/mimix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
-				>
-					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
-				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Mimix</h4>
-				<p class="text-sm text-gray-600">
-					Trouvez le plus de fois l'intrus parmi les 4 propositions
-				</p>
-			</div>
-		</a>
-		<a
-			href="/game/panix"
-			class="cursor-pointer rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md"
-		>
-			<div class="rounded-xl bg-white p-6 text-center shadow-sm transition hover:shadow-md">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100"
-				>
-					<img src="/src/lib/assets/logo_Motix.png" alt="Logo du site web" width="40" height="40" />
-				</div>
-				<h4 class="mb-3 text-xl font-bold text-gray-800">Panix</h4>
-				<p class="text-sm text-gray-600">
-					Créer un mot avec des lettres imposés et qui doivent etre collées en 60 secondes
-				</p>
-			</div>
-		</a>
+			</a>
+		{/each}
 	</div>
 </section>
 <!----
