@@ -21,7 +21,7 @@ export async function POST({ request }: RequestEvent) {
 
 		const AllAchievements = row_getAllAchi[0].ALLACHI ?? 0;
 		const AllRareAchievements = row_getAllRareAchi[0].ALLRAREACHI ?? 0;
-		const AllMissingAchievements = 3 - AllAchievements;
+		const AllMissingAchievements = 21 - AllAchievements;
 		const achievementsIds: number[] = rows_allAchievementsUnlock.map((row) => row.ID_ACHIEVEMENT);
 		return new Response(
 			JSON.stringify({
