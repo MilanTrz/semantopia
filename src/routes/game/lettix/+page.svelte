@@ -2,6 +2,7 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
+import OtherGames from '$lib/OtherGames.svelte';
 	let nbAnagramsFind: number = 0;
 	let isLoading: boolean = true;
 	let userGuess: string = '';
@@ -109,25 +110,32 @@
 </script>
 
 <Header />
-<div class="row flex min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-3xl">
+<div class="min-h-screen bg-gray-50 p-8">
+	<div class="mx-auto max-w-7xl flex gap-12">
+		<!-- Contenu principal -->
+		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">
-				<h2 class="text-4xl font-bold text-gray-900">Lettix</h2>
-				<p class="mt-1 text-gray-600">Trouvez un maximum d'annagrammes en 60 secondes</p>
-				<h2 class="text-1xl font-semibold">Mot a déchiffrer : {wordShuffleFind}</h2>
-				<div class="flex items-center gap-4">
-					<h2 class="text-1xl font-semibold">Temps restants : {count}</h2>
-					{#if showTimeAnimation}
-						<span
-							class="animate-bounce-up text-3xl font-bold {timeChangeValue > 0
-								? 'text-green-600'
-								: 'text-red-600'}"
-						>
-							{timeChangeValue > 0 ? '+' : ''}{timeChangeValue}s
-						</span>
-					{/if}
-				</div>
+				<h1 class="text-4xl font-bold text-gray-900 mb-2">
+					<i class="fa-solid fa-bolt text-violet-600 mr-3" aria-hidden="true"></i>
+					Lettix
+				</h1>
+				<p class="mt-1 text-gray-600">Trouvez un maximum d'anagrammes en 60 secondes</p>
+				<h2 class="text-1xl font-semibold">Mot à déchiffrer : {wordShuffleFind}</h2>
+				{#if !isGameOver}
+					<div class="flex items-center gap-4">
+						<h2 class="text-1xl font-semibold">Temps restants : {count}</h2>
+						{#if showTimeAnimation}
+							<span
+								class="animate-bounce-up text-3xl font-bold {timeChangeValue > 0
+									? 'text-green-600'
+									: 'text-red-600'}"
+							>
+								{timeChangeValue > 0 ? '+' : ''}{timeChangeValue}s
+							</span>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		</div>
 		{#if isLoading}
@@ -238,40 +246,10 @@
 			</div>
 		{/if}
 
-		<div class="rounded-lg bg-white p-6 shadow-sm">
-			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
-			<div class="space-y-3">
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/pemantix">
-						<h5 class="font-medium text-gray-700">🧩Pédantix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
-					</a>
-				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">📝Motix</h5>
-					</a>
-				</div>
-			</div>
-		</div>
+
+		<OtherGames exclude="lettix" />
 	</div>
+</div>
 </div>
 
 <style>

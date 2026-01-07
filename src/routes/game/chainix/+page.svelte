@@ -157,7 +157,10 @@ import OtherGames from '$lib/OtherGames.svelte';
 		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">
-				<h2 class="text-4xl font-bold text-gray-900">Chainix</h2>
+				<h1 class="text-4xl font-bold text-gray-900 mb-2">
+					<i class="fa-solid fa-link text-teal-600 mr-3" aria-hidden="true"></i>
+					Chainix
+				</h1>
 				<p class="mt-1 text-gray-600">
 					Créer la plus longue chaîne en 60 secondes. Chaque fin de mot devient le début du suivant.
 				</p>
@@ -310,6 +313,7 @@ import OtherGames from '$lib/OtherGames.svelte';
 
 		<OtherGames exclude="chainix" />
 	</div>
+</div>
 </div>
 
 <style>

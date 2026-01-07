@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import OtherGames from '$lib/OtherGames.svelte';
 	import { triggerConfettiAnimation } from '$lib';
 
 	let userGuess = '';
@@ -139,65 +140,66 @@
 </script>
 
 <Header />
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-8">
-	<div class="mx-auto max-w-4xl">
-		<div class="mb-8 text-center">
-			<h1
-				class="mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-5xl font-bold text-transparent"
-			>
-				Cémantix
-			</h1>
-			<p class="text-lg text-gray-600">Trouvez le mot mystère grâce à la proximité sémantique</p>
-			<div class="mt-4 flex justify-center gap-8">
-				<div class="text-center">
-					<p class="text-3xl font-bold text-blue-600">{nbEssai}</p>
-					<p class="text-sm text-gray-500">Essais</p>
-				</div>
-				{#if wordLength > 0}
-					<div class="text-center">
-						<p class="text-3xl font-bold text-purple-600">{wordLength}</p>
-						<p class="text-sm text-gray-500">Lettres</p>
-					</div>
-				{/if}
-			</div>
-		</div>
-
-		{#if message}
-			<div
-				class="mb-6 rounded-lg border-2 {gameWon
-					? 'border-green-400 bg-green-50'
-					: 'border-blue-400 bg-blue-50'} p-4 text-center"
-			>
-				<p class="font-medium {gameWon ? 'text-green-800' : 'text-blue-800'}">{message}</p>
-			</div>
-		{/if}
-
-		{#if !gameWon}
+<div class="min-h-screen bg-gray-50 p-8">
+	<div class="mx-auto max-w-7xl flex gap-12">
+		<!-- Contenu principal -->
+		<div class="flex-1 max-w-3xl">
 			<div class="mb-8">
-				<form on:submit|preventDefault={sendGuess} class="flex gap-3">
-					<input
-						type="text"
-						bind:value={userGuess}
-						placeholder="Entrez votre proposition..."
-						class="flex-1 rounded-lg border-2 border-gray-300 px-6 py-4 text-lg text-gray-900 placeholder-gray-400 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
-						disabled={gameWon || wordLength === 0}
-					/>
-					<button
-						type="submit"
-						class="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4 font-bold text-white transition hover:from-blue-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
-						disabled={gameWon || wordLength === 0}
-					>
-						Valider
-					</button>
-				</form>
+				<h1 class="text-4xl font-bold text-gray-900 mb-2">
+					<i class="fa-solid fa-brain text-pink-600 mr-3" aria-hidden="true"></i>
+					Cémantix
+				</h1>
+				<p class="text-gray-600">Trouvez le mot mystère grâce à la proximité sémantique</p>
+				<div class="mt-4 flex gap-6">
+					<div class="text-center">
+						<p class="text-3xl font-bold text-pink-600">{nbEssai}</p>
+						<p class="text-sm text-gray-500">Essais</p>
+					</div>
+					{#if wordLength > 0}
+						<div class="text-center">
+							<p class="text-3xl font-bold text-rose-600">{wordLength}</p>
+							<p class="text-sm text-gray-500">Lettres</p>
+						</div>
+					{/if}
+				</div>
 			</div>
-		{/if}
 
-		{#if guesses.length > 0}
-			<div class="mb-8 rounded-xl bg-white p-6 shadow-lg">
-				<h2 class="mb-4 text-2xl font-bold text-gray-800">
-					Vos propositions ({guesses.length})
-				</h2>
+			{#if message}
+				<div
+					class="mb-6 rounded-lg border-2 {gameWon
+						? 'border-green-400 bg-green-50'
+						: 'border-blue-400 bg-blue-50'} p-4"
+				>
+					<p class="font-medium {gameWon ? 'text-green-800' : 'text-blue-800'}">{message}</p>
+				</div>
+			{/if}
+
+			{#if !gameWon}
+				<div class="mb-8">
+					<form on:submit|preventDefault={sendGuess} class="flex gap-3">
+						<input
+							type="text"
+							bind:value={userGuess}
+							placeholder="Entrez votre proposition..."
+							class="flex-1 rounded-lg border-2 border-gray-300 px-6 py-4 text-lg text-gray-900 placeholder-gray-400 transition focus:border-pink-500 focus:ring-4 focus:ring-pink-200 focus:outline-none"
+							disabled={gameWon || wordLength === 0}
+						/>
+						<button
+							type="submit"
+							class="rounded-lg bg-gradient-to-r from-pink-600 via-rose-500 to-orange-400 px-8 py-4 font-bold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+							disabled={gameWon || wordLength === 0}
+						>
+							Valider
+						</button>
+					</form>
+				</div>
+			{/if}
+
+			{#if guesses.length > 0}
+				<div class="mb-8 rounded-xl bg-white p-6 shadow-sm">
+					<h2 class="mb-4 text-2xl font-bold text-gray-800">
+						Vos propositions ({guesses.length})
+					</h2>
 				<div class="space-y-2">
 					{#each guesses as guess, index}
 						{#if typeof guess.similarity === 'number'}
@@ -234,81 +236,91 @@
 							</div>
 						{/if}
 					{/each}
+					</div>
 				</div>
-			</div>
-		{/if}
-
-		<div class="flex gap-4">
-			<button
-				on:click={newGame}
-				class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-			>
-				🔄 Nouvelle partie
-			</button>
-			{#if gameWon}
-				<button
-					class="flex-1 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 font-bold text-white transition hover:from-green-700 hover:to-emerald-700"
-				>
-					📤 Partager résultat
-				</button>
 			{/if}
+
+			<div class="flex gap-4">
+				<button
+					on:click={newGame}
+					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+				>
+					🔄 Nouvelle partie
+				</button>
+				{#if gameWon}
+					<button
+						class="flex-1 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 font-bold text-white transition hover:from-green-700 hover:to-emerald-700"
+					>
+						📤 Partager résultat
+					</button>
+				{/if}
+			</div>
 		</div>
 
-		<div class="mt-8 rounded-xl bg-white p-6 shadow-lg">
-			<h3 class="mb-4 text-2xl font-bold text-gray-800">📖 Règles du jeu</h3>
-			<ol class="space-y-3 text-gray-700">
-				<li class="flex gap-3">
-					<span class="font-bold text-blue-600">1.</span>
-					<p>Trouvez le mot mystère en proposant des mots un par un</p>
-				</li>
-				<li class="flex gap-3">
-					<span class="font-bold text-blue-600">2.</span>
-					<p>Chaque proposition reçoit un score de proximité sémantique</p>
-				</li>
-				<li class="flex gap-3">
-					<span class="font-bold text-blue-600">3.</span>
-					<p>Le pourcentage peut être négatif si les mots sont très éloignés sémantiquement</p>
-				</li>
-				<li class="flex gap-3">
-					<span class="font-bold text-blue-600">4.</span>
-					<p>Plus votre mot est proche sémantiquement, plus le score est élevé</p>
-				</li>
-				<li class="flex gap-3">
-					<span class="font-bold text-blue-600">5.</span>
-					<p>Vos propositions sont triées par proximité pour vous guider</p>
-				</li>
-				<li class="flex gap-3">
-					<span class="font-bold text-blue-600">6.</span>
-					<p>Continuez jusqu'à trouver le mot exact !</p>
-				</li>
-			</ol>
+		<!-- Sidebar droite -->
+		<div class="w-80 shrink-0 space-y-6">
+			<!-- Règles -->
+			<div class="rounded-lg bg-white p-6 shadow-sm">
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+					📖 Règles du jeu
+				</h4>
+				<ol class="space-y-3 text-sm text-gray-700">
+					<li class="flex gap-3">
+						<span class="font-bold text-pink-600">1.</span>
+						<p>Trouvez le mot mystère en proposant des mots un par un</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-pink-600">2.</span>
+						<p>Chaque proposition reçoit un score de proximité sémantique</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-pink-600">3.</span>
+						<p>Le pourcentage peut être négatif si les mots sont très éloignés sémantiquement</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-pink-600">4.</span>
+						<p>Plus votre mot est proche sémantiquement, plus le score est élevé</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-pink-600">5.</span>
+						<p>Vos propositions sont triées par proximité pour vous guider</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-pink-600">6.</span>
+						<p>Continuez jusqu'à trouver le mot exact !</p>
+					</li>
+				</ol>
 
-			<div class="mt-6 grid grid-cols-2 gap-3 text-center text-sm md:grid-cols-6">
-				<div class="rounded-lg border-2 border-blue-400 bg-blue-100 p-3">
-					<p class="font-bold text-blue-800">🧊 Négatif</p>
-					<p class="text-blue-600">Glacial</p>
-				</div>
-				<div class="rounded-lg border-2 border-red-400 bg-red-100 p-3">
-					<p class="font-bold text-red-800">❄️ 0-10°C</p>
-					<p class="text-red-600">Très froid</p>
-				</div>
-				<div class="rounded-lg border-2 border-orange-400 bg-orange-100 p-3">
-					<p class="font-bold text-orange-800">😐 10-20°C</p>
-					<p class="text-orange-600">Froid</p>
-				</div>
-				<div class="rounded-lg border-2 border-yellow-400 bg-yellow-100 p-3">
-					<p class="font-bold text-yellow-800">🤔 20-35°C</p>
-					<p class="text-yellow-600">Tiède</p>
-				</div>
-				<div class="rounded-lg border-2 border-lime-400 bg-lime-100 p-3">
-					<p class="font-bold text-lime-800">😊 35-50°C</p>
-					<p class="text-lime-600">Chaud</p>
-				</div>
-				<div class="rounded-lg border-2 border-green-400 bg-green-100 p-3">
-					<p class="font-bold text-green-800">🔥 50°C+</p>
-					<p class="text-green-600">Brûlant !</p>
+				<div class="mt-6 grid grid-cols-2 gap-2 text-center text-xs">
+					<div class="rounded-lg border-2 border-blue-400 bg-blue-100 p-2">
+						<p class="font-bold text-blue-800">🧊 Négatif</p>
+						<p class="text-blue-600">Glacial</p>
+					</div>
+					<div class="rounded-lg border-2 border-red-400 bg-red-100 p-2">
+						<p class="font-bold text-red-800">❄️ 0-10°C</p>
+						<p class="text-red-600">Très froid</p>
+					</div>
+					<div class="rounded-lg border-2 border-orange-400 bg-orange-100 p-2">
+						<p class="font-bold text-orange-800">😐 10-20°C</p>
+						<p class="text-orange-600">Froid</p>
+					</div>
+					<div class="rounded-lg border-2 border-yellow-400 bg-yellow-100 p-2">
+						<p class="font-bold text-yellow-800">🤔 20-35°C</p>
+						<p class="text-yellow-600">Tiède</p>
+					</div>
+					<div class="rounded-lg border-2 border-lime-400 bg-lime-100 p-2">
+						<p class="font-bold text-lime-800">😊 35-50°C</p>
+						<p class="text-lime-600">Chaud</p>
+					</div>
+					<div class="rounded-lg border-2 border-green-400 bg-green-100 p-2">
+						<p class="font-bold text-green-800">🔥 50°C+</p>
+						<p class="text-green-600">Brûlant !</p>
+					</div>
 				</div>
 			</div>
+
+			<!-- Autres jeux -->
+			<OtherGames exclude="cemantix" />
 		</div>
 	</div>
 </div>
