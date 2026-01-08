@@ -1,4 +1,5 @@
 import pool from '$lib/server/db';
+import { endGameSession } from '$lib/utils/gameSession';
 import type { RequestEvent } from '@sveltejs/kit';
 const activeSessions: Map<
 	string,
@@ -64,13 +65,17 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { sessionId } = await request.json();
+	const {idUser,nbEssai, sessionId } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
 		const wordToFind = activeSessions.get(sessionId)?.wordToFind;
+		if (idUser){
+			await endGameSession(idUser, 'lettix', nbEssai, true);
+		}
+		  
 		return new Response(JSON.stringify({ wordToFind }), {
 			status: 200
 		});

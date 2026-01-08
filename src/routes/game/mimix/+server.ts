@@ -1,6 +1,8 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { fetchSimilarityPercent, fetchMostSimilar } from '$lib/utils/word2vec';
 import { error } from 'console';
+import pool from '$lib/server/db';
+import { endGameSession } from '$lib/utils/gameSession';
 const activeSessions: Map<
 	string,
 	{
@@ -12,22 +14,28 @@ const activeSessions: Map<
 	}
 > = new Map();
 
-export async function GET() {
-	//const userId = Number(url.searchParams.get('userId'));
+
+export async function GET({url}) {
+	const userId = Number(url.searchParams.get('userId'));
 	try {
 		const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-		const wordBasic: string = await randomWord();
+		let wordBasic:string = '';
 		let wordIntruder: string = '';
 		let isValid = false;
+		let attempts = 0;
+		const MAX_ATTEMPTS = 100; 		
+
 		do {
+			wordBasic = await randomWord();
 			wordIntruder = await randomWord();
 		} while ((await calculateSimilarity(wordBasic, wordIntruder)) > 20);
 
 		let tabSimilarWord: string[] = [];
 
-		while (!isValid) {
+		while (!isValid && attempts < MAX_ATTEMPTS) {
 			tabSimilarWord = await fetchMostSimilar(wordBasic, 2);
 			isValid = checkWordsValidity(wordBasic, wordIntruder, tabSimilarWord[0], tabSimilarWord[1]);
+			attempts++;
 		}
 
 		activeSessions.set(sessionId, {
@@ -44,6 +52,13 @@ export async function GET() {
 			tabSimilarWord[0],
 			tabSimilarWord[1]
 		]);
+		const date = new Date();
+		if (userId !== 0) {
+			await pool.query(
+				'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,"mimix",0,?) ',
+				[date, userId]
+			);
+		}
 
 		return new Response(JSON.stringify({ tabShuffleWord, sessionId }), {
 			status: 200
@@ -56,13 +71,22 @@ export async function GET() {
 }
 export async function POST({ request }: RequestEvent) {
 	const { word, sessionId } = await request.json();
+	const normalize = (w: string): string => {
+			return w
+				.normalize('NFD')
+				.replace(/[\u0300-\u036f]/g, '')
+				.trim()
+				.toLowerCase();
+		};
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
-	const { wordIntruder, totalIntruderFound } = session;
+	try{
+		const { wordIntruder, totalIntruderFound } = session;
+		console.log(normalize(word),normalize(wordIntruder))
 	let isWin: boolean = false;
-	if (word == wordIntruder) {
+	if (normalize(word) === normalize(wordIntruder)) {
 		isWin = true;
 		const newWordBasic: string = await randomWord();
 		let newWordIntruder: string = '';
@@ -74,14 +98,17 @@ export async function POST({ request }: RequestEvent) {
 			Math.max(20 + totalIntruderFound, 80)
 		);
 		let newTabSimilarWord: string[] = [];
-		while (!isValid) {
+		let attempts = 0;
+		const MAX_ATTEMPTS = 100; 
+		while (!isValid && attempts < MAX_ATTEMPTS) {
 			newTabSimilarWord = await fetchMostSimilar(newWordBasic, 2);
 			isValid = checkWordsValidity(
 				newWordBasic,
-				wordIntruder,
+				newWordIntruder,
 				newTabSimilarWord[0],
 				newTabSimilarWord[1]
 			);
+			attempts++;
 		}
 		activeSessions.set(sessionId, {
 			wordBasic: newWordBasic,
@@ -105,16 +132,23 @@ export async function POST({ request }: RequestEvent) {
 	return new Response(JSON.stringify({ message: 'Ce n est pas le bon mot', isWin }), {
 		status: 200
 	});
+	}catch (error) {
+		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
+			status: 500
+		});
+	}
+	
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { sessionId } = await request.json();
+	const {idUser,nbEssai, sessionId } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
 		const wordIntruder = activeSessions.get(sessionId)?.wordIntruder;
+		  await endGameSession(idUser, 'mimix', nbEssai, true);
 		return new Response(JSON.stringify({ wordIntruder }), {
 			status: 200
 		});
@@ -143,6 +177,7 @@ async function randomWord() {
 
 async function calculateSimilarity(wordBasic: string, wordCompare: string) {
 	const similarityToPrevious = await fetchSimilarityPercent(wordBasic, wordCompare);
+	console.log("similiarity ",similarityToPrevious, " entre ", wordBasic, " et ", wordCompare)
 	if (similarityToPrevious.status === 'missing') {
 		throw error("le mot n'existe pas");
 	}
@@ -173,7 +208,7 @@ function checkWordsValidity(
 			.replace(/[\u0300-\u036f]/g, '')
 			.trim()
 			.toLowerCase()
-			.replace(/s/, '');
+			.replace(/s/g, '');
 	};
 
 	if (!word1 || !word2 || word1.length === 0 || word2.length === 0) {

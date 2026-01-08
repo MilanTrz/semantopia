@@ -153,7 +153,6 @@ import OtherGames from '$lib/OtherGames.svelte';
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto max-w-7xl flex gap-12">
-		<!-- Contenu principal -->
 		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">

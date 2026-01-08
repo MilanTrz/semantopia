@@ -2,7 +2,6 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
 
 	$: pseudoUser = $sessionStore?.pseudo ?? null;
 	$: idUser = $sessionStore?.id ?? null;
@@ -11,7 +10,6 @@
 	$: date = $sessionStore?.dateCreation ?? null;
 
 	let mdpUser: string = '';
-	let newDate: Date;
 	let dateFormat: string;
 	let fileInput: HTMLInputElement;
 
@@ -182,7 +180,7 @@
 							<div class="mb-4 flex items-center justify-between">
 								<div class="flex-1">
 									<p class="text-sm font-medium text-gray-500">Taux de réussite</p>
-									<h3 class="mt-2 text-3xl font-bold text-gray-900">{tauxReussite}%</h3>
+									<h3 class="mt-2 text-3xl font-bold text-gray-900">{Math.round(tauxReussite * 100)/ 100}%</h3>
 								</div>
 								<div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
 									<svg

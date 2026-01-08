@@ -89,6 +89,8 @@ import OtherGames from '$lib/OtherGames.svelte';
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
+				idUser,
+				nbEssai: nbAnagramsFind,
 				sessionId
 			})
 		});
@@ -103,16 +105,32 @@ import OtherGames from '$lib/OtherGames.svelte';
 			showTimeAnimation = false;
 		}, 1000);
 	}
+	async function getStats() {
+		if (idUser) {
+			const response = await fetch('/api/statistiques/', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					gameType: 'lettix'
+				})
+			});
+			const data = await response.json();
+			totalGamePlayed = data.nbParties
+			findAnagramsAverage = data.nbEssaiMoyen
+			
+		}
+	}
 
 	onMount(() => {
 		newGame();
+		getStats();	
 	});
 </script>
 
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto max-w-7xl flex gap-12">
-		<!-- Contenu principal -->
 		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">

@@ -12,6 +12,9 @@
 	let tabShuffleWord: string[] = [];
 	let wordIntruder: string = '';
 	let foundIntruder: boolean;
+	let totalGamePlayed:number = 0;
+	let averageWordFind:number = 0;
+
 
 	async function newGame() {
 		isLoading = true;
@@ -42,7 +45,6 @@
 		});
 
 		const data = await response.json();
-		console.log('data' + data);
 		foundIntruder = data.isWin;
 		if (foundIntruder) {
 			nbIntruderFind++;
@@ -57,22 +59,40 @@
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
+				idUser,
+				nbEssai:nbIntruderFind,
 				sessionId
 			})
 		});
 		const data = await response.json();
 		wordIntruder = data.wordIntruder;
 	}
+	 async function getStats() {
+		if (idUser) {
+			const response = await fetch('/api/statistiques/', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					gameType: 'panix'
+				})
+			});
+			const data = await response.json();
+			totalGamePlayed= data.nbParties ?? 0;
+			averageWordFind = data.nbEssaiMoyen ?? 0;
+
+		}
+	}
 
 	onMount(() => {
 		newGame();
+		getStats();
 	});
 </script>
 
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto max-w-7xl flex gap-12">
-		<!-- Contenu principal -->
 		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">
@@ -138,7 +158,6 @@
 		</div>
 	</div>
 
-	<!-- Sidebar droite -->
 	<div class="w-80 shrink-0 space-y-6">
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
@@ -153,8 +172,27 @@
 				</li>
 			</ul>
 		</div>
+		 {#if idUser}
+			<div class="rounded-lg bg-white p-6 shadow-sm">
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+					📊 Vos statistiques
+				</h4>
+				<div class="grid grid-cols-2 gap-6">
+					<div class="text-center">
+						<p class="text-4xl font-bold text-purple-600">{totalGamePlayed}</p>
+						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
+					</div>
+					<div class="text-center">
+						<p class="text-4xl font-bold text-blue-600">
+							{Math.round(averageWordFind * 100) / 100}
+						</p>
+						<p class="mt-1 text-sm text-gray-600">Nombre de mots créés en moyenne</p>
+					</div>
+				</div>
+			</div>
+		{/if}
 
-		<!-- Autres jeux -->
+	
 		<OtherGames exclude="mimix" />
 	</div>
 </div>
