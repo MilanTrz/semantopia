@@ -3,33 +3,36 @@
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
 import OtherGames from '$lib/OtherGames.svelte';
-	let nbAnagramsFind: number = 0;
+
+
+	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
 	let userGuess: string = '';
 	let isSurrender: boolean = false;
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
-	let totalGamePlayed: number = 0;
-	let findAnagramsAverage: number = 0;
-	let wordShuffleFind: string = '';
-	let count: number = 60;
 	let sessionId: string = '';
-	let findAnagrams: boolean;
-	let tabAnagramsFind: string[] = [];
+	let isWordValid: boolean;
+	let chainWords: string[] = [];
+	let guessedWords: Set<string> = new Set();
 	let isGameOver: boolean = false;
-	let wordToFind: string = '';
-
 	let interval: ReturnType<typeof setInterval> | null = null;
-
 	let showTimeAnimation: boolean = false;
 	let timeChangeValue: number = 0;
+	let count = 60;
+	let startingWord: string = '';
+    let totalGamePlayed:number = 0;
+    let wordCreateAverage:number = 0;
 
 	async function newGame() {
-		nbAnagramsFind = 0;
+		userGuess = '';
+		nbWordCreate = 0;
 		count = 60;
 		isLoading = true;
 		isGameOver = false;
-		tabAnagramsFind = [];
+		isSurrender = false;
+		chainWords = [];
+		guessedWords = new Set();
 		showTimeAnimation = false;
 		if (interval !== null) {
 			clearInterval(interval);
@@ -38,13 +41,14 @@ import OtherGames from '$lib/OtherGames.svelte';
 			console.error('idUser est null');
 			return;
 		}
-		const url = `/game/lettix?userId=${encodeURIComponent(idUser)}`;
+		const url = `/game/chainix?userId=${encodeURIComponent(idUser)}`;
 		const response = await fetch(url, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
 		});
 		const data = await response.json();
-		wordShuffleFind = data.wordShuffle;
+		startingWord = data.startingWord;
+		chainWords = [startingWord];
 		sessionId = data.sessionId;
 		isLoading = false;
 
@@ -59,24 +63,43 @@ import OtherGames from '$lib/OtherGames.svelte';
 			}
 		}, 1000);
 	}
+	const normalizeWord = (word: string) =>
+		word
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.trim()
+			.toLowerCase();
+
 	async function sendGuess() {
-		const response = await fetch('/game/lettix', {
+		const cleanGuess = userGuess.trim();
+		if (!cleanGuess) return;
+
+		const normalizedGuess = normalizeWord(cleanGuess);
+		if (guessedWords.has(normalizedGuess)) {
+			count -= 5;
+			triggerTimeAnimation(-5);
+			userGuess = '';
+			return null;
+		}
+		const response = await fetch('/game/chainix', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				userGuess,
-				sessionId
+				userGuess: cleanGuess,
+				sessionId,
+				currentLastWord: chainWords[chainWords.length - 1]
 			})
 		});
 
 		const data = await response.json();
-		findAnagrams = data.isWin;
-		if (findAnagrams == true) {
-			nbAnagramsFind++;
-			tabAnagramsFind = [...tabAnagramsFind, userGuess];
-			wordShuffleFind = data.newWordShuffle;
-			count += 15;
-			triggerTimeAnimation(15);
+		isWordValid = data.isValid;
+		if (isWordValid) {
+			nbWordCreate++;
+			chainWords = [...chainWords, cleanGuess];
+			guessedWords.add(normalizedGuess);
+			let timeBonus = data.timeBonus;
+			count += timeBonus;
+			triggerTimeAnimation(timeBonus);
 		} else {
 			count -= 5;
 			triggerTimeAnimation(-5);
@@ -85,15 +108,16 @@ import OtherGames from '$lib/OtherGames.svelte';
 	}
 	async function gameOver() {
 		isGameOver = true;
-		const response = await fetch('/game/lettix', {
+		isSurrender = true;
+		await fetch('/game/chainix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				sessionId
+				sessionId,
+                idUser,
+                chainLength: chainWords.length - 1
 			})
 		});
-		const data = await response.json();
-		wordToFind = data.wordToFind;
 	}
 
 	function triggerTimeAnimation(value: number) {
@@ -103,9 +127,26 @@ import OtherGames from '$lib/OtherGames.svelte';
 			showTimeAnimation = false;
 		}, 1000);
 	}
+    async function getStats() {
+		if (idUser) {
+			const response = await fetch('/api/statistiques/', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					gameType: 'chainix'
+				})
+			});
+			const data = await response.json();
+			totalGamePlayed= data.nbParties ?? 0;
+			wordCreateAverage = data.nbEssaiMoyen ?? 0;
+
+		}
+	}
 
 	onMount(() => {
 		newGame();
+        getStats();
 	});
 </script>
 
@@ -117,11 +158,13 @@ import OtherGames from '$lib/OtherGames.svelte';
 		<div class="mb-6">
 			<div class="mb-8">
 				<h1 class="text-4xl font-bold text-gray-900 mb-2">
-					<i class="fa-solid fa-bolt text-violet-600 mr-3" aria-hidden="true"></i>
-					Lettix
+					<i class="fa-solid fa-link text-teal-600 mr-3" aria-hidden="true"></i>
+					Chainix
 				</h1>
-				<p class="mt-1 text-gray-600">Trouvez un maximum d'anagrammes en 60 secondes</p>
-				<h2 class="text-1xl font-semibold">Mot à déchiffrer : {wordShuffleFind}</h2>
+				<p class="mt-1 text-gray-600">
+					Créer la plus longue chaîne en 60 secondes. Chaque fin de mot devient le début du suivant.
+				</p>
+				<h2 class="text-1xl font-semibold">Mot actuel : <span class="text-purple-600">{chainWords[chainWords.length - 1]}</span></h2>
 				{#if !isGameOver}
 					<div class="flex items-center gap-4">
 						<h2 class="text-1xl font-semibold">Temps restants : {count}</h2>
@@ -151,7 +194,7 @@ import OtherGames from '$lib/OtherGames.svelte';
 				class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
 			>
 				<p class="text-3xl font-bold text-red-700">
-					Partie terminée, vous avez deviné {nbAnagramsFind} annagrammes. Le dernier mot était {wordToFind}.
+					Partie terminée, chaîne de {chainWords.length - 1} mots.
 				</p>
 			</div>
 		{/if}
@@ -174,23 +217,23 @@ import OtherGames from '$lib/OtherGames.svelte';
 				</button>
 			</form>
 		</div>
-		<div class="mb-6 rounded-lg p-6">
-			<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800"></p>
-		</div>
+		
 
 		<div>
-			{#if tabAnagramsFind.length > 0}
+			{#if chainWords.length > 1}
 				<div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
 					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-						✅ Anagrammes trouvés ({tabAnagramsFind.length})
+						✅ Chaîne de mots ({chainWords.length - 1})
 					</h4>
-					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-						{#each tabAnagramsFind as word, index}
-							<div
-								class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2"
-							>
-								<span class="text-sm font-medium text-green-700">#{index + 1}</span>
-								<span class="font-semibold text-green-900">{word}</span>
+					<div class="flex flex-wrap items-center gap-2">
+						{#each chainWords as word, index}
+							<div class="flex items-center gap-2">
+								<div class="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 font-semibold text-purple-900">
+									{word}
+								</div>
+								{#if index < chainWords.length - 1}
+									<span class="text-lg font-bold text-purple-600">→</span>
+								{/if}
 							</div>
 						{/each}
 					</div>
@@ -218,15 +261,36 @@ import OtherGames from '$lib/OtherGames.svelte';
 			<ul class="space-y-3 text-sm text-gray-600">
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Trouver le mot en déchiffrant l'annagramme</p>
+					<p>Créer la plus longue chaîne de mots en 60 secondes</p>
 				</li>
 				<li class="flex items-start">
 					<span class="mr-2">•</span>
-					<p>Vous gagnez du temps ou en perdez en fonction de votre réponse</p>
+					<p>Chaque mot doit commencer par les 2 ou 3 dernières lettres du mot précédent</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Les mots doivent exister dans le dictionnaire</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Vous gagnez du temps (2-4s) pour chaque mot trouvé</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Vous perdez 5 secondes pour chaque mot invalide</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Vous ne pouvez pas utiliser deux fois le même mot</p>
+				</li>
+				<li class="flex items-start">
+					<span class="mr-2">•</span>
+					<p>Chaque partie démarre avec un nouveau mot de départ</p>
 				</li>
 			</ul>
 		</div>
-		{#if idUser}
+
+        {#if idUser}
 			<div class="rounded-lg bg-white p-6 shadow-sm">
 				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
 					📊 Vos statistiques
@@ -238,16 +302,16 @@ import OtherGames from '$lib/OtherGames.svelte';
 					</div>
 					<div class="text-center">
 						<p class="text-4xl font-bold text-blue-600">
-							{Math.round(findAnagramsAverage * 100) / 100}
+							{Math.round(wordCreateAverage * 100) / 100}
 						</p>
-						<p class="mt-1 text-sm text-gray-600">Nombre d'annagrammes trouvés en moyenne</p>
+						<p class="mt-1 text-sm text-gray-600">Longueur moyenne de la chaîne</p>
 					</div>
 				</div>
 			</div>
 		{/if}
+      
 
-
-		<OtherGames exclude="lettix" />
+		<OtherGames exclude="chainix" />
 	</div>
 </div>
 </div>

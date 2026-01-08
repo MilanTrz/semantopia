@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import OtherGames from '$lib/OtherGames.svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { onMount } from 'svelte';
 
@@ -400,210 +401,238 @@
 </script>
 
 <Header />
-<div class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-8">
-	<div class="mx-auto max-w-5xl">
-		<div class="mb-8 text-center">
-			<h1 class="text-5xl font-bold text-slate-900">Correlix</h1>
-			<p class="mt-3 text-lg text-slate-600">
-				Reliez progressivement <span class="font-semibold text-emerald-600"
-					>{startWord || '...'}</span
-				>
-				a <span class="font-semibold text-sky-600">{targetWord || '...'}</span> avec des mots suffisamment
-				proches et de plus en plus corrélés.
-			</p>
-		</div>
-
-		<div class="mb-8 grid gap-4 md:grid-cols-3">
-			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-				<p class="text-sm tracking-wide text-slate-500 uppercase">Mot de depart</p>
-				<p class="mt-2 text-3xl font-bold text-emerald-600">{startWord || '...'}</p>
-			</div>
-			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-				<p class="text-sm tracking-wide text-slate-500 uppercase">Mot objectif</p>
-				<p class="mt-2 text-3xl font-bold text-sky-600">{targetWord || '...'}</p>
-			</div>
-			<div class="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-				<p class="text-sm tracking-wide text-slate-500 uppercase">Essais</p>
-				<p class="mt-2 text-3xl font-bold text-slate-800">{attempts}</p>
-				<p class="text-xs text-slate-500">Lien minimal {minSimilarity}%</p>
-			</div>
-		</div>
-
-		{#if initializing}
-			<div class="flex items-center justify-center py-16">
-				<div
-					class="h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"
-				></div>
-			</div>
-		{:else}
+<div class="min-h-screen bg-gray-50 p-8">
+	<div class="mx-auto max-w-7xl flex gap-12">
+		<!-- Contenu principal -->
+		<div class="flex-1 max-w-3xl">
 			<div class="mb-8">
-				<form class="flex flex-col gap-3 md:flex-row" on:submit|preventDefault={sendGuess}>
-					<input
-						class="w-full rounded-xl border border-slate-200 px-6 py-4 text-lg text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-200 focus:outline-none"
-						type="text"
-						bind:value={userWord}
-						placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
-						autocomplete="off"
-						disabled={gameWon || isLoading || initializing}
-					/>
-					<button
-						type="submit"
-						class={`rounded-xl bg-gradient-to-r from-emerald-500 to-sky-500 px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:from-emerald-600 hover:to-sky-600 ${
-							canSubmit ? '' : 'cursor-not-allowed opacity-60'
-						}`}
-						disabled={!canSubmit}
+				<h1 class="text-4xl font-bold text-gray-900 mb-2">
+					<i class="fa-solid fa-project-diagram text-orange-600 mr-3" aria-hidden="true"></i>
+					Corrélix
+				</h1>
+				<p class="text-gray-600">
+					Reliez progressivement <span class="font-semibold text-orange-600"
+						>{startWord || '...'}</span
 					>
-						{isLoading ? 'Verification...' : 'Valider'}
-					</button>
-				</form>
+					à <span class="font-semibold text-amber-600">{targetWord || '...'}</span> avec des mots suffisamment
+					proches et de plus en plus corrélés.
+				</p>
 			</div>
 
-			{#if path.length > 0}
-				<div class="mb-10 space-y-4">
-					{#each path as step, index}
-						<div
-							class={`cursor-pointer rounded-xl border bg-white p-5 shadow-sm transition ${
-								index === activeIndex
-									? 'border-emerald-400 ring-2 ring-emerald-100'
-									: 'border-slate-200 hover:border-slate-300'
+			<div class="mb-8 grid gap-4 md:grid-cols-3">
+				<div class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+					<p class="text-sm tracking-wide text-gray-500 uppercase">Mot de départ</p>
+					<p class="mt-2 text-3xl font-bold text-orange-600">{startWord || '...'}</p>
+				</div>
+				<div class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+					<p class="text-sm tracking-wide text-gray-500 uppercase">Mot objectif</p>
+					<p class="mt-2 text-3xl font-bold text-amber-600">{targetWord || '...'}</p>
+				</div>
+				<div class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+					<p class="text-sm tracking-wide text-gray-500 uppercase">Essais</p>
+					<p class="mt-2 text-3xl font-bold text-gray-800">{attempts}</p>
+					<p class="text-xs text-gray-500">Lien minimal {minSimilarity}%</p>
+				</div>
+			</div>
+
+			{#if initializing}
+				<div class="flex items-center justify-center py-16">
+					<div
+						class="h-12 w-12 animate-spin rounded-full border-4 border-orange-200 border-t-orange-600"
+					></div>
+				</div>
+			{:else}
+				<div class="mb-8">
+					<form class="flex flex-col gap-3 md:flex-row" on:submit|preventDefault={sendGuess}>
+						<input
+							class="w-full rounded-xl border border-gray-200 px-6 py-4 text-lg text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-orange-500 focus:ring-4 focus:ring-orange-200 focus:outline-none"
+							type="text"
+							bind:value={userWord}
+							placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
+							autocomplete="off"
+							disabled={gameWon || isLoading || initializing}
+						/>
+						<button
+							type="submit"
+							class={`rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:shadow-lg ${
+								canSubmit ? '' : 'cursor-not-allowed opacity-60'
 							}`}
-							role="button"
-							tabindex="0"
-							on:click={() => selectStep(index, true)}
+							disabled={!canSubmit}
 						>
-							<div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-								<div>
-									<p class="text-xs tracking-wide text-slate-500 uppercase">
-										Etape {index}
-									</p>
-									<p class="mt-1 text-2xl font-semibold text-slate-900 capitalize">{step.word}</p>
-								</div>
-								<div class="flex flex-wrap gap-3 text-sm">
-									<div
-										class={`rounded-full border px-4 py-2 font-semibold ${getSimilarityBadge(step.similarityToTarget)}`}
-									>
-										Vers objectif {formatPercent(step.similarityToTarget)}
+							{isLoading ? 'Vérification...' : 'Valider'}
+						</button>
+					</form>
+				</div>
+
+				{#if path.length > 0}
+					<div class="mb-10 space-y-4">
+						{#each path as step, index}
+							<div
+								class={`cursor-pointer rounded-xl border bg-white p-5 shadow-sm transition ${
+									index === activeIndex
+										? 'border-orange-400 ring-2 ring-orange-100'
+										: 'border-gray-200 hover:border-gray-300'
+								}`}
+								role="button"
+								tabindex="0"
+								on:click={() => selectStep(index, true)}
+							>
+								<div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+									<div>
+										<p class="text-xs tracking-wide text-gray-500 uppercase">
+											Étape {index}
+										</p>
+										<p class="mt-1 text-2xl font-semibold text-gray-900 capitalize">{step.word}</p>
 									</div>
-									{#if step.similarityFromPrevious !== null}
+									<div class="flex flex-wrap gap-3 text-sm">
 										<div
-											class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 font-medium text-slate-700"
+											class={`rounded-full border px-4 py-2 font-semibold ${getSimilarityBadge(step.similarityToTarget)}`}
 										>
-											Lien avec le mot précédent {formatPercent(step.similarityFromPrevious)}
+											Vers objectif {formatPercent(step.similarityToTarget)}
 										</div>
-									{/if}
-									{#if index > 0}
-										<div
-											class={`rounded-full bg-white px-4 py-2 font-semibold ${getDeltaColor(step.deltaToTarget)}`}
-										>
-											{formatDelta(step.deltaToTarget)}
-										</div>
-									{/if}
+										{#if step.similarityFromPrevious !== null}
+											<div
+												class="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 font-medium text-gray-700"
+											>
+												Lien avec le mot précédent {formatPercent(step.similarityFromPrevious)}
+											</div>
+										{/if}
+										{#if index > 0}
+											<div
+												class={`rounded-full bg-white px-4 py-2 font-semibold ${getDeltaColor(step.deltaToTarget)}`}
+											>
+												{formatDelta(step.deltaToTarget)}
+											</div>
+										{/if}
+									</div>
 								</div>
 							</div>
-						</div>
-					{/each}
-				</div>
-			{/if}
+						{/each}
+					</div>
+				{/if}
 
-			{#if graphNodes.length > 0}
-				<div class="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-					<h3 class="mb-4 text-lg font-semibold text-slate-900">Pont lexical</h3>
-					<svg class="h-48 w-full" viewBox="0 0 100 60" preserveAspectRatio="none">
-						<defs>
-							<linearGradient id="bridge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-								<stop offset="0%" stop-color="#34d399" />
-								<stop offset="100%" stop-color="#38bdf8" />
-							</linearGradient>
-						</defs>
-						{#each graphEdges as edge}
-							<line
-								x1={edge.x1}
-								y1={edge.y1}
-								x2={edge.x2}
-								y2={edge.y2}
-								stroke={edge.isGhost ? '#bae6fd' : 'url(#bridge-gradient)'}
-								stroke-width="1.8"
-								stroke-dasharray={edge.isGhost ? '5 3' : null}
-								stroke-linecap="round"
-							/>
-							{#if edge.similarity !== null}
+				{#if graphNodes.length > 0}
+					<div class="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+						<h3 class="mb-4 text-lg font-semibold text-gray-900">Pont lexical</h3>
+						<svg class="h-48 w-full" viewBox="0 0 100 60" preserveAspectRatio="none">
+							<defs>
+								<linearGradient id="bridge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+									<stop offset="0%" stop-color="#ea580c" />
+									<stop offset="50%" stop-color="#f59e0b" />
+									<stop offset="100%" stop-color="#fbbf24" />
+								</linearGradient>
+							</defs>
+							{#each graphEdges as edge}
+								<line
+									x1={edge.x1}
+									y1={edge.y1}
+									x2={edge.x2}
+									y2={edge.y2}
+									stroke={edge.isGhost ? '#fed7aa' : 'url(#bridge-gradient)'}
+									stroke-width="1.8"
+									stroke-dasharray={edge.isGhost ? '5 3' : null}
+									stroke-linecap="round"
+								/>
+								{#if edge.similarity !== null}
+									<text
+										x={edge.labelX}
+										y={Math.max(edge.labelY, GRAPH_TOP + 2)}
+										text-anchor="middle"
+										class="fill-gray-500"
+										style="font-size:2.8px;font-weight:500;"
+									>
+										{formatPercent(edge.similarity)}
+									</text>
+								{/if}
+							{/each}
+							{#each graphNodes as node, index}
+								<circle
+									cx={node.xPercent}
+									cy={node.y}
+									r="3.5"
+									fill={getNodeFill(node, index)}
+									stroke={getNodeStroke(node, index)}
+									stroke-width={node.isTarget ? 1.6 : 1.2}
+								/>
 								<text
-									x={edge.labelX}
-									y={Math.max(edge.labelY, GRAPH_TOP + 2)}
+									x={node.xPercent}
+									y={node.y - 5}
 									text-anchor="middle"
-									class="fill-slate-500"
-									style="font-size:2.8px;font-weight:500;"
+									class="fill-gray-500"
+									style="font-size:2.6px;font-weight:600;"
 								>
-									{formatPercent(edge.similarity)}
+									{formatPercent(node.similarityToTarget)}
 								</text>
-							{/if}
-						{/each}
-						{#each graphNodes as node, index}
-							<circle
-								cx={node.xPercent}
-								cy={node.y}
-								r="3.5"
-								fill={getNodeFill(node, index)}
-								stroke={getNodeStroke(node, index)}
-								stroke-width={node.isTarget ? 1.6 : 1.2}
-							/>
-							<text
-								x={node.xPercent}
-								y={node.y - 5}
-								text-anchor="middle"
-								class="fill-slate-500"
-								style="font-size:2.6px;font-weight:600;"
-							>
-								{formatPercent(node.similarityToTarget)}
-							</text>
-							<text
-								x={node.xPercent}
-								y={GRAPH_BOTTOM + 8}
-								text-anchor="middle"
-								class={node.isTarget ? 'fill-sky-700' : 'fill-slate-700'}
-								style="font-size:3.2px;font-weight:600;"
-							>
-								{node.label}
-							</text>
-						{/each}
-					</svg>
-					<p class="mt-3 text-xs text-slate-500">
-						Hauteur proportionnelle à la proximité avec le mot objectif. La portion en pointillés
-						représente reste du pont jusqu'au but.
-					</p>
-				</div>
+								<text
+									x={node.xPercent}
+									y={GRAPH_BOTTOM + 8}
+									text-anchor="middle"
+									class={node.isTarget ? 'fill-amber-700' : 'fill-gray-700'}
+									style="font-size:3.2px;font-weight:600;"
+								>
+									{node.label}
+								</text>
+							{/each}
+						</svg>
+						<p class="mt-3 text-xs text-gray-500">
+							Hauteur proportionnelle à la proximité avec le mot objectif. La portion en pointillés
+							représente le reste du pont jusqu'au but.
+						</p>
+					</div>
+				{/if}
+
+				{#if message}
+					<div class={`mb-8 rounded-xl border-2 p-5 shadow-sm ${getMessageStyle()}`}>
+						<p class="text-base font-medium">{message}</p>
+					</div>
+				{/if}
 			{/if}
 
-			{#if message}
-				<div class={`mb-8 rounded-xl border-2 p-5 text-center shadow-sm ${getMessageStyle()}`}>
-					<p class="text-base font-medium">{message}</p>
-				</div>
-			{/if}
-		{/if}
-
-		<div class="flex flex-col gap-4 md:flex-row">
-			<button
-				on:click={newGame}
-				class="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-4 font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-			>
-				🔄 Nouvelle partie
-			</button>
-			<button
-				class="flex-1 rounded-xl bg-gradient-to-r from-sky-600 to-emerald-600 px-6 py-4 font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-emerald-700"
-				disabled={!gameWon}
-			>
-				📤 Partager le pont
-			</button>
+			<div class="flex flex-col gap-4 md:flex-row">
+				<button
+					on:click={newGame}
+					class="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+				>
+					🔄 Nouvelle partie
+				</button>
+				<button
+					class="flex-1 rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-6 py-4 font-semibold text-white shadow-sm transition hover:shadow-lg"
+					disabled={!gameWon}
+				>
+					📤 Partager le pont
+				</button>
+			</div>
 		</div>
 
-		<div class="mt-10 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-			<h2 class="mb-4 text-2xl font-semibold text-slate-900">📖 Rappels du jeu</h2>
-			<ul class="space-y-3 text-sm text-slate-600">
-				<li>1. Chaque nouveau mot doit être à au moins {minSimilarity}% du précédent.</li>
-				<li>2. Vous pouvez cliquer sur n'importe quelle étape pour repartir de là.</li>
-				<li>3. Les mots inconnus du modèle ne sont pas acceptés.</li>
-				<li>4. Atteignez le mot objectif pour compléter le pont lexical.</li>
-			</ul>
+		<!-- Sidebar droite -->
+		<div class="w-80 shrink-0 space-y-6">
+			<!-- Règles -->
+			<div class="rounded-lg bg-white p-6 shadow-sm">
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+					📖 Règles du jeu
+				</h4>
+				<ul class="space-y-3 text-sm text-gray-700">
+					<li class="flex gap-3">
+						<span class="font-bold text-orange-600">1.</span>
+						<p>Chaque nouveau mot doit être à au moins {minSimilarity}% du précédent.</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-orange-600">2.</span>
+						<p>Vous pouvez cliquer sur n'importe quelle étape pour repartir de là.</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-orange-600">3.</span>
+						<p>Les mots inconnus du modèle ne sont pas acceptés.</p>
+					</li>
+					<li class="flex gap-3">
+						<span class="font-bold text-orange-600">4.</span>
+						<p>Atteignez le mot objectif pour compléter le pont lexical.</p>
+					</li>
+				</ul>
+			</div>
+
+			<!-- Autres jeux -->
+			<OtherGames exclude="correlix" />
 		</div>
 	</div>
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import OtherGames from '$lib/OtherGames.svelte';
 	import { onMount } from 'svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
@@ -235,15 +236,20 @@
 
 <Header />
 
-<div class="row flex min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-3xl">
+<div class="min-h-screen bg-gray-50 p-8">
+	<div class="mx-auto max-w-7xl flex gap-12">
+		<!-- Contenu principal -->
+		<div class="flex-1 max-w-3xl">
 		<div class="mb-6">
 			<div class="mb-8">
-				<h2 class="text-4xl font-bold text-gray-900">Motix</h2>
+				<h1 class="text-4xl font-bold text-gray-900 mb-2">
+					<i class="fa-solid fa-keyboard text-emerald-600 mr-3" aria-hidden="true"></i>
+					Motix
+				</h1>
 				<p class="mt-1 text-gray-600">
-					En cinq essais maximum, trouver le mot grâce a la position des lettres des mot proposés
+					En cinq essais maximum, trouver le mot grâce à la position des lettres des mots proposés
 				</p>
-				<p class="mt-2 text-sm text-gray-500">NbEssai : {nbEssai}</p>
+				<p class="mt-2 text-sm text-gray-500">Essais : {nbEssai}</p>
 				<p>Le mot contient {tabWordFind.length} lettres</p>
 			</div>
 		</div>
@@ -365,7 +371,7 @@
 			</button>
 		</div>
 	</div>
-	<div class="w-80 space-y-6">
+	<div class="w-80 shrink-0 space-y-6">
 		<div class="rounded-lg bg-white p-6 shadow-sm">
 			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
 			<ul class="space-y-3 text-sm text-gray-600">
@@ -447,50 +453,27 @@
 				</h4>
 				<div class="grid grid-cols-2 gap-6">
 					<div class="text-center">
-						<p class="text-4xl font-bold text-purple-600">{nbParties}</p>
-						<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
-						<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-blue-600">{Math.round(nbEssaiMoyen * 100) / 100}</p>
-						<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
-					</div>
-					<div class="text-center">
-						<p class="text-4xl font-bold text-orange-600">{serieActuelle}</p>
-						<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
-					</div>
+					<p class="text-4xl font-bold text-emerald-600">{nbParties}</p>
+					<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 				</div>
-			</div>
-		{/if}
-
-		<div class="rounded-lg bg-white p-6 shadow-sm">
-			<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">🎮 Autres jeux</h4>
-			<div class="space-y-3">
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/cemantix">
-						<h5 class="font-medium text-gray-700">🧩Cémantix</h5>
-					</a>
+				<div class="text-center">
+					<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
+					<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
 				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/correlix">
-						<h5 class="font-medium text-gray-700">🔗Corrélix</h5>
-					</a>
+				<div class="text-center">
+					<p class="text-4xl font-bold text-lime-600">{Math.round(nbEssaiMoyen * 100) / 100}</p>
+					<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
 				</div>
-				<div
-					class="flex cursor-pointer items-center rounded-lg border border-gray-200 p-3 transition hover:bg-purple-50"
-				>
-					<a href="/game/pedantix">
-						<h5 class="font-medium text-gray-700">📝Pédantix</h5>
-					</a>
+				<div class="text-center">
+					<p class="text-4xl font-bold text-green-500">{serieActuelle}</p>
+					<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
 				</div>
 			</div>
 		</div>
-	</div>
+	{/if}
+
+	<!-- Autres jeux -->
+	<OtherGames exclude="motix" />
+</div>
+</div>
 </div>
