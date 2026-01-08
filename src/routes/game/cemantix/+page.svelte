@@ -141,12 +141,12 @@
 
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-7xl flex gap-12">
+	<div class="mx-auto flex max-w-7xl gap-12">
 		<!-- Contenu principal -->
-		<div class="flex-1 max-w-3xl">
+		<div class="max-w-3xl flex-1">
 			<div class="mb-8">
-				<h1 class="text-4xl font-bold text-gray-900 mb-2">
-					<i class="fa-solid fa-brain text-pink-600 mr-3" aria-hidden="true"></i>
+				<h1 class="mb-2 text-4xl font-bold text-gray-900">
+					<i class="fa-solid fa-brain mr-3 text-pink-600" aria-hidden="true"></i>
 					Cémantix
 				</h1>
 				<p class="text-gray-600">Trouvez le mot mystère grâce à la proximité sémantique</p>
@@ -200,42 +200,42 @@
 					<h2 class="mb-4 text-2xl font-bold text-gray-800">
 						Vos propositions ({guesses.length})
 					</h2>
-				<div class="space-y-2">
-					{#each guesses as guess, index}
-						{#if typeof guess.similarity === 'number'}
-							<div
-								class="flex items-center justify-between rounded-lg border-2 {getSimilarityColor(
-									guess.similarity
-								)} p-4 transition hover:shadow-md"
-							>
-								<div class="flex items-center gap-4">
-									<span class="text-2xl">{getSimilarityEmoji(guess.similarity)}</span>
-									<div>
-										<p class="text-lg font-bold">{guess.word}</p>
-										<p class="text-sm opacity-75">
-											Essai #{guess.attemptNumber}
-											{#if guess.rank}
-												<span class="ml-2 rounded-full bg-white/50 px-2 py-0.5 font-bold">
-													🏆 Top {guess.rank}
-												</span>
-											{/if}
-										</p>
+					<div class="space-y-2">
+						{#each guesses as guess, index}
+							{#if typeof guess.similarity === 'number'}
+								<div
+									class="flex items-center justify-between rounded-lg border-2 {getSimilarityColor(
+										guess.similarity
+									)} p-4 transition hover:shadow-md"
+								>
+									<div class="flex items-center gap-4">
+										<span class="text-2xl">{getSimilarityEmoji(guess.similarity)}</span>
+										<div>
+											<p class="text-lg font-bold">{guess.word}</p>
+											<p class="text-sm opacity-75">
+												Essai #{guess.attemptNumber}
+												{#if guess.rank}
+													<span class="ml-2 rounded-full bg-white/50 px-2 py-0.5 font-bold">
+														🏆 Top {guess.rank}
+													</span>
+												{/if}
+											</p>
+										</div>
+									</div>
+									<div class="text-right">
+										<p class="text-2xl font-bold">{getTemperature(guess.similarity)}</p>
+										{#if guess.rank}
+											<div class="mt-1 h-2 w-24 overflow-hidden rounded-full bg-white/50">
+												<div
+													class="h-full bg-current transition-all duration-500"
+													style="width: {getRankProgress(guess.rank)}%"
+												></div>
+											</div>
+										{/if}
 									</div>
 								</div>
-								<div class="text-right">
-									<p class="text-2xl font-bold">{getTemperature(guess.similarity)}</p>
-									{#if guess.rank}
-										<div class="mt-1 h-2 w-24 overflow-hidden rounded-full bg-white/50">
-											<div
-												class="h-full bg-current transition-all duration-500"
-												style="width: {getRankProgress(guess.rank)}%"
-											></div>
-										</div>
-									{/if}
-								</div>
-							</div>
-						{/if}
-					{/each}
+							{/if}
+						{/each}
 					</div>
 				</div>
 			{/if}
@@ -261,9 +261,7 @@
 		<div class="w-80 shrink-0 space-y-6">
 			<!-- Règles -->
 			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-					📖 Règles du jeu
-				</h4>
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
 				<ol class="space-y-3 text-sm text-gray-700">
 					<li class="flex gap-3">
 						<span class="font-bold text-pink-600">1.</span>

@@ -2,8 +2,6 @@
 	import Header from '$lib/header.svelte';
 
 	import { GAMES } from '$lib/gameConfig';
-
-
 </script>
 
 <Header />
@@ -37,8 +35,10 @@
 </section>
 
 <section class="bg-gray-50 px-8 py-16">
-	<h2 class="mb-2 text-center text-3xl font-bold"><i class="fa-solid fa-bullseye"></i> Choisisser votre défi</h2>
-	<p class="mb-12 text-center text-gray-600"> Huit jeux innovants pour tous les niveaux</p>
+	<h2 class="mb-2 text-center text-3xl font-bold">
+		<i class="fa-solid fa-bullseye"></i> Choisisser votre défi
+	</h2>
+	<p class="mb-12 text-center text-gray-600">Huit jeux innovants pour tous les niveaux</p>
 
 	<div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-4">
 		{#each GAMES as game (game.slug)}
@@ -63,7 +63,7 @@
 </section>
 <footer class="bg-gray-900 px-8 py-12 text-white">
 	<div class="mx-auto flex max-w-6xl flex-col items-center gap-4 text-center">
-		<h3 class="text-2xl font-bold "><i class="fa-solid fa-house"></i> Sémantopia</h3>
+		<h3 class="text-2xl font-bold"><i class="fa-solid fa-house"></i> Sémantopia</h3>
 		<p class="max-w-md text-gray-400">
 			La plateforme de référence pour les jeux de mots et défis linguistiques en français.
 		</p>

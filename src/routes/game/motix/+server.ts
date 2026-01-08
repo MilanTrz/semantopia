@@ -9,10 +9,9 @@ export async function POST({ request }: RequestEvent) {
 		const data = await getRandomWord(sizeWord);
 		const findWord = data.name;
 		const findCategorie = data.categorie;
-		do{
+		do {
 			similarWord = await getSimilarWord(findWord);
-		}while(normalize(similarWord) === normalize(findWord))
-		
+		} while (normalize(similarWord) === normalize(findWord));
 
 		const tabWord = findWord
 			.normalize('NFD')
@@ -73,5 +72,5 @@ function normalize(str: string): string {
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
 		.trim()
-		.replace(/(s|x|e)$/g, ''); 
+		.replace(/(s|x|e)$/g, '');
 }

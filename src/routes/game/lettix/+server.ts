@@ -65,17 +65,17 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const {idUser,nbEssai, sessionId } = await request.json();
+	const { idUser, score, sessionId } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
 		const wordToFind = activeSessions.get(sessionId)?.wordToFind;
-		if (idUser){
-			await endGameSession(idUser, 'lettix', nbEssai, true);
+		if (idUser) {
+			await endGameSession(idUser, 'lettix', 0, true,score);
 		}
-		  
+
 		return new Response(JSON.stringify({ wordToFind }), {
 			status: 200
 		});

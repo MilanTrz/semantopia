@@ -313,9 +313,9 @@ function normalize(str: string): string {
 	return str
 		.toLowerCase()
 		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '') 
-		.replace(/[^a-z0-9\s]/g, '') 
-		.replace(/\b(es|s)\b/g, '') 
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9\s]/g, '')
+		.replace(/\b(es|s)\b/g, '')
 		.replace(/\s+/g, ' ')
 		.trim();
 }
@@ -405,12 +405,12 @@ async function getHints(title: string, lang: string = 'fr'): Promise<hints> {
 	const normalizedTitle = normalize(title);
 
 	const relevantCategories = allCategories
-	.filter((catTitle) => !irrelevantPatterns.some((pattern) => pattern.test(catTitle)))
-	.map((cat) => cat.replace(/^Catégorie:/, ''))
-	.filter((cat) => {
-		const normalizedCat = normalize(cat);
-		return normalizedCat !== normalizedTitle;
-	});
+		.filter((catTitle) => !irrelevantPatterns.some((pattern) => pattern.test(catTitle)))
+		.map((cat) => cat.replace(/^Catégorie:/, ''))
+		.filter((cat) => {
+			const normalizedCat = normalize(cat);
+			return normalizedCat !== normalizedTitle;
+		});
 
 	return {
 		categories: relevantCategories,

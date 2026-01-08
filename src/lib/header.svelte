@@ -32,12 +32,11 @@
 				<li>
 					<a href="/achievements" class="text-gray-600 transition hover:text-purple-600">Badges</a>
 				</li>
-				{#if isAdmin}
-					<li>
-						<a href="/challenge" class="text-gray-600 transition hover:text-purple-600">Challenge</a
-						>
-					</li>
-				{/if}
+				<li>
+					<a href="/leaderboard" class="text-gray-600 transition hover:text-purple-600"
+						>Classement</a
+					>
+				</li>
 				<li><p>{pseudo}</p></li>
 				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />
 				<button

@@ -4,7 +4,7 @@ export async function startGameSession(userId: number | null | undefined, type: 
 	if (!userId) return;
 	const date = new Date();
 	await pool.query(
-		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID) VALUES(?,1,0,?,0,?) ',
+		'INSERT INTO GAME_SESSION(DATE_PARTIE,EN_COURS,NOMBRE_ESSAI,TYPE,WIN,USER_ID,SCORE) VALUES(?,1,0,?,0,?,0) ',
 		[date, type, userId]
 	);
 }
@@ -13,7 +13,8 @@ export async function endGameSession(
 	userId: number | null | undefined,
 	type: string,
 	nbEssai: number,
-	isVictory: boolean
+	isVictory: boolean,
+	score: number
 ) {
 	if (!userId) return;
 	const [rows] = (await pool.query(
@@ -23,7 +24,7 @@ export async function endGameSession(
 	const idMax = rows[0]?.ID;
 	if (!idMax) return;
 	await pool.query(
-		'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = ? WHERE USER_ID = ? AND ID = ? AND TYPE = ?',
-		[nbEssai, isVictory ? 1 : 0, userId, idMax, type]
+		'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = ? WHERE USER_ID = ? AND ID = ? AND TYPE = ? AND SCORE = ?',
+		[nbEssai, isVictory ? 1 : 0, userId, idMax, type,score]
 	);
 }

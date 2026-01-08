@@ -402,12 +402,12 @@
 
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-7xl flex gap-12">
+	<div class="mx-auto flex max-w-7xl gap-12">
 		<!-- Contenu principal -->
-		<div class="flex-1 max-w-3xl">
+		<div class="max-w-3xl flex-1">
 			<div class="mb-8">
-				<h1 class="text-4xl font-bold text-gray-900 mb-2">
-					<i class="fa-solid fa-project-diagram text-orange-600 mr-3" aria-hidden="true"></i>
+				<h1 class="mb-2 text-4xl font-bold text-gray-900">
+					<i class="fa-solid fa-project-diagram mr-3 text-orange-600" aria-hidden="true"></i>
 					Corrélix
 				</h1>
 				<p class="text-gray-600">
@@ -608,9 +608,7 @@
 		<div class="w-80 shrink-0 space-y-6">
 			<!-- Règles -->
 			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-					📖 Règles du jeu
-				</h4>
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
 				<ul class="space-y-3 text-sm text-gray-700">
 					<li class="flex gap-3">
 						<span class="font-bold text-orange-600">1.</span>

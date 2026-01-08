@@ -82,7 +82,7 @@ export async function GET({ url }: RequestEvent) {
 export async function POST({ request }: RequestEvent) {
 	const { userGuess, sessionId, action } = await request.json();
 	const session = activeSessions.get(sessionId);
-	if (action === 'skipLetters'){
+	if (action === 'skipLetters') {
 		const imposedLetters = randomSyllabe();
 		activeSessions.set(sessionId, {
 			imposedLetters: imposedLetters
@@ -108,21 +108,21 @@ export async function POST({ request }: RequestEvent) {
 			status: 200
 		});
 	}
-	
+
 	return new Response(JSON.stringify({ message: 'Mot invalide', isWin }), {
 		status: 200
 	});
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { sessionId, idUser,nbEssai } = await request.json();
+	const { sessionId, idUser, score } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
-        await endGameSession(idUser, 'panix', nbEssai, true);
-        return new Response(null, { status: 204 });
+		await endGameSession(idUser, 'panix', 0, true,score);
+		return new Response(null, { status: 204 });
 	} catch (error) {
 		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
 			status: 500
