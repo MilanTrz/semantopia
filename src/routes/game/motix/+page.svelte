@@ -4,6 +4,8 @@
 	import { onMount } from 'svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
 	import { writable } from 'svelte/store';
 
 	let letters = 'AZERTYUIOPQSDFGHJKLMWXCVBN'.split('');
@@ -184,6 +186,15 @@
 				})
 			});
 			getStats();
+
+			// Émettre l'événement de victoire
+			const eventData: GameEventData = {
+				userId: userId,
+				gameType: 'motix',
+				won: true,
+				attempts: nbEssai
+			};
+			emitGameEvent(eventData);
 		}
 	}
 

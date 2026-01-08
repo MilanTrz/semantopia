@@ -2,6 +2,9 @@
 	import Header from '$lib/header.svelte';
 	import OtherGames from '$lib/OtherGames.svelte';
 	import { triggerConfettiAnimation } from '$lib';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
+	import { sessionStore } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
 
 	type Step = {
@@ -172,6 +175,15 @@
 			if (data.isWinner) {
 				gameWon = true;
 				triggerConfettiAnimation();
+
+				// Émettre l'événement de victoire
+				const eventData: GameEventData = {
+					userId: $sessionStore?.id ?? 0,
+					gameType: 'correlix',
+					won: true,
+					attempts: attempts
+				};
+				emitGameEvent(eventData);
 			}
 		} catch (error) {
 			console.error('Erreur sendGuess Correlix:', error);

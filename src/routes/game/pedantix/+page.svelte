@@ -4,6 +4,8 @@
 	import { onMount } from 'svelte';
 	import { triggerConfettiAnimation } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
 	import type { challenge } from '$lib/models/challenge';
 	import type { hints } from '$lib/models/hints';
 
@@ -180,6 +182,15 @@
 			throw error;
 		}
 		triggerConfettiAnimation();
+
+		// Émettre l'événement de victoire
+		const eventData: GameEventData = {
+			userId: idUser ?? 0,
+			gameType: 'pedantix',
+			won: true,
+			attempts: nbEssai
+		};
+		emitGameEvent(eventData);
 	}
 
 	async function surrenderGame() {

@@ -7,6 +7,7 @@ import {
 	type SimilarityPercentResult
 } from '$lib/utils/word2vec';
 import { endGameSession, startGameSession } from '$lib/utils/gameSession';
+import type { GameEventData } from '$lib/models/achievements';
 
 type CemantixState = {
 	targetWord: string;
@@ -105,6 +106,18 @@ export async function POST({ request }: RequestEvent) {
 		if (isWinner) {
 			const resolvedUserId = userId ?? nextState.userId;
 			await endGameSession(resolvedUserId, 'cemantix', nextState.attemptCounter, true);
+
+			// Émettre l'événement de victoire
+			if (resolvedUserId && typeof window !== 'undefined') {
+				const eventData: GameEventData = {
+					userId: resolvedUserId,
+					gameType: 'cemantix',
+					won: true,
+					attempts: nextState.attemptCounter
+				};
+				// Créer un payload pour le client
+				console.log('Achievement event (cemantix):', eventData);
+			}
 		}
 
 		return new Response(

@@ -3,6 +3,8 @@
 	import OtherGames from '$lib/OtherGames.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
 	let nbIntruderFind: number = 0;
 	let isLoading: boolean = true;
 	const session = sessionStore.get();
@@ -62,6 +64,15 @@
 		});
 		const data = await response.json();
 		wordIntruder = data.wordIntruder;
+
+		// Émettre l'événement de fin de partie
+		const eventData: GameEventData = {
+			userId: idUser ?? 0,
+			gameType: 'mimix',
+			won: nbIntruderFind > 0,
+			score: nbIntruderFind
+		};
+		emitGameEvent(eventData);
 	}
 
 	onMount(() => {

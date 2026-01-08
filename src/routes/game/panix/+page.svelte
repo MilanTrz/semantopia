@@ -2,7 +2,9 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
-import OtherGames from '$lib/OtherGames.svelte';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
+	import OtherGames from '$lib/OtherGames.svelte';
 
 
 	let nbWordCreate: number = 0;
@@ -104,6 +106,15 @@ import OtherGames from '$lib/OtherGames.svelte';
 				nbEssai: nbWordCreate
 			})
 		});
+
+		// Émettre l'événement de fin de partie
+		const eventData: GameEventData = {
+			userId: idUser ?? 0,
+			gameType: 'panix',
+			won: nbWordCreate > 0,
+			score: nbWordCreate
+		};
+		emitGameEvent(eventData);
 	}
 
 	function triggerTimeAnimation(value: number) {

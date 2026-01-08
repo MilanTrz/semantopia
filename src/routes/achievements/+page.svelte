@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { gameEventEmitter } from '$lib/store/gameEventStore';
 	import Header from '$lib/header.svelte';
+	import { ACHIEVEMENTS } from '$lib/models/achievements';
+	import { checkAndUnlockAchievements } from '$lib/utils/achievementManager';
 	import { onMount } from 'svelte';
+
 	$: idUser = $sessionStore?.id ?? null;
 	let userAllAchievements = 0;
 	let userAllRareAchievements = 0;
@@ -29,71 +33,33 @@
 			userAllRareAchievements = repbodyAchievements.AllRareAchievements ?? 0;
 			userMissingAchievements = repbodyAchievements.AllMissingAchievements ?? 0;
 			userAllAchievementsUnlock = repbodyAchievements.achievementsIds ?? [];
-			applyAchievementsStyles();
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
 	}
 
-	function applyAchievementsStyles() {
-		const achievements = document.querySelectorAll<HTMLElement>('.achievement');
-
-		achievements.forEach((achievement) => {
-			const id = Number(achievement.dataset.id);
-			const card = achievement.closest('.rounded-lg') as HTMLElement;
-			const status = card.querySelector<HTMLElement>('.achievement-status');
-			const icon = card.querySelector<HTMLElement>('.rounded-full');
-			const description = card.querySelector<HTMLElement>('.text-sm.text-gray-600');
-			const isUnlocked = userAllAchievementsUnlock.includes(id);
-
-			if (!isUnlocked) {
-				card.classList.add('bg-gray-200');
-				card.classList.remove('bg-white');
-
-				achievement.classList.add('text-gray-500');
-				achievement.classList.remove('text-gray-900');
-
-				if (icon) {
-					icon.classList.add('bg-gray-400');
-					icon.classList.remove('bg-gray-700');
-				}
-
-				if (description) {
-					description.classList.add('text-gray-500');
-					description.classList.remove('text-gray-600');
-				}
-
-				if (status) {
-					status.textContent = 'Non obtenu';
-					status.classList.add('text-gray-500');
-					status.classList.remove('text-green-600');
-				}
-			} else {
-				card.classList.add('bg-white');
-				card.classList.remove('bg-gray-200');
-
-				achievement.classList.add('text-gray-900');
-				achievement.classList.remove('text-gray-500');
-
-				if (icon) {
-					icon.classList.add('bg-gray-700');
-					icon.classList.remove('bg-gray-400');
-				}
-
-				if (description) {
-					description.classList.add('text-gray-600');
-					description.classList.remove('text-gray-500');
-				}
-
-				if (status) {
-					status.textContent = 'Obtenu';
-					status.classList.add('text-green-600');
-					status.classList.remove('text-gray-500');
-				}
-			}
-		});
+	function getAchievementStatusClass(achievementId: number) {
+		const isUnlocked = userAllAchievementsUnlock.includes(achievementId);
+		return {
+			card: isUnlocked ? 'bg-white' : 'bg-gray-200',
+			title: isUnlocked ? 'text-gray-900' : 'text-gray-500',
+			icon: isUnlocked ? 'bg-gray-700' : 'bg-gray-400',
+			description: isUnlocked ? 'text-gray-600' : 'text-gray-500',
+			status: isUnlocked ? 'text-green-600' : 'text-gray-500',
+			statusText: isUnlocked ? 'Obtenu' : 'Non obtenu'
+		};
 	}
+
+	// Écouter les événements de fin de partie
+	gameEventEmitter.subscribe(async (eventData) => {
+		if (eventData && idUser) {
+			await checkAndUnlockAchievements(eventData, userAllAchievementsUnlock);
+			// Rafraîchir la liste des achievements
+			await getInformationAchievements();
+		}
+	});
+
 	onMount(() => {
 		getInformationAchievements();
 	});
@@ -112,11 +78,7 @@
 				<div
 					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-800"
 				>
-					<img
-						src="/src/lib/assets/assets_achievements/logoTotalBadgesObtenus.png"
-						alt="logoTotalBadges"
-						class="h-8 w-8"
-					/>
+					<i class="fa-solid fa-star text-2xl text-white"></i>
 				</div>
 				<p class="mb-1 text-3xl font-bold text-gray-900">{userAllAchievements}</p>
 				<p class="text-sm text-gray-600">Badges obtenus</p>
@@ -126,11 +88,7 @@
 				<div
 					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-800"
 				>
-					<img
-						src="/src/lib/assets/assets_achievements/logoBadgesRare.png"
-						alt="logoBadgesRare"
-						class="h-8 w-8"
-					/>
+					<i class="fa-solid fa-gem text-2xl text-white"></i>
 				</div>
 				<p class="mb-1 text-3xl font-bold text-gray-900">{userAllRareAchievements}</p>
 				<p class="text-sm text-gray-600">Badges rares</p>
@@ -140,11 +98,7 @@
 				<div
 					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
 				>
-					<img
-						src="/src/lib/assets/assets_achievements/logoADebloquer.png"
-						alt="logoBadgesManquants"
-						class="h-8 w-8"
-					/>
+					<i class="fa-solid fa-lock text-2xl text-white"></i>
 				</div>
 				<p class="mb-1 text-3xl font-bold text-gray-900">{userMissingAchievements}</p>
 				<p class="text-sm text-gray-600">À débloquer</p>
@@ -165,352 +119,21 @@
 			</div>
 		</div>
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/logoPlayOneGame.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
+			{#each ACHIEVEMENTS as achievement (achievement.id)}
+				{@const statusClasses = getAchievementStatusClass(achievement.id)}
+				<div class="rounded-lg {statusClasses.card} p-6 text-center shadow">
+					<div
+						class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full {statusClasses.icon}"
+					>
+						<i class="fa-solid {achievement.icon} text-2xl text-white"></i>
+					</div>
+					<p data-id={achievement.id} class="achievement mb-2 font-semibold {statusClasses.title}">
+						{achievement.title}
+					</p>
+					<p class="mb-3 text-sm {statusClasses.description}">{achievement.description}</p>
+					<p class="achievement-status text-xs {statusClasses.status}">{statusClasses.statusText}</p>
 				</div>
-				<p data-id="1" class="achievement mb-2 font-semibold text-gray-900">Premier pas</p>
-				<p class="mb-3 text-sm text-gray-600">Jouer votre première partie</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/BadgesPlay10Parties.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="2" class="achievement mb-2 font-semibold text-gray-900">Jouer confirmée</p>
-				<p class="mb-3 text-sm text-gray-600">Jouer 10 parties</p>
-				<p class="achievement-status text-xs text-gray-500">Non Obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="3" class="achievement mb-2 font-semibold text-gray-900">
-					Divinité de Sémantopia
-				</p>
-				<p class="mb-3 text-sm text-gray-600">Jouer 50 parties</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="4" class="achievement mb-2 font-semibold text-gray-900">
-					Apprenti sémantopiste
-				</p>
-				<p class="mb-3 text-sm text-gray-600">Jouer à tous les jeux</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="5" class="achievement mb-2 font-semibold text-gray-900">Bling-Bling</p>
-				<p class="mb-3 text-sm text-gray-600">Obtenir 5 badges</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="6" class="achievement mb-2 font-semibold text-gray-900">Couvre moi de badges</p>
-				<p class="mb-3 text-sm text-gray-600">Obtenir 10 badges</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="7" class="achievement mb-2 font-semibold text-gray-900">Fin ?</p>
-				<p class="mb-3 text-sm text-gray-600">Obtenir tous les badges</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="8" class="achievement mb-2 font-semibold text-gray-900">
-					Juniors de Sémantopia
-				</p>
-				<p class="mb-3 text-sm text-gray-600">Compte d'une semaine</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="9" class="achievement mb-2 font-semibold text-gray-900">
-					Vétéran de Sémantopia
-				</p>
-				<p class="mb-3 text-sm text-gray-600">Compte d'un mois</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="10" class="achievement mb-2 font-semibold text-gray-900">
-					Séniors de Sémantopia
-				</p>
-				<p class="mb-3 text-sm text-gray-600">Compte de 3 mois</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="11" class="achievement mb-2 font-semibold text-gray-900">Créateur</p>
-				<p class="mb-3 text-sm text-gray-600">Être développeur de Sémantopia</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="12" class="achievement mb-2 font-semibold text-gray-900">???</p>
-				<p class="mb-3 text-sm text-gray-600">Faire le konami code</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="13" class="achievement mb-2 font-semibold text-gray-900">Chasseur de mots</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner 5 parties sur pédantix, cémantix, corrélix, motix
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="14" class="achievement mb-2 font-semibold text-gray-900">Chasseur de lettres</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Faire un score de 5 sur lettix, mimix, panix, chainix
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="15" class="achievement mb-2 font-semibold text-gray-900">Une idée brillante</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner une partie de pédantix en moins de 25 essais
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="16" class="achievement mb-2 font-semibold text-gray-900">
-					Œil pour œil, mot pour mot
-				</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner une partie de pédantix en moins de 10 essais
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="17" class="achievement mb-2 font-semibold text-gray-900">Dans le mille</p>
-				<p class="mb-3 text-sm text-gray-600">Gagner une partie de motix en 2 coups</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="18" class="achievement mb-2 font-semibold text-gray-900">
-					Merci pour la partie
-				</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner une partie de cémantix en moins de 30 essais
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="19" class="achievement mb-2 font-semibold text-gray-900">
-					Prends en de la graine
-				</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner une partie de cémantix en moins de 15 essais
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="20" class="achievement mb-2 font-semibold text-gray-900">La clé du succès</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner une partie sur corrélix en moins de 3 étapes
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
-
-			<div class="rounded-lg bg-white p-6 text-center shadow">
-				<div
-					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700"
-				>
-					<img
-						src="/src/lib/assets/assets_achievements/badgesGetAllBadges.png"
-						alt="logoPlayOneGame"
-						class="h-8 w-8"
-					/>
-				</div>
-				<p data-id="21" class="achievement mb-2 font-semibold text-gray-900">Sérieux dévouement</p>
-				<p class="mb-3 text-sm text-gray-600">
-					Gagner une partie sur corrélix en moins de 10 essais
-				</p>
-				<p class="achievement-status text-xs text-gray-500">Non obtenu</p>
-			</div>
+			{/each}
 		</div>
 	</section>
 </section>

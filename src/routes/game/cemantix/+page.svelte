@@ -2,6 +2,9 @@
 	import Header from '$lib/header.svelte';
 	import OtherGames from '$lib/OtherGames.svelte';
 	import { triggerConfettiAnimation } from '$lib';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
+	import { sessionStore } from '$lib/store/sessionStore';
 
 	let userGuess = '';
 	let guesses: {
@@ -98,6 +101,15 @@
 						targetWord = data.targetWord;
 						message = `🎉 Félicitations ! Vous avez trouvé le mot "${targetWord}" en ${nbEssai} essais !`;
 						triggerConfettiAnimation();
+
+						// Émettre l'événement de victoire
+						const eventData: GameEventData = {
+							userId: $sessionStore?.id ?? 0,
+							gameType: 'cemantix',
+							won: true,
+							attempts: nbEssai
+						};
+						emitGameEvent(eventData);
 					} else {
 						message = `Proximité de ${userGuess.trim()}: ${data.similarity.toFixed(2)}%`;
 					}
