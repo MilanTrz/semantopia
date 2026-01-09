@@ -34,7 +34,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 	},
 	{
 		id: 2,
-		title: 'Jouer confirmée',
+		title: 'Joueur confirmé',
 		description: 'Jouer 10 parties',
 		icon: 'fa-star',
 		rarity: 0,
