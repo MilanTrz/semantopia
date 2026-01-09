@@ -2,7 +2,7 @@ import type { RequestEvent } from "./$types";
 import pool from '$lib/server/db';
 
 export async function POST({ request }: RequestEvent) {
-  const { userId, idAchievement, rarity } = await request.json();
+  const { userId, idAchievement } = await request.json();
   const date = new Date();
 
   if (!userId || !idAchievement) {
@@ -30,8 +30,8 @@ export async function POST({ request }: RequestEvent) {
       }
 
       await connection.query(
-        'INSERT INTO ACHIEVEMENTS (USER_ID, UNLOCK_DATE, RARITY, ID_ACHIEVEMENT) VALUES (?,?,?,?)',
-        [userId, date, rarity ?? 0, idAchievement]
+        'INSERT INTO ACHIEVEMENTS (USER_ID, UNLOCK_DATE, ID_ACHIEVEMENT) VALUES (?,?,?)',
+        [userId, date, idAchievement]
       );
 
       return new Response(

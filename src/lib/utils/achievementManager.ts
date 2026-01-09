@@ -27,14 +27,38 @@ export async function checkAndUnlockAchievements(
 				continue;
 			}
 
+			if ([5, 6, 7].includes(achievement.id)) {
+				continue;
+			}
+
 			if (achievement.id === 12 && eventData?.konamiCode === true) {
-				await unlockAchievement(eventData.userId, achievement.id, achievement.rarity);
+				await unlockAchievement(eventData.userId, achievement.id);
 				continue;
 			}
 
 			if (achievement.condition(eventData)) {
-				await unlockAchievement(eventData.userId, achievement.id, achievement.rarity);
+				await unlockAchievement(eventData.userId, achievement.id);
 			}
+		}
+
+		// Badges basés sur le nombre de badges
+		const badgeCount = currentUnlockedAchievements.length;
+		
+		// 5 badges
+		if (badgeCount >= 5 && !currentUnlockedAchievements.includes(5)) {
+			await unlockAchievement(eventData.userId, 5);
+		}
+		
+		// 10 badges
+		if (badgeCount >= 10 && !currentUnlockedAchievements.includes(6)) {
+			await unlockAchievement(eventData.userId, 6);
+		}
+		
+		// tous les badges (sauf 7 (lui) et 11 (créateur))
+		const totalAchievementsNeeded = ACHIEVEMENTS.length - 2;
+		const achievableUnlocked = currentUnlockedAchievements.filter(id => id !== 7 && id !== 11).length;
+		if (achievableUnlocked >= totalAchievementsNeeded && !currentUnlockedAchievements.includes(7)) {
+			await unlockAchievement(eventData.userId, 7);
 		}
 	} catch (error) {
 		console.error('Erreur lors de la vérification des achievements:', error);
@@ -43,8 +67,7 @@ export async function checkAndUnlockAchievements(
 
 export async function unlockAchievement(
 	userId: number,
-	achievementId: number,
-	rarity: number
+	achievementId: number
 ): Promise<boolean> {
 	try {
 		const response = await fetch('/api/achievements/addAchievements', {
@@ -52,8 +75,7 @@ export async function unlockAchievement(
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				userId,
-				idAchievement: achievementId,
-				rarity
+				idAchievement: achievementId
 			})
 		});
 
