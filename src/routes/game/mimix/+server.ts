@@ -14,7 +14,7 @@ const activeSessions: Map<
 	}
 > = new Map();
 
-export async function GET({ url }) {
+export async function GET({ url }:RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
 	try {
 		const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -83,7 +83,6 @@ export async function POST({ request }: RequestEvent) {
 	}
 	try {
 		const { wordIntruder, totalIntruderFound } = session;
-		console.log(normalize(word), normalize(wordIntruder));
 		let isWin: boolean = false;
 		if (normalize(word) === normalize(wordIntruder)) {
 			isWin = true;
@@ -146,7 +145,10 @@ export async function PUT({ request }: RequestEvent) {
 	}
 	try {
 		const wordIntruder = activeSessions.get(sessionId)?.wordIntruder;
-		await endGameSession(idUser, 'mimix', 0, true, score);
+		if (idUser !== 0){
+			await endGameSession(idUser, 'mimix', 0, true, score);
+		}
+		
 		return new Response(JSON.stringify({ wordIntruder }), {
 			status: 200
 		});
@@ -175,7 +177,6 @@ async function randomWord() {
 
 async function calculateSimilarity(wordBasic: string, wordCompare: string) {
 	const similarityToPrevious = await fetchSimilarityPercent(wordBasic, wordCompare);
-	console.log('similiarity ', similarityToPrevious, ' entre ', wordBasic, ' et ', wordCompare);
 	if (similarityToPrevious.status === 'missing') {
 		throw error("le mot n'existe pas");
 	}
@@ -226,6 +227,6 @@ function checkWordsValidity(
 	) {
 		return false;
 	}
-
+	
 	return true;
 }

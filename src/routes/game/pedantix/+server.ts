@@ -198,7 +198,6 @@ async function getRandomTitlePage(lang: string = 'fr'): Promise<string> {
 			if (!isValideTitle(page.title)) {
 				continue;
 			}
-			console.log(page.title);
 			return page.title;
 		}
 		return await getRandomTitlePage();

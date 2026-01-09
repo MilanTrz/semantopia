@@ -13,7 +13,6 @@ interface GameStats extends RowDataPacket {
 
 export async function POST({ request }: RequestEvent) {
 	const { userId, gameType } = await request.json();
-	console.log(userId, gameType);
 	try {
 		const [row_game]: [GameStats[], unknown] = await pool.query(
 			`

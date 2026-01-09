@@ -57,7 +57,7 @@
 	}
 	async function gameOver() {
 		isGameOver = true;
-		let disabledButton: boolean = false;
+		disabledButton = false;
 		const response = await fetch('/game/mimix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },

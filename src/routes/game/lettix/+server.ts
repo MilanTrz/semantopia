@@ -72,7 +72,7 @@ export async function PUT({ request }: RequestEvent) {
 	}
 	try {
 		const wordToFind = activeSessions.get(sessionId)?.wordToFind;
-		if (idUser) {
+		if (idUser !== 0) {
 			await endGameSession(idUser, 'lettix', 0, true, score);
 		}
 
@@ -99,7 +99,6 @@ async function randomWord() {
 	) {
 		return randomWord();
 	}
-	console.log(wordToFind);
 	return wordToFind;
 }
 function shuffleWord(word: string): string {
@@ -152,6 +151,5 @@ async function checkWordExist(word: string) {
 	});
 	const data = await response.json();
 	const isCorrectWord = data.exists;
-	console.log(data + '  ' + isCorrectWord);
 	return isCorrectWord;
 }
