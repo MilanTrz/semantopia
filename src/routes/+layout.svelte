@@ -4,8 +4,8 @@
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { emitGameEvent } from '$lib/store/gameEventStore';
-	import { initKonamiCodeDetection } from '$lib/utils/konamiCode';
-	import { createAccountAgeEvent } from '$lib/utils/accountAgeChecker';
+	import { initKonamiCodeDetection } from '$lib/utils/achievement/konamiCode';
+	import { createAccountAgeEvent } from '$lib/utils/achievement/accountAgeChecker';
 	import type { GameEventData } from '$lib/models/achievements';
 
 	let { children } = $props();

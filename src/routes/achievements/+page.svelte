@@ -3,7 +3,7 @@
 	import { gameEventEmitter } from '$lib/store/gameEventStore';
 	import Header from '$lib/header.svelte';
 	import { ACHIEVEMENTS } from '$lib/models/achievements';
-	import { checkAndUnlockAchievements } from '$lib/utils/achievementManager';
+	import { checkAndUnlockAchievements } from '$lib/utils/achievement/achievementManager';
 	import { onMount } from 'svelte';
 	import './achievements.css';
 
