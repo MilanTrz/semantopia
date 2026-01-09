@@ -12,9 +12,9 @@ export async function startGameSession(userId: number | null | undefined, type: 
 export async function endGameSession(
 	userId: number | null | undefined,
 	type: string,
-	nbEssai: number,
+	nbEssai: number | null | undefined,
 	isVictory: boolean,
-	score: number
+	score: number | null | undefined
 ) {
 	if (!userId) return;
 	const [rows] = (await pool.query(

@@ -254,7 +254,8 @@ function isValideTitle(title: string): boolean {
 		'alphabétique',
 		'Communauté',
 		'gens',
-		'.'
+		'.',
+		
 	];
 	const lowerTitle = title.toLowerCase();
 	for (const word of forbiddenWords) {
@@ -262,7 +263,7 @@ function isValideTitle(title: string): boolean {
 			return false;
 		}
 	}
-	if (lowerTitle.match(/\d/)) {
+	if (lowerTitle.match(/\d/) || lowerTitle.match(/^(M{0,3})(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)) {
 		return false;
 	}
 	return true;
@@ -297,7 +298,7 @@ export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser, sessionId } = await request.json();
 
 	try {
-		await endGameSession(idUser, 'pedantix', nbEssai, isVictory);
+		await endGameSession(idUser, 'pedantix', nbEssai, isVictory,null);
 
 		const revealWord = activeSessions.get(sessionId)?.titleWikiPage;
 		const revealContent = activeSessions.get(sessionId)?.contentsplice;

@@ -37,7 +37,7 @@ export async function POST({ request }: RequestEvent) {
 export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser } = await request.json();
 	try {
-		await endGameSession(idUser, 'motix', nbEssai, Boolean(isVictory));
+		await endGameSession(idUser, 'motix', nbEssai, Boolean(isVictory),null);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		console.error('Erreur Server:', error);

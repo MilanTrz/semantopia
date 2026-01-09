@@ -3,10 +3,11 @@
 	import { sessionStore } from './store/sessionStore';
 	let session = sessionStore.get();
 	let pseudo: string | null = session ? session.pseudo : null;
-	let isAdmin: boolean | null = session ? session.isAdmin : null;
 	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
 	async function logout() {
+		console.log('Avant clear', sessionStore.get())
 		sessionStore.clear();
+			console.log('Apres clear', sessionStore.get())
 		await fetch('/api/logout', {
 			method: 'DELETE'
 		});

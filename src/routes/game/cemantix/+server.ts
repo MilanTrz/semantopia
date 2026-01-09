@@ -104,7 +104,7 @@ export async function POST({ request }: RequestEvent) {
 		sessions.update(sessionId, nextState);
 		if (isWinner) {
 			const resolvedUserId = userId ?? nextState.userId;
-			await endGameSession(resolvedUserId, 'cemantix', nextState.attemptCounter, true);
+			await endGameSession(resolvedUserId, 'cemantix', nextState.attemptCounter, true,null);
 		}
 
 		return new Response(
