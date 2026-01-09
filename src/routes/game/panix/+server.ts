@@ -36,11 +36,8 @@ const syllabesInterdites = [
 	'ff',
 	'gg',
 	'll',
-	'mm',
-	'nn',
 	'pp',
 	'rr',
-	'ss',
 	'tt',
 	'vv',
 
@@ -49,7 +46,7 @@ const syllabesInterdites = [
 	'iu',
 	'uo',
 	'ue',
-	'oi'
+	'sss'
 ];
 let poolSyllabes: string[] = [];
 

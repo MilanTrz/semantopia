@@ -12,8 +12,11 @@
 	let userAllRareAchievements = 0;
 	let userMissingAchievements = 0;
 	let userAllAchievementsUnlock: number[] = [];
+	let isLoading = true;
 
 	async function getInformationAchievements() {
+		if (!idUser) return;
+		
 		try {
 			const response = await fetch('/achievements', {
 				method: 'POST',
@@ -32,7 +35,8 @@
 			).length;
 		} catch (error) {
 			console.error('Erreur Server:', error);
-			throw error;
+		} finally {
+			isLoading = false;
 		}
 	}
 
@@ -61,17 +65,18 @@
 	}
 
 	let unsubscribe: (() => void) | null = null;
+
 	onMount(() => {
+		getInformationAchievements();
+
 		unsubscribe = gameEventEmitter.subscribe(async (eventData) => {
-			if (eventData && idUser) {
+			if (eventData && idUser && userAllAchievementsUnlock.length > 0) {
 				await checkAndUnlockAchievements(eventData, userAllAchievementsUnlock);
-				await getInformationAchievements();
+				setTimeout(() => {
+					getInformationAchievements();
+				}, 500);
 			}
 		});
-
-		if (idUser) {
-			getInformationAchievements();
-		}
 
 		return () => {
 			if (unsubscribe) unsubscribe();

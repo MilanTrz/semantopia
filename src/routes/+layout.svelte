@@ -7,6 +7,7 @@
 	import { initKonamiCodeDetection } from '$lib/utils/achievement/konamiCode';
 	import { createAccountAgeEvent } from '$lib/utils/achievement/accountAgeChecker';
 	import type { GameEventData } from '$lib/models/achievements';
+	import AchievementNotification from '$lib/components/AchievementNotification.svelte';
 
 	let { children } = $props();
 
@@ -53,5 +54,7 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
+
+<AchievementNotification />
 
 {@render children?.()}
