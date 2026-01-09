@@ -72,3 +72,7 @@ export function getGameConfig(slug: string): GameConfig | undefined {
 export function getOtherGames(excludeSlug: string): GameConfig[] {
 	return GAMES.filter(g => g.slug !== excludeSlug);
 }
+
+export function getTotalGameTypes(): number {
+	return GAMES.length;
+}

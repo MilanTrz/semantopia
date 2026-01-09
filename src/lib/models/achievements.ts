@@ -1,3 +1,5 @@
+import { getTotalGameTypes } from "$lib/gameConfig";
+
 export interface Achievement {
 	id: number;
 	title: string;
@@ -52,7 +54,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Jouer à tous les jeux',
 		icon: 'fa-graduation-cap',
 		rarity: 1,
-		condition: (data) => data.totalGameTypes === 8
+		condition: (data) => (data.totalGameTypes ?? 0) >= getTotalGameTypes()
 	},
 	{
 		id: 5,
