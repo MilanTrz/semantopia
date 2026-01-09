@@ -1,0 +1,57 @@
+@keyframes shimmer {
+	0% {
+		background-position: -200% center;
+	}
+	100% {
+		background-position: 200% center;
+	}
+}
+
+.enchantment-1,
+.enchantment-2 {
+	position: relative;
+	overflow: hidden;
+}
+
+.enchantment-1::before,
+.enchantment-2::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	border-radius: inherit;
+	z-index: 1;
+}
+
+/* 1: Purple */
+.enchantment-1::before {
+	background: linear-gradient(
+		110deg,
+		transparent 25%,
+		rgba(147, 51, 234, 0.2) 45%,
+		transparent 65%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 12s linear infinite;
+}
+
+/* 2: Gold */
+.enchantment-2::before {
+	background: linear-gradient(
+		110deg,
+		transparent 25%,
+		rgba(255, 223, 0, 0.25) 45%,
+		transparent 65%
+	);
+	background-size: 200% 100%;
+	animation: shimmer 12s linear infinite;
+}
+
+.enchantment-1 > *,
+.enchantment-2 > * {
+	position: relative;
+	z-index: 2;
+}

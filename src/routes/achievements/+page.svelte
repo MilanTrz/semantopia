@@ -5,19 +5,13 @@
 	import { ACHIEVEMENTS } from '$lib/models/achievements';
 	import { checkAndUnlockAchievements } from '$lib/utils/achievementManager';
 	import { onMount } from 'svelte';
+	import './achievements.css';
 
 	$: idUser = $sessionStore?.id ?? null;
 	let userAllAchievements = 0;
 	let userAllRareAchievements = 0;
 	let userMissingAchievements = 0;
 	let userAllAchievementsUnlock: number[] = [];
-
-	let repbodyAchievements: {
-		AllAchievements: number;
-		AllRareAchievements: number;
-		AllMissingAchievements: number;
-		achievementsIds: number[];
-	};
 
 	async function getInformationAchievements() {
 		try {
@@ -28,40 +22,60 @@
 					userId: idUser
 				})
 			});
-			repbodyAchievements = await response.json();
-			userAllAchievements = repbodyAchievements.AllAchievements ?? 0;
-			userAllRareAchievements = repbodyAchievements.AllRareAchievements ?? 0;
-			userMissingAchievements = repbodyAchievements.AllMissingAchievements ?? 0;
-			userAllAchievementsUnlock = repbodyAchievements.achievementsIds ?? [];
+			const data = await response.json();
+			userAllAchievements = data.AllAchievements ?? 0;
+			userMissingAchievements = data.AllMissingAchievements ?? 0;
+			userAllAchievementsUnlock = (data.achievementsIds ?? []);
+			
+			userAllRareAchievements = ACHIEVEMENTS.filter(
+				ach => ach.rarity >= 1 && userAllAchievementsUnlock.includes(ach.id)
+			).length;
 		} catch (error) {
 			console.error('Erreur Server:', error);
 			throw error;
 		}
 	}
 
-	function getAchievementStatusClass(achievementId: number) {
-		const isUnlocked = userAllAchievementsUnlock.includes(achievementId);
+	$: unlockedSet = new Set(userAllAchievementsUnlock);
+
+	function getAchievementStatusClass(achievementId: number, unlockedIds: Set<number>, rarity: number) {
+		const isUnlocked = unlockedIds.has(achievementId);
+		const baseCard = isUnlocked ? 'bg-white shadow-lg hover:shadow-xl' : 'bg-gray-200 shadow hover:shadow-md';
+		
+		const enchantmentClass = isUnlocked && rarity >= 1 ? `enchantment-${rarity}` : '';
+		
+		const iconColors = {
+			0: isUnlocked ? 'bg-gradient-to-br from-gray-700 to-gray-800 shadow-md' : 'bg-gray-400',
+			1: isUnlocked ? 'bg-gradient-to-br from-purple-500 via-violet-500 to-purple-600 shadow-lg' : 'bg-gray-400',
+			2: isUnlocked ? 'bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 shadow-lg' : 'bg-gray-400'
+		};
+		
 		return {
-			card: isUnlocked ? 'bg-white' : 'bg-gray-200',
-			title: isUnlocked ? 'text-gray-900' : 'text-gray-500',
-			icon: isUnlocked ? 'bg-gray-700' : 'bg-gray-400',
-			description: isUnlocked ? 'text-gray-600' : 'text-gray-500',
-			status: isUnlocked ? 'text-green-600' : 'text-gray-500',
+			card: `${baseCard} ${enchantmentClass} transition-all duration-300 transform hover:scale-105`,
+			title: isUnlocked ? 'text-gray-900 font-bold' : 'text-gray-500',
+			icon: iconColors[rarity as keyof typeof iconColors] || iconColors[0],
+			description: isUnlocked ? 'text-gray-700' : 'text-gray-500',
+			status: isUnlocked ? 'text-green-600 font-semibold' : 'text-gray-500',
 			statusText: isUnlocked ? 'Obtenu' : 'Non obtenu'
 		};
 	}
 
-	// Écouter les événements de fin de partie
-	gameEventEmitter.subscribe(async (eventData) => {
-		if (eventData && idUser) {
-			await checkAndUnlockAchievements(eventData, userAllAchievementsUnlock);
-			// Rafraîchir la liste des achievements
-			await getInformationAchievements();
-		}
-	});
-
+	let unsubscribe: (() => void) | null = null;
 	onMount(() => {
-		getInformationAchievements();
+		unsubscribe = gameEventEmitter.subscribe(async (eventData) => {
+			if (eventData && idUser) {
+				await checkAndUnlockAchievements(eventData, userAllAchievementsUnlock);
+				await getInformationAchievements();
+			}
+		});
+
+		if (idUser) {
+			getInformationAchievements();
+		}
+
+		return () => {
+			if (unsubscribe) unsubscribe();
+		};
 	});
 </script>
 
@@ -120,14 +134,14 @@
 		</div>
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 			{#each ACHIEVEMENTS as achievement (achievement.id)}
-				{@const statusClasses = getAchievementStatusClass(achievement.id)}
-				<div class="rounded-lg {statusClasses.card} p-6 text-center shadow">
+				{@const statusClasses = getAchievementStatusClass(achievement.id, unlockedSet, achievement.rarity)}
+				<div class="rounded-lg {statusClasses.card} p-6 text-center">
 					<div
-						class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full {statusClasses.icon}"
+						class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full {statusClasses.icon} transition-transform duration-300"
 					>
 						<i class="fa-solid {achievement.icon} text-2xl text-white"></i>
 					</div>
-					<p data-id={achievement.id} class="achievement mb-2 font-semibold {statusClasses.title}">
+					<p data-id={achievement.id} class="achievement mb-2 {statusClasses.title}">
 						{achievement.title}
 					</p>
 					<p class="mb-3 text-sm {statusClasses.description}">{achievement.description}</p>

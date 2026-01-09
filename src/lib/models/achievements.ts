@@ -60,23 +60,23 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Obtenir 5 badges',
 		icon: 'fa-gem',
 		rarity: 0,
-		condition: () => false // Géré automatiquement
+		condition: () => false
 	},
 	{
 		id: 6,
 		title: 'Couvre moi de badges',
 		description: 'Obtenir 10 badges',
 		icon: 'fa-shield',
-		rarity: 0,
-		condition: () => false // Géré automatiquement
+		rarity: 1,
+		condition: () => false
 	},
 	{
 		id: 7,
 		title: 'Fin ?',
 		description: 'Obtenir tous les badges',
 		icon: 'fa-trophy',
-		rarity: 1,
-		condition: () => false // Géré automatiquement
+		rarity: 2,
+		condition: () => false
 	},
 	{
 		id: 8,
@@ -107,7 +107,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		title: 'Créateur',
 		description: 'Être développeur de Sémantopia',
 		icon: 'fa-code',
-		rarity: 1,
+		rarity: 2,
 		condition: (data) => data.isDevTeamMember === true
 	},
 	{
