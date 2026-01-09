@@ -472,7 +472,7 @@ export async function PUT({ request }: RequestEvent) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
-		await endGameSession(idUser, 'chainix', 0, true,score);
+		await endGameSession(idUser, 'chainix', 0, true, score);
 		activeSessions.delete(sessionId);
 		return new Response(null, { status: 204 });
 	} catch (error) {

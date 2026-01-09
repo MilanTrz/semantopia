@@ -44,7 +44,6 @@
 	const session = sessionStore.get();
 	const idUser: number | null = session ? session.id : 0;
 
-
 	let hintsGame: hints;
 	let revealedIndice = [false, false, false];
 
@@ -233,11 +232,9 @@
 			throw error;
 		}
 	}
-	
 
 	onMount(() => {
 		newGame();
-		
 	});
 </script>
 
@@ -256,7 +253,7 @@
 					<p class="mt-2 text-sm text-gray-500">Essais : {nbEssai}</p>
 				</div>
 			</div>
-		
+
 			{#if isLoading}
 				<div class="flex flex-col items-center justify-center py-12">
 					<div

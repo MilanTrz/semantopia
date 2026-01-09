@@ -22,6 +22,8 @@ export async function POST({ request }: RequestEvent) {
         TYPE,
         COUNT(ID) AS NB_PARTIES_JOUES,
         AVG(NOMBRE_ESSAI) AS NB_ESSAI_MOYEN,
+		AVG(SCORE) AS SCORE_MOYEN,
+		MAX(SCORE) AS MAX_SCORE,
         SUM(WIN) / COUNT(ID) AS TAUX_REUSSITE,
         (
             SELECT COUNT(*)
@@ -51,12 +53,16 @@ export async function POST({ request }: RequestEvent) {
 		const nbEssaiMoyen = stats.NB_ESSAI_MOYEN ?? 0;
 		const tauxReussite = stats.TAUX_REUSSITE ?? 0;
 		const serieActuelle = stats.SERIE_ACTUELLE ?? 0;
+		const scoreMoyen = stats.SCORE_MOYEN ?? 0;
+		const scoreMax = stats.MAX_SCORE ?? 0;
 		return new Response(
 			JSON.stringify({
 				nbParties,
 				nbEssaiMoyen,
 				tauxReussite,
-				serieActuelle
+				serieActuelle,
+				scoreMoyen,
+				scoreMax
 			}),
 			{ status: 201 }
 		);

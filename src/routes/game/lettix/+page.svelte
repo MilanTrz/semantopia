@@ -11,6 +11,7 @@
 	const idUser: number | null = session ? session.id : 0;
 	let totalGamePlayed: number = 0;
 	let findAnagramsAverage: number = 0;
+	let findMaxAnagrams: number = 0;
 	let wordShuffleFind: string = '';
 	let count: number = 60;
 	let sessionId: string = '';
@@ -18,6 +19,7 @@
 	let tabAnagramsFind: string[] = [];
 	let isGameOver: boolean = false;
 	let wordToFind: string = '';
+	let disabledButton: boolean = true;
 
 	let interval: ReturnType<typeof setInterval> | null = null;
 
@@ -25,6 +27,7 @@
 	let timeChangeValue: number = 0;
 
 	async function newGame() {
+		disabledButton = true;
 		nbAnagramsFind = 0;
 		count = 60;
 		isLoading = true;
@@ -85,6 +88,7 @@
 	}
 	async function gameOver() {
 		isGameOver = true;
+		disabledButton = false;
 		const response = await fetch('/game/lettix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -117,7 +121,8 @@
 			});
 			const data = await response.json();
 			totalGamePlayed = data.nbParties;
-			findAnagramsAverage = data.nbEssaiMoyen;
+			findAnagramsAverage = data.scoreMoyen;
+			findMaxAnagrams = data.scoreMax;
 		}
 	}
 
@@ -218,12 +223,14 @@
 			<div class="flex gap-4">
 				<button
 					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					disabled={disabledButton}
 					on:click={newGame}
 				>
 					🔄 Nouvelle partie
 				</button>
 				<button
 					class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
+					disabled={disabledButton}
 				>
 					📤 Partager résultat
 				</button>
@@ -258,6 +265,12 @@
 								{Math.round(findAnagramsAverage * 100) / 100}
 							</p>
 							<p class="mt-1 text-sm text-gray-600">Nombre d'annagrammes trouvés en moyenne</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-blue-600">
+								{findMaxAnagrams}
+							</p>
+							<p class="mt-1 text-sm text-gray-600">Nombre d'annagrammes trouvés le plus</p>
 						</div>
 					</div>
 				</div>

@@ -22,6 +22,8 @@
 	let startingWord: string = '';
 	let totalGamePlayed: number = 0;
 	let wordCreateAverage: number = 0;
+	let wordCreateMax: number = 0;
+	let disabledButton: boolean = true;
 
 	async function newGame() {
 		userGuess = '';
@@ -30,6 +32,7 @@
 		isLoading = true;
 		isGameOver = false;
 		isSurrender = false;
+		disabledButton = true;
 		chainWords = [];
 		guessedWords = new Set();
 		showTimeAnimation = false;
@@ -108,6 +111,7 @@
 	async function gameOver() {
 		isGameOver = true;
 		isSurrender = true;
+		disabledButton = false;
 		await fetch('/game/chainix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -138,7 +142,8 @@
 			});
 			const data = await response.json();
 			totalGamePlayed = data.nbParties ?? 0;
-			wordCreateAverage = data.nbEssaiMoyen ?? 0;
+			wordCreateAverage = data.scoreMoyen ?? 0;
+			wordCreateMax = data.scoreMax ?? 0;
 		}
 	}
 
@@ -151,7 +156,6 @@
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto flex max-w-7xl gap-12">
-		<!-- Contenu principal -->
 		<div class="max-w-3xl flex-1">
 			<div class="mb-6">
 				<div class="mb-8">
@@ -246,11 +250,13 @@
 			<div class="flex gap-4">
 				<button
 					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					disabled={disabledButton}
 					on:click={newGame}
 				>
 					🔄 Nouvelle partie
 				</button>
 				<button
+					disabled={disabledButton}
 					class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
 				>
 					📤 Partager résultat
@@ -307,6 +313,12 @@
 								{Math.round(wordCreateAverage * 100) / 100}
 							</p>
 							<p class="mt-1 text-sm text-gray-600">Longueur moyenne de la chaîne</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-blue-600">
+								{wordCreateMax}
+							</p>
+							<p class="mt-1 text-sm text-gray-600">Longueur maximale d'une chaîne crée</p>
 						</div>
 					</div>
 				</div>

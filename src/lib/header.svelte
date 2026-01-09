@@ -11,7 +11,7 @@
 			method: 'DELETE'
 		});
 		window.setTimeout(() => {
-			goto('/login');
+			goto('/home');
 		});
 	}
 </script>

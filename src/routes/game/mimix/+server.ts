@@ -146,7 +146,7 @@ export async function PUT({ request }: RequestEvent) {
 	}
 	try {
 		const wordIntruder = activeSessions.get(sessionId)?.wordIntruder;
-		await endGameSession(idUser, 'mimix', 0, true,score);
+		await endGameSession(idUser, 'mimix', 0, true, score);
 		return new Response(JSON.stringify({ wordIntruder }), {
 			status: 200
 		});

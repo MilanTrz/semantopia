@@ -24,7 +24,7 @@ export async function endGameSession(
 	const idMax = rows[0]?.ID;
 	if (!idMax) return;
 	await pool.query(
-		'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = ? WHERE USER_ID = ? AND ID = ? AND TYPE = ? AND SCORE = ?',
-		[nbEssai, isVictory ? 1 : 0, userId, idMax, type,score]
+		'UPDATE GAME_SESSION SET EN_COURS = 0, NOMBRE_ESSAI = ?, WIN = ?, SCORE = ? WHERE USER_ID = ? AND ID = ? AND TYPE = ? ',
+		[nbEssai, isVictory ? 1 : 0, score, userId, idMax, type]
 	);
 }

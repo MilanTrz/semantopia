@@ -12,11 +12,12 @@
 	let activeType: ClassementType = 'mostGamePlayed';
 	async function loadLeaderboard(type: ClassementType) {
 		try {
+			activeType = type;
 			classement = await getClassement(type);
 		} catch (err) {
 			console.error('Erreur chargement classement:', err);
 			classement = [];
-		} 
+		}
 	}
 	onMount(() => {
 		loadLeaderboard(activeType);
@@ -45,13 +46,11 @@
 				{#if top3[1]}
 					<div class="flex flex-col items-center">
 						<div class="relative">
-							
-                             <img 
-                                src={top3[1].avatar} 
-                                alt={top3[1].pseudo}
-                                class="w-20 h-20 rounded-full object-cover border-4 border-gray-300"
-                            />
-                            
+							<img
+								src={top3[1].avatar}
+								alt={top3[1].pseudo}
+								class="h-20 w-20 rounded-full border-4 border-gray-300 object-cover"
+							/>
 
 							<div
 								class="absolute -bottom-2 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-gray-300 text-sm font-bold text-gray-700"
@@ -62,7 +61,6 @@
 						<div class="mt-4 w-40 rounded-lg bg-white p-4 text-center shadow-md">
 							<p class="truncate font-semibold text-gray-800">{top3[1].pseudo}</p>
 							<div class="mt-1 flex items-center justify-center gap-1">
-								
 								<span class="font-medium text-gray-600">{top3[1].points.toLocaleString()}</span>
 							</div>
 							<p class="mt-1 text-xs text-gray-400">points</p>
@@ -73,13 +71,12 @@
 				{#if top3[0]}
 					<div class="-mt-8 flex flex-col items-center">
 						<div class="relative">
-							
-                            <img 
-                                src={top3[0].avatar} 
-                                alt={top3[0].pseudo}
-                                class="w-24 h-24 rounded-full object-cover border-4 border-yellow-400"
-                            />
-                        
+							<img
+								src={top3[0].avatar}
+								alt={top3[0].pseudo}
+								class="h-24 w-24 rounded-full border-4 border-yellow-400 object-cover"
+							/>
+
 							<div
 								class="absolute -bottom-2 left-1/2 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full bg-yellow-400 font-bold text-white"
 							>
@@ -91,7 +88,6 @@
 						>
 							<p class="truncate font-bold text-white">{top3[0].pseudo}</p>
 							<div class="mt-1 flex items-center justify-center gap-1">
-								
 								<span class="text-lg font-bold text-white">{top3[0].points.toLocaleString()}</span>
 							</div>
 							<p class="mt-1 text-xs text-yellow-100">points</p>
@@ -102,13 +98,11 @@
 				{#if top3[2]}
 					<div class="flex flex-col items-center">
 						<div class="relative">
-							
-                             <img 
-                                src={top3[2].avatar} 
-                                alt={top3[2].pseudo}
-                                class="w-20 h-20 rounded-full object-cover border-4 border-orange-300"
-                            />
-                     
+							<img
+								src={top3[2].avatar}
+								alt={top3[2].pseudo}
+								class="h-20 w-20 rounded-full border-4 border-orange-300 object-cover"
+							/>
 
 							<div
 								class="absolute -bottom-2 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-orange-300 text-sm font-bold text-white"
@@ -119,7 +113,6 @@
 						<div class="mt-4 w-40 rounded-lg bg-white p-4 text-center shadow-md">
 							<p class="truncate font-semibold text-gray-800">{top3[2].pseudo}</p>
 							<div class="mt-1 flex items-center justify-center gap-1">
-					
 								<span class="font-medium text-gray-600">{top3[2].points.toLocaleString()}</span>
 							</div>
 							<p class="mt-1 text-xs text-gray-400">points</p>
@@ -141,13 +134,13 @@
 					>
 						<div class="flex items-center gap-4">
 							<span class="w-6 text-lg font-semibold text-gray-400">{index + 4}</span>
-							
-                             <img 
-                                src={player.avatar} 
-                                alt={player.pseudo}
-                                class="w-12 h-12 rounded-full object-cover"
-                            />
-                        
+
+							<img
+								src={player.avatar}
+								alt={player.pseudo}
+								class="h-12 w-12 rounded-full object-cover"
+							/>
+
 							<div>
 								<p class="font-semibold text-gray-800">{player.pseudo}</p>
 							</div>

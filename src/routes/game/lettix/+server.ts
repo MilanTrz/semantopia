@@ -73,7 +73,7 @@ export async function PUT({ request }: RequestEvent) {
 	try {
 		const wordToFind = activeSessions.get(sessionId)?.wordToFind;
 		if (idUser) {
-			await endGameSession(idUser, 'lettix', 0, true,score);
+			await endGameSession(idUser, 'lettix', 0, true, score);
 		}
 
 		return new Response(JSON.stringify({ wordToFind }), {
