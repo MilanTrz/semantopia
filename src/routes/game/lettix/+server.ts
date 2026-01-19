@@ -1,4 +1,5 @@
 import pool from '$lib/server/db';
+import { endGameSession } from '$lib/utils/gameSession';
 import type { RequestEvent } from '@sveltejs/kit';
 const activeSessions: Map<
 	string,
@@ -64,13 +65,17 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { sessionId } = await request.json();
+	const { idUser, score, sessionId } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
 		const wordToFind = activeSessions.get(sessionId)?.wordToFind;
+		if (idUser !== 0) {
+			await endGameSession(idUser, 'lettix', 0, true, score);
+		}
+
 		return new Response(JSON.stringify({ wordToFind }), {
 			status: 200
 		});
@@ -94,7 +99,6 @@ async function randomWord() {
 	) {
 		return randomWord();
 	}
-	console.log(wordToFind);
 	return wordToFind;
 }
 function shuffleWord(word: string): string {
@@ -147,6 +151,5 @@ async function checkWordExist(word: string) {
 	});
 	const data = await response.json();
 	const isCorrectWord = data.exists;
-	console.log(data + '  ' + isCorrectWord);
 	return isCorrectWord;
 }

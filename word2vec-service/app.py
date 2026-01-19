@@ -191,8 +191,8 @@ def get_random_word():
 
         candidates = [
             word
-            for word in model.index_to_key[:200000]
-            if is_valid_word(word)
+            for word in model.index_to_key[:100000]
+            if is_valid_word(word) and len(word) >= 4
         ]
 
         if not candidates:

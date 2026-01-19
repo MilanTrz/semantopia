@@ -3,12 +3,16 @@ import { endGameSession, startGameSession } from '$lib/utils/gameSession';
 
 export async function POST({ request }: RequestEvent) {
 	const { sizeWord, userId } = await request.json();
+	let similarWord = '';
 
 	try {
 		const data = await getRandomWord(sizeWord);
 		const findWord = data.name;
 		const findCategorie = data.categorie;
-		const similarWord = await getSimilarWord(findWord);
+		do {
+			similarWord = await getSimilarWord(findWord);
+		} while (normalize(similarWord) === normalize(findWord));
+
 		const tabWord = findWord
 			.normalize('NFD')
 			.replace(/[\u0300-\u036f]/g, '')
@@ -33,7 +37,7 @@ export async function POST({ request }: RequestEvent) {
 export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser } = await request.json();
 	try {
-		await endGameSession(idUser, 'motix', nbEssai, Boolean(isVictory));
+		await endGameSession(idUser, 'motix', nbEssai, Boolean(isVictory),null);
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		console.error('Erreur Server:', error);
@@ -55,9 +59,18 @@ async function getSimilarWord(word: string) {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
 			word: word,
-			topn: 1
+			topn: 2
 		})
 	});
 	const data = await response.json();
 	return data.similar_words[0].word;
+}
+
+function normalize(str: string): string {
+	return str
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.trim()
+		.replace(/(s|x|e)$/g, '');
 }

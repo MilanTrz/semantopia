@@ -6,7 +6,6 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
-	import type { challenge } from '$lib/models/challenge';
 	import type { hints } from '$lib/models/hints';
 
 	type MaskToken = number | string | { length: number; state: 'near'; score: number; word: string };
@@ -51,7 +50,6 @@
 	let revealedIndice = [false, false, false];
 
 	let isWordInGame: boolean = true;
-	let isChallengeWinned: boolean = false;
 
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
@@ -65,7 +63,6 @@
 			getStatistics();
 		}
 		resetIndices();
-		isChallengeWinned = false;
 		isSurrender = false;
 		tabguess = [];
 		isLoading = true;
@@ -253,42 +250,20 @@
 
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
-	<div class="mx-auto max-w-7xl flex gap-12">
+	<div class="mx-auto flex max-w-7xl gap-12">
 		<!-- Contenu principal -->
-		<div class="flex-1 max-w-3xl">
+		<div class="max-w-3xl flex-1">
 			<div class="mb-6">
 				<div class="mb-8">
-					<h1 class="text-4xl font-bold text-gray-900 mb-2">
-						<i class="fa-solid fa-book-open text-blue-700 mr-3" aria-hidden="true"></i>
+					<h1 class="mb-2 text-4xl font-bold text-gray-900">
+						<i class="fa-solid fa-book-open mr-3 text-blue-700" aria-hidden="true"></i>
 						Pédantix
 					</h1>
 					<p class="mt-1 text-gray-600">Découvrez l'article Wikipédia caché mot par mot</p>
 					<p class="mt-2 text-sm text-gray-500">Essais : {nbEssai}</p>
 				</div>
 			</div>
-			{#if isChallengeWinned}
-				<div class="mb-6 flex items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-6">
-					<svg
-						class="h-6 w-6 flex-shrink-0 text-green-600"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<div>
-						<p class="font-semibold text-green-900">Défi relevé !</p>
-						<p class="text-sm text-green-700">
-							Félicitations, vous avez réussi le défi d'aujourd'hui de Pédantix !
-						</p>
-					</div>
-				</div>
-			{/if}
+
 			{#if isLoading}
 				<div class="flex flex-col items-center justify-center py-12">
 					<div
@@ -510,104 +485,104 @@
 		</div>
 		<!-- Sidebar -->
 		<div class="w-80 shrink-0 space-y-6">
-				<div class="rounded-lg bg-white p-6 shadow-sm">
-					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
-					<ul class="space-y-3 text-sm text-gray-600">
-						<li class="flex items-start">
-							<span class="mr-2">•</span>
-							<p>Trouvez le mot mystère en vous aidant de la proximité sémantique</p>
-						</li>
-						<li class="flex items-start">
-							<span class="mr-2">•</span>
-							<p>Plus votre proposition est proche du mot, plus le pourcentage est élevé</p>
-						</li>
-						<li class="flex items-start">
-							<span class="mr-2">•</span>
-							<p>Chaque bonne proposition révèle des mots dans l'extrait Wikipedia</p>
-						</li>
-						<li class="flex items-start">
-							<span class="mr-2">•</span>
-							<p>Utilisez les indices pour vous rapprocher du mot cible</p>
-						</li>
-					</ul>
-				</div>
-				<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-					<div class="w-full max-w-md">
-						<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
-							<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
-
-							<div class="space-y-4">
-								{#if !revealedIndice[0]}
-									<button
-										on:click={() => toggleReveal(0)}
-										class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
-									>
-										Premier Indice
-									</button>
-								{:else}
-									<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
-										<h4>Catégorie de la page Wikipedia :</h4>
-										<p class="text-gray-800">{hintsGame.categories[0]}</p>
-									</div>
-								{/if}
-								{#if !revealedIndice[1]}
-									<button
-										on:click={() => toggleReveal(1)}
-										class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
-									>
-										Deuxième Indice
-									</button>
-								{:else}
-									<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
-										<h4>Lien qui appartient a la page:</h4>
-										<p class="text-gray-800">{hintsGame.links}</p>
-									</div>
-								{/if}
-								{#if !revealedIndice[2]}
-									<button
-										on:click={() => toggleReveal(2)}
-										class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
-									>
-										Troisième Indice
-									</button>
-								{:else}
-									<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
-										<h4>Intro sans le titre de la page :</h4>
-										<p class="text-gray-800">{hintsGame.intro}</p>
-									</div>
-								{/if}
-							</div>
-						</div>
-					</div>
-				</div>
-				{#if idUser}
-					<div class="rounded-lg bg-white p-6 shadow-sm">
-						<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-							📊 Vos statistiques
-						</h4>
-						<div class="grid grid-cols-2 gap-6">
-							<div class="text-center">
-								<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
-								<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-							</div>
-							<div class="text-center">
-								<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
-								<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-							</div>
-							<div class="text-center">
-								<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
-								<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
-							</div>
-							<div class="text-center">
-								<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
-								<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
-							</div>
-						</div>
-					</div>
-				{/if}
-
-				<!-- Autres jeux -->
-				<OtherGames exclude="pedantix" />
+			<div class="rounded-lg bg-white p-6 shadow-sm">
+				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
+				<ul class="space-y-3 text-sm text-gray-600">
+					<li class="flex items-start">
+						<span class="mr-2">•</span>
+						<p>Trouvez le mot mystère en vous aidant de la proximité sémantique</p>
+					</li>
+					<li class="flex items-start">
+						<span class="mr-2">•</span>
+						<p>Plus votre proposition est proche du mot, plus le pourcentage est élevé</p>
+					</li>
+					<li class="flex items-start">
+						<span class="mr-2">•</span>
+						<p>Chaque bonne proposition révèle des mots dans l'extrait Wikipedia</p>
+					</li>
+					<li class="flex items-start">
+						<span class="mr-2">•</span>
+						<p>Utilisez les indices pour vous rapprocher du mot cible</p>
+					</li>
+				</ul>
 			</div>
+			<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+				<div class="w-full max-w-md">
+					<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+						<h2 class="mb-6 text-center text-2xl font-bold text-gray-800">Indices Mystère</h2>
+
+						<div class="space-y-4">
+							{#if !revealedIndice[0]}
+								<button
+									on:click={() => toggleReveal(0)}
+									class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+								>
+									Premier Indice
+								</button>
+							{:else}
+								<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+									<h4>Catégorie de la page Wikipedia :</h4>
+									<p class="text-gray-800">{hintsGame.categories[0]}</p>
+								</div>
+							{/if}
+							{#if !revealedIndice[1]}
+								<button
+									on:click={() => toggleReveal(1)}
+									class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+								>
+									Deuxième Indice
+								</button>
+							{:else}
+								<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+									<h4>Lien qui appartient a la page:</h4>
+									<p class="text-gray-800">{hintsGame.links}</p>
+								</div>
+							{/if}
+							{#if !revealedIndice[2]}
+								<button
+									on:click={() => toggleReveal(2)}
+									class="w-full rounded-lg border-2 border-black bg-white px-6 py-3 font-semibold text-black transition-all duration-200 hover:bg-gray-50 hover:shadow-md active:bg-gray-100"
+								>
+									Troisième Indice
+								</button>
+							{:else}
+								<div class="w-full rounded-lg border-2 border-black bg-gray-50 p-4">
+									<h4>Intro sans le titre de la page :</h4>
+									<p class="text-gray-800">{hintsGame.intro}</p>
+								</div>
+							{/if}
+						</div>
+					</div>
+				</div>
+			</div>
+			{#if idUser}
+				<div class="rounded-lg bg-white p-6 shadow-sm">
+					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+						📊 Vos statistiques
+					</h4>
+					<div class="grid grid-cols-2 gap-6">
+						<div class="text-center">
+							<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
+							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
+							<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
+							<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
+							<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
+						</div>
+					</div>
+				</div>
+			{/if}
+
+			<!-- Autres jeux -->
+			<OtherGames exclude="pedantix" />
 		</div>
 	</div>
+</div>

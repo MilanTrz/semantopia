@@ -112,13 +112,16 @@ export async function POST({ request }: RequestEvent) {
 }
 
 export async function PUT({ request }: RequestEvent) {
-	const { sessionId, idUser, nbEssai } = await request.json();
+	const { sessionId, idUser, score } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
-		await endGameSession(idUser, 'panix', nbEssai, true);
+		if (idUser !== 0){
+				await endGameSession(idUser, 'panix', 0, true, score);
+		}
+	
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {

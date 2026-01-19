@@ -202,7 +202,7 @@ export async function POST({ request }: RequestEvent) {
 
 	if (isWinner) {
 		const resolvedUserId = userId ?? state.userId;
-		await endGameSession(resolvedUserId ?? null, 'correlix', nextPath.length - 1, true);
+		await endGameSession(resolvedUserId ?? null, 'correlix', nextPath.length - 1, true,null);
 	}
 
 	let feedback: string;

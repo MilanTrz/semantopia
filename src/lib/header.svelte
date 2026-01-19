@@ -3,7 +3,6 @@
 	import { sessionStore } from './store/sessionStore';
 	let session = sessionStore.get();
 	let pseudo: string | null = session ? session.pseudo : null;
-	let isAdmin: boolean | null = session ? session.isAdmin : null;
 	$: avatar = $sessionStore?.avatar || '/photo_profil/photo_default.png';
 	async function logout() {
 		sessionStore.clear();
@@ -11,7 +10,7 @@
 			method: 'DELETE'
 		});
 		window.setTimeout(() => {
-			goto('/login');
+			goto('/home');
 		});
 	}
 </script>
@@ -31,6 +30,11 @@
 				<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 				<li>
 					<a href="/achievements" class="text-gray-600 transition hover:text-purple-600">Badges</a>
+				</li>
+				<li>
+					<a href="/leaderboard" class="text-gray-600 transition hover:text-purple-600"
+						>Classement</a
+					>
 				</li>
 				<li><p>{pseudo}</p></li>
 				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />

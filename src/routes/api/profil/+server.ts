@@ -30,7 +30,7 @@ export async function POST({ request }: RequestEvent) {
 		if (existsSync(oldPathFile)) {
 			await unlink(oldPathFile);
 		}
-		const avatarPath = `/static/photo_profil/${newFileName}`;
+		const avatarPath = `/photo_profil/${newFileName}`;
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
 		await writeFile(newFilePath, buffer);

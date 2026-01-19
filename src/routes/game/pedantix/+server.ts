@@ -56,7 +56,6 @@ export async function POST({ request }: RequestEvent) {
 					return;
 				}
 				if (typeof current === 'object' && current !== null && 'score' in current) {
-					// Keep the best similarity seen so far
 					target[index] = similarity > (current as { score: number }).score ? newNear : current;
 				}
 			}
@@ -199,7 +198,6 @@ async function getRandomTitlePage(lang: string = 'fr'): Promise<string> {
 			if (!isValideTitle(page.title)) {
 				continue;
 			}
-			console.log(page.title);
 			return page.title;
 		}
 		return await getRandomTitlePage();
@@ -255,7 +253,8 @@ function isValideTitle(title: string): boolean {
 		'alphabétique',
 		'Communauté',
 		'gens',
-		'.'
+		'.',
+		
 	];
 	const lowerTitle = title.toLowerCase();
 	for (const word of forbiddenWords) {
@@ -263,7 +262,7 @@ function isValideTitle(title: string): boolean {
 			return false;
 		}
 	}
-	if (lowerTitle.match(/\d/)) {
+	if (lowerTitle.match(/\d/) || lowerTitle.match(/^(M{0,3})(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)) {
 		return false;
 	}
 	return true;
@@ -298,7 +297,7 @@ export async function PUT({ request }: RequestEvent) {
 	const { nbEssai, isVictory, idUser, sessionId } = await request.json();
 
 	try {
-		await endGameSession(idUser, 'pedantix', nbEssai, isVictory);
+		await endGameSession(idUser, 'pedantix', nbEssai, isVictory,null);
 
 		const revealWord = activeSessions.get(sessionId)?.titleWikiPage;
 		const revealContent = activeSessions.get(sessionId)?.contentsplice;
@@ -309,6 +308,16 @@ export async function PUT({ request }: RequestEvent) {
 		console.error('Erreur Server:', error);
 		throw error;
 	}
+}
+function normalize(str: string): string {
+	return str
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9\s]/g, '')
+		.replace(/\b(es|s)\b/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
 }
 
 async function getHints(title: string, lang: string = 'fr'): Promise<hints> {
@@ -393,10 +402,15 @@ async function getHints(title: string, lang: string = 'fr'): Promise<hints> {
 		.map((l) => l.title);
 
 	const allCategories = catData.query.pages[pageId]?.categories?.map((c) => c.title) ?? [];
+	const normalizedTitle = normalize(title);
 
 	const relevantCategories = allCategories
-		.filter((title) => !irrelevantPatterns.some((pattern) => pattern.test(title)))
-		.map((cat) => cat.replace(/^Catégorie:/, ''));
+		.filter((catTitle) => !irrelevantPatterns.some((pattern) => pattern.test(catTitle)))
+		.map((cat) => cat.replace(/^Catégorie:/, ''))
+		.filter((cat) => {
+			const normalizedCat = normalize(cat);
+			return normalizedCat !== normalizedTitle;
+		});
 
 	return {
 		categories: relevantCategories,
