@@ -21,6 +21,8 @@ export interface GameEventData {
 	accountAgeMs?: number;
 	isDevTeamMember?: boolean;
     konamiCode?: boolean;
+	wordGameWins?: number; // Victoires sur pedantix, cemantix, correlix, motix
+	letterGameScore?: number; // Score sur lettix, mimix, panix, chainix
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -62,7 +64,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Obtenir 5 badges',
 		icon: 'fa-gem',
 		rarity: 0,
-		condition: () => false
+		condition: () => false // on AchievementManager.ts
 	},
 	{
 		id: 6,
@@ -70,7 +72,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Obtenir 10 badges',
 		icon: 'fa-shield',
 		rarity: 1,
-		condition: () => false
+		condition: () => false // on AchievementManager.ts
 	},
 	{
 		id: 7,
@@ -78,7 +80,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Obtenir tous les badges',
 		icon: 'fa-trophy',
 		rarity: 2,
-		condition: () => false
+		condition: () => false // on AchievementManager.ts
 	},
 	{
 		id: 8,
@@ -118,7 +120,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Faire le konami code',
 		icon: 'fa-keyboard',
 		rarity: 1,
-		condition: () => false
+		condition: () => false // on konamiCode.ts
 	},
 	{
 		id: 13,
@@ -126,7 +128,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner 5 parties sur pédantix, cémantix, corrélix, motix',
 		icon: 'fa-book',
 		rarity: 1,
-		condition: () => false 
+		condition: (data) => (data.wordGameWins ?? 0) === 1
 	},
 	{
 		id: 14,
@@ -134,7 +136,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Faire un score de 5 sur lettix, mimix, panix, chainix',
 		icon: 'fa-font',
 		rarity: 1,
-		condition: () => false 
+		condition: (data) => (data.letterGameScore ?? 0) === 1
 	},
 	{
 		id: 15,

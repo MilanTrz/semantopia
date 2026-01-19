@@ -12,10 +12,31 @@ async function enrichEventDataWithStats(eventData: GameEventData): Promise<GameE
 		const statsResponse = await fetch(`/api/statistiques?userId=${eventData.userId}`);
 		if (statsResponse.ok) {
 			const stats = await statsResponse.json();
+			
+			// Vérifier que TOUS les jeux de mots ont >= 5 victoires
+			const wordGameWins = [
+				stats.games?.pedantix?.wins ?? 0,
+				stats.games?.cemantix?.wins ?? 0,
+				stats.games?.correlix?.wins ?? 0,
+				stats.games?.motix?.wins ?? 0
+			];
+			const wordGameScore = wordGameWins.every(wins => wins >= 5) ? 1 : 0;
+			
+			// Vérifier que TOUS les jeux de lettres ont un score >= 5
+			const letterGameScores = [
+				stats.games?.lettix?.maxScore ?? 0,
+				stats.games?.mimix?.maxScore ?? 0,
+				stats.games?.panix?.maxScore ?? 0,
+				stats.games?.chainix?.maxScore ?? 0
+			];
+			const letterGameScore = letterGameScores.every(score => score >= 5) ? 1 : 0;
+
 			return {
 				...eventData,
 				totalGamesPlayed: stats.nbParties ?? eventData.totalGamesPlayed,
-				totalGameTypes: stats.totalGameTypes ?? eventData.totalGameTypes
+				totalGameTypes: stats.totalGameTypes ?? eventData.totalGameTypes,
+				wordGameWins: wordGameScore,
+				letterGameScore
 			};
 		}
 	} catch (statsError) {
@@ -112,6 +133,10 @@ async function unlockAchievement(
 		});
 
 		if (!response.ok) {
+			// Vérifier si c'est une erreur de doublon (déjà possédé)
+			if (response.status === 409 || response.statusText === 'Conflict') {
+				return false;
+			}
 			throw new Error(`Erreur HTTP: ${response.status}`);
 		}
 

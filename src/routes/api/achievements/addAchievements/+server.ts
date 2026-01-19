@@ -25,7 +25,7 @@ export async function POST({ request }: RequestEvent) {
         // Déjà acquis: API idempotente
         return new Response(
           JSON.stringify({ message: 'Achievement déjà acquis' }),
-          { status: 200 }
+          { status: 409 }
         );
       }
 
