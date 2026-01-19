@@ -16,6 +16,7 @@
 	let averageWordFind: number = 0;
 	let maxWordFind: number = 0;
 	let disabledButton: boolean = true;
+	let isGuessing: boolean = false;
 
 	async function newGame() {
 		isLoading = true;
@@ -37,22 +38,28 @@
 		isLoading = false;
 	}
 	async function sendGuess(word: string) {
-		const response = await fetch('/game/mimix', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				word,
-				sessionId
-			})
-		});
+		if (isGuessing) return;
+		isGuessing = true;
+		try {
+			const response = await fetch('/game/mimix', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					word,
+					sessionId
+				})
+			});
 
-		const data = await response.json();
-		foundIntruder = data.isWin;
-		if (foundIntruder) {
-			nbIntruderFind++;
-			tabShuffleWord = data.newTabShuffleWord;
-		} else {
-			gameOver();
+			const data = await response.json();
+			foundIntruder = data.isWin;
+			if (foundIntruder) {
+				nbIntruderFind++;
+				tabShuffleWord = data.newTabShuffleWord;
+			} else {
+				gameOver();
+			}
+		} finally {
+			isGuessing = false;
 		}
 	}
 	async function gameOver() {
@@ -77,7 +84,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					userId: idUser,
-					gameType: 'panix'
+					gameType: 'mimix'
 				})
 			});
 			const data = await response.json();
@@ -134,8 +141,8 @@
 							{#each tabShuffleWord as word}
 								<button
 									onclick={() => sendGuess(word)}
-									class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
-									disabled={isGameOver}
+									class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+									disabled={isGameOver || isGuessing}
 								>
 									<div
 										class="absolute inset-0 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-10"

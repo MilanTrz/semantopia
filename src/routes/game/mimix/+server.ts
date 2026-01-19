@@ -20,36 +20,40 @@ export async function GET({ url }:RequestEvent) {
 		const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 		let wordBasic: string = '';
 		let wordIntruder: string = '';
-		let isValid = false;
-		let attempts = 0;
-		const MAX_ATTEMPTS = 100;
 
 		do {
 			wordBasic = await randomWord();
 			wordIntruder = await randomWord();
 		} while ((await calculateSimilarity(wordBasic, wordIntruder)) > 20);
 
-		let tabSimilarWord: string[] = [];
+		let similarWords = await fetchMostSimilar(wordBasic, 10);
+		let validPair = findValidPair(wordBasic, wordIntruder, similarWords);
+		let attempts = 0;
+		const MAX_ATTEMPTS = 100;
 
-		while (!isValid && attempts < MAX_ATTEMPTS) {
-			tabSimilarWord = await fetchMostSimilar(wordBasic, 2);
-			isValid = checkWordsValidity(wordBasic, wordIntruder, tabSimilarWord[0], tabSimilarWord[1]);
+		while (!validPair && attempts < MAX_ATTEMPTS) {
+			similarWords = await fetchMostSimilar(wordBasic, 20);
+			validPair = findValidPair(wordBasic, wordIntruder, similarWords);
 			attempts++;
+		}
+
+		if (!validPair) {
+			throw new Error('Unable to find valid similar words');
 		}
 
 		activeSessions.set(sessionId, {
 			wordBasic: wordBasic,
 			wordIntruder: wordIntruder,
-			wordCloseOne: tabSimilarWord[0],
-			wordCloseTwo: tabSimilarWord[1],
+			wordCloseOne: validPair[0],
+			wordCloseTwo: validPair[1],
 			totalIntruderFound: 0
 		});
 
 		const tabShuffleWord: string[] = shuffleArray([
 			wordBasic,
 			wordIntruder,
-			tabSimilarWord[0],
-			tabSimilarWord[1]
+			validPair[0],
+			validPair[1]
 		]);
 		const date = new Date();
 		if (userId !== 0) {
@@ -84,43 +88,42 @@ export async function POST({ request }: RequestEvent) {
 	try {
 		const { wordIntruder, totalIntruderFound } = session;
 		let isWin: boolean = false;
+		console.log(normalize(word), normalize(wordIntruder));
 		if (normalize(word) === normalize(wordIntruder)) {
 			isWin = true;
 			const newWordBasic: string = await randomWord();
 			let newWordIntruder: string = '';
-			let isValid = false;
 			do {
 				newWordIntruder = await randomWord();
 			} while (
 				(await calculateSimilarity(newWordBasic, newWordIntruder)) >
 				Math.max(20 + totalIntruderFound, 80)
 			);
-			let newTabSimilarWord: string[] = [];
+			let newSimilarWords = await fetchMostSimilar(newWordBasic, 20);
+			let newValidPair = findValidPair(newWordBasic, newWordIntruder, newSimilarWords);
 			let attempts = 0;
 			const MAX_ATTEMPTS = 100;
-			while (!isValid && attempts < MAX_ATTEMPTS) {
-				newTabSimilarWord = await fetchMostSimilar(newWordBasic, 2);
-				isValid = checkWordsValidity(
-					newWordBasic,
-					newWordIntruder,
-					newTabSimilarWord[0],
-					newTabSimilarWord[1]
-				);
+			while (!newValidPair && attempts < MAX_ATTEMPTS) {
+				newSimilarWords = await fetchMostSimilar(newWordBasic, 20);
+				newValidPair = findValidPair(newWordBasic, newWordIntruder, newSimilarWords);
 				attempts++;
+			}
+			if (!newValidPair) {
+				throw new Error('Unable to find valid similar words');
 			}
 			activeSessions.set(sessionId, {
 				wordBasic: newWordBasic,
 				wordIntruder: newWordIntruder,
-				wordCloseOne: newTabSimilarWord[0],
-				wordCloseTwo: newTabSimilarWord[1],
+				wordCloseOne: newValidPair[0],
+				wordCloseTwo: newValidPair[1],
 				totalIntruderFound: totalIntruderFound + 1
 			});
 
 			const newTabShuffleWord: string[] = shuffleArray([
 				newWordBasic,
 				newWordIntruder,
-				newTabSimilarWord[0],
-				newTabSimilarWord[1]
+				newValidPair[0],
+				newValidPair[1]
 			]);
 
 			return new Response(JSON.stringify({ newTabShuffleWord, isWin }), {
@@ -170,6 +173,15 @@ async function randomWord() {
 		wordToFind.length < 3 ||
 		wordToFind.match(/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/)
 	) {
+		return randomWord();
+	}
+	const checkResponse = await fetch('http://localhost:5000/api/check-word', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ word: wordToFind })
+	});
+	const checkData = await checkResponse.json();
+	if (!checkData.exists) {
 		return randomWord();
 	}
 	return wordToFind;
@@ -229,4 +241,17 @@ function checkWordsValidity(
 	}
 	
 	return true;
+}
+
+function findValidPair(wordBasic: string, wordIntruder: string, similarWords: string[]): [string, string] | null {
+	for (let i = 0; i < similarWords.length; i++) {
+		for (let j = i + 1; j < similarWords.length; j++) {
+			const w1 = similarWords[i];
+			const w2 = similarWords[j];
+			if (checkWordsValidity(wordBasic, wordIntruder, w1, w2)) {
+				return [w1, w2];
+			}
+		}
+	}
+	return null;
 }
