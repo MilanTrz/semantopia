@@ -39,7 +39,7 @@
 	let startWord = '';
 	let targetWord = '';
 	let path: Step[] = [];
-	let minSimilarity = 30;
+	let minSimilarity = 25;
 	let userWord = '';
 	let message = '';
 	let gameWon = false;
@@ -92,7 +92,7 @@
 				startWord = data.startWord;
 				targetWord = data.targetWord;
 				path = data.path ?? [];
-				minSimilarity = data.minSimilarity ?? 30;
+				minSimilarity = data.minSimilarity;
 				sessionId = data.sessionId ?? '';
 				attempts = Math.max(path.length - 1, 0);
 				activeIndex = Math.max(path.length - 1, 0);
@@ -271,16 +271,10 @@
 	}
 
 	function getSimilarityBadge(value: number): string {
-		if (value >= 70) {
+		if (value == 100) {
 			return 'border-green-500 bg-green-50 text-green-700';
 		}
-		if (value >= 55) {
-			return 'border-lime-500 bg-lime-50 text-lime-700';
-		}
-		if (value >= 40) {
-			return 'border-yellow-500 bg-yellow-50 text-yellow-700';
-		}
-		if (value >= 30) {
+		if (value >= 25) {
 			return 'border-orange-500 bg-orange-50 text-orange-700';
 		}
 		return 'border-gray-400 bg-gray-50 text-gray-700';
