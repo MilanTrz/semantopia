@@ -12,7 +12,7 @@ async function enrichEventDataWithStats(eventData: GameEventData): Promise<GameE
 		const statsResponse = await fetch(`/api/statistiques?userId=${eventData.userId}`);
 		if (statsResponse.ok) {
 			const stats = await statsResponse.json();
-			
+
 			// Vérifier que TOUS les jeux de mots ont >= 5 victoires
 			const wordGameWins = [
 				stats.games?.pedantix?.wins ?? 0,
@@ -20,8 +20,8 @@ async function enrichEventDataWithStats(eventData: GameEventData): Promise<GameE
 				stats.games?.correlix?.wins ?? 0,
 				stats.games?.motix?.wins ?? 0
 			];
-			const wordGameScore = wordGameWins.every(wins => wins >= 5) ? 1 : 0;
-			
+			const wordGameScore = wordGameWins.every((wins) => wins >= 5) ? 1 : 0;
+
 			// Vérifier que TOUS les jeux de lettres ont un score >= 5
 			const letterGameScores = [
 				stats.games?.lettix?.maxScore ?? 0,
@@ -29,7 +29,7 @@ async function enrichEventDataWithStats(eventData: GameEventData): Promise<GameE
 				stats.games?.panix?.maxScore ?? 0,
 				stats.games?.chainix?.maxScore ?? 0
 			];
-			const letterGameScore = letterGameScores.every(score => score >= 5) ? 1 : 0;
+			const letterGameScore = letterGameScores.every((score) => score >= 5) ? 1 : 0;
 
 			return {
 				...eventData,
@@ -80,7 +80,7 @@ async function checkBadgeAchievements(
 
 	// 5 badges
 	if (badgeCount >= 5 && !currentUnlockedAchievements.includes(5)) {
-		const achievement = ACHIEVEMENTS.find(a => a.id === 5);
+		const achievement = ACHIEVEMENTS.find((a) => a.id === 5);
 		if (achievement) {
 			await unlockAchievementWithNotification(userId, achievement);
 		}
@@ -88,7 +88,7 @@ async function checkBadgeAchievements(
 
 	// 10 badges
 	if (badgeCount >= 10 && !currentUnlockedAchievements.includes(6)) {
-		const achievement = ACHIEVEMENTS.find(a => a.id === 6);
+		const achievement = ACHIEVEMENTS.find((a) => a.id === 6);
 		if (achievement) {
 			await unlockAchievementWithNotification(userId, achievement);
 		}
@@ -96,9 +96,11 @@ async function checkBadgeAchievements(
 
 	// All badges (except 7 and 11)
 	const totalAchievementsNeeded = ACHIEVEMENTS.length - 2;
-	const achievableUnlocked = currentUnlockedAchievements.filter(id => id !== 7 && id !== 11).length;
+	const achievableUnlocked = currentUnlockedAchievements.filter(
+		(id) => id !== 7 && id !== 11
+	).length;
 	if (achievableUnlocked >= totalAchievementsNeeded && !currentUnlockedAchievements.includes(7)) {
-		const achievement = ACHIEVEMENTS.find(a => a.id === 7);
+		const achievement = ACHIEVEMENTS.find((a) => a.id === 7);
 		if (achievement) {
 			await unlockAchievementWithNotification(userId, achievement);
 		}
@@ -118,10 +120,7 @@ export async function checkAndUnlockAchievements(
 	}
 }
 
-async function unlockAchievement(
-	userId: number,
-	achievementId: number
-): Promise<boolean> {
+async function unlockAchievement(userId: number, achievementId: number): Promise<boolean> {
 	try {
 		const response = await fetch('/api/achievements/addAchievements', {
 			method: 'POST',
@@ -150,17 +149,17 @@ async function unlockAchievement(
 
 export async function unlockAchievementWithNotification(
 	userId: number,
-	achievement: typeof ACHIEVEMENTS[0]
+	achievement: (typeof ACHIEVEMENTS)[0]
 ): Promise<boolean> {
 	const success = await unlockAchievement(userId, achievement.id);
-	
+
 	if (success) {
 		// Affiche la notification
 		addAchievementNotification(achievement);
-		
+
 		// Joue le son selon la rareté de l'achievement
 		playMinecraftAchievementSound(achievement.rarity);
 	}
-	
+
 	return success;
 }

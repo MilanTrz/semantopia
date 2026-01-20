@@ -59,9 +59,6 @@
 	}
 
 	async function newGame() {
-		if (idUser) {
-			getStatistics();
-		}
 		resetIndices();
 		isSurrender = false;
 		tabguess = [];
@@ -149,8 +146,8 @@
 
 	const nearTextColor = (score?: number) => {
 		const safe = Math.min(Math.max(score ?? 0, 0), 1);
-		const hue = 50 - safe * 50; // yellow to red
-		const lightness = 65 + safe * 10; // slightly lighter when closer
+		const hue = 50 - safe * 50; 
+		const lightness = 65 + safe * 10; 
 		return `hsl(${hue} 85% ${lightness}%)`;
 	};
 
@@ -180,7 +177,7 @@
 		}
 		triggerConfettiAnimation();
 
-		// Émettre l'événement de victoire
+		
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			gameType: 'pedantix',
@@ -245,13 +242,15 @@
 	}
 	onMount(() => {
 		newGame();
+		if (idUser) {
+			getStatistics();
+		}
 	});
 </script>
 
 <Header />
 <div class="min-h-screen bg-gray-50 p-8">
 	<div class="mx-auto flex max-w-7xl gap-12">
-		<!-- Contenu principal -->
 		<div class="max-w-3xl flex-1">
 			<div class="mb-6">
 				<div class="mb-8">
@@ -483,7 +482,6 @@
 				</button>
 			</div>
 		</div>
-		<!-- Sidebar -->
 		<div class="w-80 shrink-0 space-y-6">
 			<div class="rounded-lg bg-white p-6 shadow-sm">
 				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
@@ -580,8 +578,6 @@
 					</div>
 				</div>
 			{/if}
-
-			<!-- Autres jeux -->
 			<OtherGames exclude="pedantix" />
 		</div>
 	</div>

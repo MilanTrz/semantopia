@@ -102,8 +102,6 @@
 		});
 		const data = await response.json();
 		wordToFind = data.wordToFind;
-
-		// Émettre l'événement de fin de partie
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			gameType: 'lettix',
@@ -131,9 +129,9 @@
 				})
 			});
 			const data = await response.json();
-			totalGamePlayed = data.nbParties;
-			findAnagramsAverage = data.scoreMoyen;
-			findMaxAnagrams = data.scoreMax;
+			totalGamePlayed = data.nbParties ?? 0;
+			findAnagramsAverage = data.scoreMoyen ?? 0;
+			findMaxAnagrams = data.scoreMax ?? 0;
 		}
 	}
 

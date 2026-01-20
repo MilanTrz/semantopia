@@ -202,7 +202,7 @@ export async function POST({ request }: RequestEvent) {
 
 	if (isWinner) {
 		const resolvedUserId = userId ?? state.userId;
-		await endGameSession(resolvedUserId ?? null, 'correlix', nextPath.length - 1, true,null);
+		await endGameSession(resolvedUserId ?? null, 'correlix', nextPath.length - 1, true, null);
 	}
 
 	let feedback: string;
@@ -268,7 +268,6 @@ async function initialiseGame(userId: number | null): Promise<CorrelixState> {
 			similarityFromPrevious: null,
 			deltaToTarget: null
 		};
-
 		if (userId) {
 			await startGameSession(userId, 'correlix');
 		}

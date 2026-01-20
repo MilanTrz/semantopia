@@ -105,9 +105,8 @@ export async function POST({ request }: RequestEvent) {
 		sessions.update(sessionId, nextState);
 		if (isWinner) {
 			const resolvedUserId = userId ?? nextState.userId;
-			await endGameSession(resolvedUserId, 'cemantix', nextState.attemptCounter, true,null);
+			await endGameSession(resolvedUserId, 'cemantix', nextState.attemptCounter, true, null);
 
-			// Émettre l'événement de victoire
 			if (resolvedUserId && typeof window !== 'undefined') {
 				const eventData: GameEventData = {
 					userId: resolvedUserId,
@@ -115,7 +114,6 @@ export async function POST({ request }: RequestEvent) {
 					won: true,
 					attempts: nextState.attemptCounter
 				};
-				// Créer un payload pour le client
 				console.log('Achievement event (cemantix):', eventData);
 			}
 		}

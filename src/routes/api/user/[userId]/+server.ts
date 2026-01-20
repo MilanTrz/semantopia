@@ -7,10 +7,7 @@ export async function GET({ params }: RequestEvent) {
 		const userId = Number(params.userId);
 
 		if (!userId || isNaN(userId)) {
-			return new Response(
-				JSON.stringify({ message: 'ID utilisateur invalide' }),
-				{ status: 400 }
-			);
+			return new Response(JSON.stringify({ message: 'ID utilisateur invalide' }), { status: 400 });
 		}
 
 		const connection = await pool.getConnection();
@@ -21,20 +18,14 @@ export async function GET({ params }: RequestEvent) {
 			);
 
 			if (!Array.isArray(rows) || rows.length === 0) {
-				return new Response(
-					JSON.stringify({ message: 'Utilisateur non trouvé' }),
-					{ status: 404 }
-				);
+				return new Response(JSON.stringify({ message: 'Utilisateur non trouvé' }), { status: 404 });
 			}
 
-            if (rows.length == 0) {
-			return new Response(
-				JSON.stringify({ message: 'Aucun compte trouvé' }),
-				{
+			if (rows.length == 0) {
+				return new Response(JSON.stringify({ message: 'Aucun compte trouvé' }), {
 					status: 200
-				}
-			);
-		}
+				});
+			}
 			return new Response(
 				JSON.stringify({
 					id: rows[0].ID,
@@ -47,9 +38,6 @@ export async function GET({ params }: RequestEvent) {
 		}
 	} catch (error) {
 		console.error('Erreur serveur:', error);
-		return new Response(
-			JSON.stringify({ message: 'Erreur serveur: ' + error }),
-			{ status: 500 }
-		);
+		return new Response(JSON.stringify({ message: 'Erreur serveur: ' + error }), { status: 500 });
 	}
 }

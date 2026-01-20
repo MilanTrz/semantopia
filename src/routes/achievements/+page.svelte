@@ -16,7 +16,7 @@
 
 	async function getInformationAchievements() {
 		if (!idUser) return;
-		
+
 		try {
 			const response = await fetch('/achievements', {
 				method: 'POST',
@@ -28,10 +28,10 @@
 			const data = await response.json();
 			userAllAchievements = data.AllAchievements ?? 0;
 			userMissingAchievements = data.AllMissingAchievements ?? 0;
-			userAllAchievementsUnlock = (data.achievementsIds ?? []);
-			
+			userAllAchievementsUnlock = data.achievementsIds ?? [];
+
 			userAllRareAchievements = ACHIEVEMENTS.filter(
-				ach => ach.rarity >= 1 && userAllAchievementsUnlock.includes(ach.id)
+				(ach) => ach.rarity >= 1 && userAllAchievementsUnlock.includes(ach.id)
 			).length;
 		} catch (error) {
 			console.error('Erreur Server:', error);
@@ -42,18 +42,28 @@
 
 	$: unlockedSet = new Set(userAllAchievementsUnlock);
 
-	function getAchievementStatusClass(achievementId: number, unlockedIds: Set<number>, rarity: number) {
+	function getAchievementStatusClass(
+		achievementId: number,
+		unlockedIds: Set<number>,
+		rarity: number
+	) {
 		const isUnlocked = unlockedIds.has(achievementId);
-		const baseCard = isUnlocked ? 'bg-white shadow-lg hover:shadow-xl' : 'bg-gray-200 shadow hover:shadow-md';
-		
+		const baseCard = isUnlocked
+			? 'bg-white shadow-lg hover:shadow-xl'
+			: 'bg-gray-200 shadow hover:shadow-md';
+
 		const enchantmentClass = isUnlocked && rarity >= 1 ? `enchantment-${rarity}` : '';
-		
+
 		const iconColors = {
 			0: isUnlocked ? 'bg-gradient-to-br from-gray-700 to-gray-800 shadow-md' : 'bg-gray-400',
-			1: isUnlocked ? 'bg-gradient-to-br from-purple-500 via-violet-500 to-purple-600 shadow-lg' : 'bg-gray-400',
-			2: isUnlocked ? 'bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 shadow-lg' : 'bg-gray-400'
+			1: isUnlocked
+				? 'bg-gradient-to-br from-purple-500 via-violet-500 to-purple-600 shadow-lg'
+				: 'bg-gray-400',
+			2: isUnlocked
+				? 'bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 shadow-lg'
+				: 'bg-gray-400'
 		};
-		
+
 		return {
 			card: `${baseCard} ${enchantmentClass} transition-all duration-300 transform hover:scale-105`,
 			title: isUnlocked ? 'text-gray-900 font-bold' : 'text-gray-500',
@@ -139,7 +149,11 @@
 		</div>
 		<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 			{#each ACHIEVEMENTS as achievement (achievement.id)}
-				{@const statusClasses = getAchievementStatusClass(achievement.id, unlockedSet, achievement.rarity)}
+				{@const statusClasses = getAchievementStatusClass(
+					achievement.id,
+					unlockedSet,
+					achievement.rarity
+				)}
 				<div class="rounded-lg {statusClasses.card} p-6 text-center">
 					<div
 						class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full {statusClasses.icon} transition-transform duration-300"
@@ -150,7 +164,9 @@
 						{achievement.title}
 					</p>
 					<p class="mb-3 text-sm {statusClasses.description}">{achievement.description}</p>
-					<p class="achievement-status text-xs {statusClasses.status}">{statusClasses.statusText}</p>
+					<p class="achievement-status text-xs {statusClasses.status}">
+						{statusClasses.statusText}
+					</p>
 				</div>
 			{/each}
 		</div>

@@ -47,6 +47,19 @@ export async function POST({ request }: RequestEvent) {
     `,
 			[userId, gameType]
 		);
+		if (!row_game || row_game.length === 0) {
+		return new Response(
+			JSON.stringify({
+				nbParties: 0,
+				nbEssaiMoyen: 0,
+				tauxReussite: 0,
+				serieActuelle: 0,
+				scoreMoyen: 0,
+				scoreMax: 0
+			}),
+			{ status: 200 }
+		);
+	}
 		const stats = row_game[0];
 		const nbParties = stats.NB_PARTIES_JOUES ?? 0;
 		const nbEssaiMoyen = stats.NB_ESSAI_MOYEN ?? 0;

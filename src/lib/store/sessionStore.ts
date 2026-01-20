@@ -19,11 +19,10 @@ function createSessionStore() {
 		set: (value: sessionData) => {
 			if (isBrowser) sessionStorage.setItem('sessionData', JSON.stringify(value));
 			store.set(value);
-			
 		},
 		clear: () => {
 			if (isBrowser) sessionStorage.removeItem('sessionData');
-			store.set({}as sessionData);
+			store.set({} as sessionData);
 			window.location.reload();
 		},
 		get: () => {

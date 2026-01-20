@@ -14,7 +14,7 @@ const activeSessions: Map<
 	}
 > = new Map();
 
-export async function GET({ url }:RequestEvent) {
+export async function GET({ url }: RequestEvent) {
 	const userId = Number(url.searchParams.get('userId'));
 	try {
 		const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -148,10 +148,10 @@ export async function PUT({ request }: RequestEvent) {
 	}
 	try {
 		const wordIntruder = activeSessions.get(sessionId)?.wordIntruder;
-		if (idUser !== 0){
+		if (idUser !== 0) {
 			await endGameSession(idUser, 'mimix', 0, true, score);
 		}
-		
+
 		return new Response(JSON.stringify({ wordIntruder }), {
 			status: 200
 		});
@@ -239,11 +239,15 @@ function checkWordsValidity(
 	) {
 		return false;
 	}
-	
+
 	return true;
 }
 
-function findValidPair(wordBasic: string, wordIntruder: string, similarWords: string[]): [string, string] | null {
+function findValidPair(
+	wordBasic: string,
+	wordIntruder: string,
+	similarWords: string[]
+): [string, string] | null {
 	for (let i = 0; i < similarWords.length; i++) {
 		for (let j = i + 1; j < similarWords.length; j++) {
 			const w1 = similarWords[i];
