@@ -5,7 +5,7 @@ export interface Achievement {
 	title: string;
 	description: string;
 	icon: string;
-	rarity: number; // 0 = commun, 1 = rare
+	rarity: number; // 0 = commun, 1 = epique, 2 = legendaire
 	condition: (gameData: GameEventData) => boolean;
 }
 
