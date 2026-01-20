@@ -79,7 +79,6 @@
 		const data = await response.json();
 		wordIntruder = data.wordIntruder;
 
-		// Émettre l'événement de fin de partie
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			gameType: 'mimix',
@@ -152,7 +151,7 @@
 							{#each tabShuffleWord as word}
 								<button
 									onclick={() => sendGuess(word)}
-									class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+									class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 									disabled={isGameOver || isGuessing}
 								>
 									<div

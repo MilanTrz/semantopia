@@ -4,7 +4,7 @@
 
 	let notifications: AchievementNotification[] = [];
 
-	achievementNotifications.subscribe(value => {
+	achievementNotifications.subscribe((value) => {
 		notifications = value;
 	});
 
@@ -42,25 +42,33 @@
 	}
 </script>
 
-<div class="fixed top-5 right-5 pointer-events-none z-50 space-y-2 max-w-sm sm:max-w-sm">
+<div class="pointer-events-none fixed top-5 right-5 z-50 max-w-sm space-y-2 sm:max-w-sm">
 	{#each notifications as notification (notification.id)}
 		<div
-			class="bg-gradient-to-br from-gray-800 to-gray-900 {getBorderColor(notification.achievement.rarity)} border-4 rounded-lg p-4 pointer-events-auto shadow-2xl animate-slide-in-right w-full sm:w-96"
+			class="bg-gradient-to-br from-gray-800 to-gray-900 {getBorderColor(
+				notification.achievement.rarity
+			)} animate-slide-in-right pointer-events-auto w-full rounded-lg border-4 p-4 shadow-2xl sm:w-96"
 		>
-			<div class="flex gap-4 items-start">
+			<div class="flex items-start gap-4">
 				<div
-					class="flex-shrink-0 w-12 h-12 flex items-center justify-center {getIconBgGradient(notification.achievement.rarity)} rounded-md shadow-lg"
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center {getIconBgGradient(
+						notification.achievement.rarity
+					)} rounded-md shadow-lg"
 				>
 					<i class="fas {notification.achievement.icon} text-2xl text-white drop-shadow-md"></i>
 				</div>
 				<div class="flex-1">
-					<div class="text-xs font-bold uppercase tracking-wider {getLabelColor(notification.achievement.rarity)} drop-shadow-md">
+					<div
+						class="text-xs font-bold tracking-wider uppercase {getLabelColor(
+							notification.achievement.rarity
+						)} drop-shadow-md"
+					>
 						Achievement Unlocked!
 					</div>
-					<div class="text-base font-bold text-white mt-1 drop-shadow-md">
+					<div class="mt-1 text-base font-bold text-white drop-shadow-md">
 						{notification.achievement.title}
 					</div>
-					<div class="text-xs text-gray-300 mt-1 drop-shadow-md">
+					<div class="mt-1 text-xs text-gray-300 drop-shadow-md">
 						{notification.achievement.description}
 					</div>
 				</div>

@@ -6,7 +6,6 @@
 	import type { GameEventData } from '$lib/models/achievements';
 	import OtherGames from '$lib/OtherGames.svelte';
 
-
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
 	let userGuess: string = '';
@@ -111,7 +110,6 @@
 			})
 		});
 
-		// Émettre l'événement de fin de partie
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			gameType: 'panix',
@@ -314,7 +312,7 @@
 					</h4>
 					<div class="grid grid-cols-2 gap-6">
 						<div class="text-center">
-							<p class="text-4xl font-bold text-purple-600">{totalGamePlayed}</p>
+							<p class="text-4xl font-bold text-purple-600">{totalGamePlayed }</p>
 							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
 						</div>
 						<div class="text-center">

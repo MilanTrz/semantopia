@@ -189,7 +189,6 @@
 			});
 			getStats();
 
-			// Émettre l'événement de victoire
 			const eventData: GameEventData = {
 				userId: userId,
 				gameType: 'motix',

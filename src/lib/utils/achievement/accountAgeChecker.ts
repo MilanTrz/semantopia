@@ -48,9 +48,11 @@ export async function getUserAccountInfo(userId: number): Promise<UserAccountInf
 /**
  * Crée un événement de vérification de date du compte
  */
-export async function createAccountAgeEvent(userId: number): Promise<Partial<GameEventData> | null> {
+export async function createAccountAgeEvent(
+	userId: number
+): Promise<Partial<GameEventData> | null> {
 	const accountInfo = await getUserAccountInfo(userId);
-	
+
 	if (!accountInfo) {
 		return null;
 	}

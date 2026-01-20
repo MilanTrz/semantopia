@@ -9,11 +9,11 @@ export function playMinecraftAchievementSound(rarity: number = 0) {
 			1: '/sounds/a2.mp3',
 			2: '/sounds/a3.mp3'
 		};
-		
+
 		const soundFile = soundMap[rarity] || soundMap[0];
 		const audio = new Audio(soundFile);
 		audio.volume = 0.7;
-		audio.play().catch(error => {
+		audio.play().catch((error) => {
 			console.warn('Impossible de jouer le son:', error);
 		});
 	} catch (error) {

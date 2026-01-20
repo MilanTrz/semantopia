@@ -1,4 +1,4 @@
-import { getTotalGameTypes } from "$lib/gameConfig";
+import { getTotalGameTypes } from '$lib/gameConfig';
 
 export interface Achievement {
 	id: number;
@@ -11,7 +11,16 @@ export interface Achievement {
 
 export interface GameEventData {
 	userId: number;
-	gameType: 'pedantix' | 'cemantix' | 'correlix' | 'motix' | 'lettix' | 'mimix' | 'panix' | 'chainix' | 'none';
+	gameType:
+		| 'pedantix'
+		| 'cemantix'
+		| 'correlix'
+		| 'motix'
+		| 'lettix'
+		| 'mimix'
+		| 'panix'
+		| 'chainix'
+		| 'none';
 	won: boolean;
 	attempts?: number;
 	score?: number;
@@ -20,7 +29,7 @@ export interface GameEventData {
 	totalGameTypes?: number;
 	accountAgeMs?: number;
 	isDevTeamMember?: boolean;
-    konamiCode?: boolean;
+	konamiCode?: boolean;
 	wordGameWins?: number; // Victoires sur pedantix, cemantix, correlix, motix
 	letterGameScore?: number; // Score sur lettix, mimix, panix, chainix
 }
@@ -85,18 +94,20 @@ export const ACHIEVEMENTS: Achievement[] = [
 	{
 		id: 8,
 		title: 'Juniors de Sémantopia',
-		description: 'Compte d\'une semaine',
+		description: "Compte d'une semaine",
 		icon: 'fa-calendar',
 		rarity: 0,
-		condition: (data) => data.accountAgeMs !== undefined && data.accountAgeMs >= 7 * 24 * 60 * 60 * 1000
+		condition: (data) =>
+			data.accountAgeMs !== undefined && data.accountAgeMs >= 7 * 24 * 60 * 60 * 1000
 	},
 	{
 		id: 9,
 		title: 'Vétéran de Sémantopia',
-		description: 'Compte d\'un mois',
+		description: "Compte d'un mois",
 		icon: 'fa-medal',
 		rarity: 0,
-		condition: (data) => data.accountAgeMs !== undefined && data.accountAgeMs >= 30 * 24 * 60 * 60 * 1000
+		condition: (data) =>
+			data.accountAgeMs !== undefined && data.accountAgeMs >= 30 * 24 * 60 * 60 * 1000
 	},
 	{
 		id: 10,
@@ -104,7 +115,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Compte de 3 mois',
 		icon: 'fa-ring',
 		rarity: 1,
-		condition: (data) => data.accountAgeMs !== undefined && data.accountAgeMs >= 90 * 24 * 60 * 60 * 1000
+		condition: (data) =>
+			data.accountAgeMs !== undefined && data.accountAgeMs >= 90 * 24 * 60 * 60 * 1000
 	},
 	{
 		id: 11,
@@ -144,7 +156,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie de pédantix en moins de 25 essais',
 		icon: 'fa-lightbulb',
 		rarity: 0,
-		condition: (data) => data.gameType === 'pedantix' && data.won && data.attempts !== undefined && data.attempts < 25
+		condition: (data) =>
+			data.gameType === 'pedantix' && data.won && data.attempts !== undefined && data.attempts < 25
 	},
 	{
 		id: 16,
@@ -152,7 +165,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie de pédantix en moins de 10 essais',
 		icon: 'fa-eye',
 		rarity: 1,
-		condition: (data) => data.gameType === 'pedantix' && data.won && data.attempts !== undefined && data.attempts < 10
+		condition: (data) =>
+			data.gameType === 'pedantix' && data.won && data.attempts !== undefined && data.attempts < 10
 	},
 	{
 		id: 17,
@@ -168,7 +182,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie de cémantix en moins de 30 essais',
 		icon: 'fa-handshake',
 		rarity: 0,
-		condition: (data) => data.gameType === 'cemantix' && data.won && data.attempts !== undefined && data.attempts < 30
+		condition: (data) =>
+			data.gameType === 'cemantix' && data.won && data.attempts !== undefined && data.attempts < 30
 	},
 	{
 		id: 19,
@@ -176,7 +191,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie de cémantix en moins de 15 essais',
 		icon: 'fa-seedling',
 		rarity: 1,
-		condition: (data) => data.gameType === 'cemantix' && data.won && data.attempts !== undefined && data.attempts < 15
+		condition: (data) =>
+			data.gameType === 'cemantix' && data.won && data.attempts !== undefined && data.attempts < 15
 	},
 	{
 		id: 20,
@@ -184,7 +200,8 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie sur corrélix en moins de 3 étapes',
 		icon: 'fa-key',
 		rarity: 0,
-		condition: (data) => data.gameType === 'correlix' && data.won && data.attempts !== undefined && data.attempts < 3
+		condition: (data) =>
+			data.gameType === 'correlix' && data.won && data.attempts !== undefined && data.attempts < 3
 	},
 	{
 		id: 21,
@@ -192,6 +209,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie sur corrélix en moins de 10 essais',
 		icon: 'fa-heart',
 		rarity: 1,
-		condition: (data) => data.gameType === 'correlix' && data.won && data.attempts !== undefined && data.attempts < 10
+		condition: (data) =>
+			data.gameType === 'correlix' && data.won && data.attempts !== undefined && data.attempts < 10
 	}
 ];

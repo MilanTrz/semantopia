@@ -71,27 +71,29 @@
 		};
 
 		// Écouter les événements de jeu globalement
-		const unsubscribeGameEvent = gameEventEmitter.subscribe(async (eventData: GameEventData | null) => {
-			if (!eventData) return;
+		const unsubscribeGameEvent = gameEventEmitter.subscribe(
+			async (eventData: GameEventData | null) => {
+				if (!eventData) return;
 
-			const userId = $sessionStore?.id ?? 0;
-			if (!userId) return;
+				const userId = $sessionStore?.id ?? 0;
+				if (!userId) return;
 
-			// Éviter les appels trop rapides
-			const now = Date.now();
-			if (now - lastEventTime < 100) return;
-			lastEventTime = now;
+				// Éviter les appels trop rapides
+				const now = Date.now();
+				if (now - lastEventTime < 100) return;
+				lastEventTime = now;
 
-			// Vérifier et déverrouiller les achievements
-			const previousCount = userAchievements.length;
-			await checkAndUnlockAchievements(eventData, userAchievements);
+				// Vérifier et déverrouiller les achievements
+				const previousCount = userAchievements.length;
+				await checkAndUnlockAchievements(eventData, userAchievements);
 
-			// Recharger la liste seulement si un achievement a été déverrouillé
-			const updatedAchievements = await getUserAchievements(userId);
-			if (updatedAchievements.length > previousCount) {
-				userAchievements = updatedAchievements;
+				// Recharger la liste seulement si un achievement a été déverrouillé
+				const updatedAchievements = await getUserAchievements(userId);
+				if (updatedAchievements.length > previousCount) {
+					userAchievements = updatedAchievements;
+				}
 			}
-		});
+		);
 
 		checkAccountAge();
 		initializeAchievements();

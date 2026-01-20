@@ -7,6 +7,20 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { onMount } from 'svelte';
 
+	let repbodyStats: {
+		nbParties: number;
+		nbEssaiMoyen: number;
+		tauxReussite: number;
+		serieActuelle: number;
+	};
+	const session = sessionStore.get();
+	const idUser: number | null = session ? session.id : 0;
+
+	let partiesJouees: number = 0;
+	let tauxReussite: number = 0;
+	let essaisMoyen: number = 0.0;
+	let serieActuelle: number = 0;
+
 	type Step = {
 		word: string;
 		similarityToTarget: number;
@@ -67,9 +81,32 @@
 			activeIndex = path.length - 1;
 		}
 	}
+	async function getStatistics() {
+		try {
+			const responseStats: Response = await fetch('/api/statistiques', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					userId: idUser,
+					gameType: 'correlix'
+				})
+			});
+			repbodyStats = await responseStats.json();
+			partiesJouees = repbodyStats.nbParties ?? 0;
+			tauxReussite = repbodyStats.tauxReussite ?? 0;
+			essaisMoyen = repbodyStats.nbEssaiMoyen ?? 0;
+			serieActuelle = repbodyStats.serieActuelle ?? 0;
+		} catch (error) {
+			console.error('Erreur Server:', error);
+			throw error;
+		}
+	}
 
 	onMount(() => {
 		newGame();
+		if (idUser) {
+			getStatistics();
+		}
 	});
 
 	async function newGame() {
@@ -82,7 +119,7 @@
 		sessionId = '';
 
 		try {
-			const response = await fetch('/game/correlix/', {
+			const response = await fetch('/game/correlix/?userId=' + idUser, {
 				method: 'GET',
 				headers: { 'Content-Type': 'application/json' }
 			});
@@ -176,7 +213,7 @@
 				gameWon = true;
 				triggerConfettiAnimation();
 
-				// Émettre l'événement de victoire
+				
 				const eventData: GameEventData = {
 					userId: $sessionStore?.id ?? 0,
 					gameType: 'correlix',
@@ -634,8 +671,31 @@
 					</li>
 				</ul>
 			</div>
-
-			<!-- Autres jeux -->
+			{#if idUser}
+				<div class="rounded-lg bg-white p-6 shadow-sm">
+					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+						📊 Vos statistiques
+					</h4>
+					<div class="grid grid-cols-2 gap-6">
+						<div class="text-center">
+							<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
+							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
+							<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
+							<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
+						</div>
+						<div class="text-center">
+							<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
+							<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
+						</div>
+					</div>
+				</div>
+			{/if}
 			<OtherGames exclude="correlix" />
 		</div>
 	</div>

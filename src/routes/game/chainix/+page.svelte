@@ -6,7 +6,6 @@
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
 
-
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
 	let userGuess: string = '';
@@ -125,7 +124,6 @@
 			})
 		});
 
-		// Émettre l'événement de fin de partie
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			gameType: 'chainix',

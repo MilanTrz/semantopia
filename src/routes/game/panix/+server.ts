@@ -118,10 +118,10 @@ export async function PUT({ request }: RequestEvent) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
 	}
 	try {
-		if (idUser !== 0){
-				await endGameSession(idUser, 'panix', 0, true, score);
+		if (idUser !== 0) {
+			await endGameSession(idUser, 'panix', 0, true, score);
 		}
-	
+
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		return new Response(JSON.stringify({ message: 'Erreur serveur.' + error }), {
