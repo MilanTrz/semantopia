@@ -3,7 +3,6 @@
 	import { gameEventEmitter } from '$lib/store/gameEventStore';
 	import Header from '$lib/header.svelte';
 	import { ACHIEVEMENTS } from '$lib/models/achievements';
-	import { checkAndUnlockAchievements } from '$lib/utils/achievement/achievementManager';
 	import { onMount } from 'svelte';
 	import './achievements.css';
 
@@ -81,7 +80,6 @@
 
 		unsubscribe = gameEventEmitter.subscribe(async (eventData) => {
 			if (eventData && idUser && userAllAchievementsUnlock.length > 0) {
-				await checkAndUnlockAchievements(eventData, userAllAchievementsUnlock);
 				setTimeout(() => {
 					getInformationAchievements();
 				}, 500);
