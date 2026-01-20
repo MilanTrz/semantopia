@@ -110,7 +110,7 @@ export async function POST({ request }: RequestEvent) {
 			if (resolvedUserId && typeof window !== 'undefined') {
 				const eventData: GameEventData = {
 					userId: resolvedUserId,
-					gameType: 'cemantix',
+					type: 'cemantix',
 					won: true,
 					attempts: nextState.attemptCounter
 				};

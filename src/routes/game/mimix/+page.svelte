@@ -81,7 +81,7 @@
 
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
-			gameType: 'mimix',
+			type: 'mimix',
 			won: nbIntruderFind > 0,
 			score: nbIntruderFind
 		};

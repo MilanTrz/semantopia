@@ -23,8 +23,6 @@ export function calculateAccountAge(createdAtString: string): number {
  */
 export async function getUserAccountInfo(userId: number): Promise<UserAccountInfo | null> {
 	try {
-		// Cette fonction suppose qu'il existe un endpoint pour récupérer les infos du compte
-		// Adapter selon votre API
 		const response = await fetch(`/api/user/${userId}`, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
@@ -50,18 +48,22 @@ export async function getUserAccountInfo(userId: number): Promise<UserAccountInf
  */
 export async function createAccountAgeEvent(
 	userId: number
-): Promise<Partial<GameEventData> | null> {
+): Promise<GameEventData> {
 	const accountInfo = await getUserAccountInfo(userId);
 
 	if (!accountInfo) {
-		return null;
+		return {
+			userId,
+			type: 'none',
+			accountAgeMs: 0
+		};
 	}
 
 	const accountAgeMs = calculateAccountAge(accountInfo.createdAt);
 
 	return {
 		userId,
-		accountAgeMs,
-		won: true // Pour que les conditions de date du compte fonctionnent
-	};
+		type: 'none',
+		accountAgeMs
+		};
 }

@@ -121,7 +121,7 @@
 
 						const eventData: GameEventData = {
 							userId: $sessionStore?.id ?? 0,
-							gameType: 'cemantix',
+							type: 'cemantix',
 							won: true,
 							attempts: nbEssai
 						};

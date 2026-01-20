@@ -191,7 +191,7 @@
 
 			const eventData: GameEventData = {
 				userId: userId,
-				gameType: 'motix',
+				type: 'motix',
 				won: true,
 				attempts: nbEssai
 			};

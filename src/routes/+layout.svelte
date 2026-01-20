@@ -11,6 +11,8 @@
 	import AchievementNotification from '$lib/components/AchievementNotification.svelte';
 
 	let { children } = $props();
+	let session = sessionStore.get();
+
 
 	async function getUserAchievements(userId: number): Promise<number[]> {
 		try {
@@ -33,13 +35,12 @@
 
 		// Initialiser la détection du code Konami
 		const cleanupKonami = initKonamiCodeDetection(() => {
-			const userId = $sessionStore?.id ?? 0;
+			const userId = session?.id ?? 0;
 			if (userId) {
 				console.log('🎮 Code Konami détecté!');
 				const eventData: GameEventData = {
 					userId,
-					gameType: 'none',
-					won: true,
+					type: 'none',
 					konamiCode: true
 				};
 				emitGameEvent(eventData);
@@ -47,13 +48,13 @@
 		});
 
 		const checkAccountAge = async () => {
-			const userId = $sessionStore?.id ?? 0;
+			const userId = session?.id ?? 0;
 			if (userId) {
 				const accountEvent = await createAccountAgeEvent(userId);
 				if (accountEvent) {
 					const eventData: GameEventData = {
 						userId,
-						gameType: 'none',
+						type: 'none',
 						won: true,
 						accountAgeMs: accountEvent.accountAgeMs
 					};
@@ -64,7 +65,7 @@
 
 		// Charger les achievements au démarrage
 		const initializeAchievements = async () => {
-			const userId = $sessionStore?.id ?? 0;
+			const userId = session?.id ?? 0;
 			if (userId) {
 				userAchievements = await getUserAchievements(userId);
 			}
@@ -75,7 +76,7 @@
 			async (eventData: GameEventData | null) => {
 				if (!eventData) return;
 
-				const userId = $sessionStore?.id ?? 0;
+				const userId = session?.id ?? 0;
 				if (!userId) return;
 
 				// Éviter les appels trop rapides

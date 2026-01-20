@@ -180,7 +180,7 @@
 		
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
-			gameType: 'pedantix',
+			type: 'pedantix',
 			won: true,
 			attempts: nbEssai
 		};

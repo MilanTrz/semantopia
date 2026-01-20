@@ -11,7 +11,7 @@ export interface Achievement {
 
 export interface GameEventData {
 	userId: number;
-	gameType:
+	type:
 		| 'pedantix'
 		| 'cemantix'
 		| 'correlix'
@@ -21,7 +21,7 @@ export interface GameEventData {
 		| 'panix'
 		| 'chainix'
 		| 'none';
-	won: boolean;
+	won?: boolean;
 	attempts?: number;
 	score?: number;
 	timeElapsed?: number;
@@ -157,7 +157,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-lightbulb',
 		rarity: 0,
 		condition: (data) =>
-			data.gameType === 'pedantix' && data.won && data.attempts !== undefined && data.attempts < 25
+			data.type === 'pedantix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 25
 	},
 	{
 		id: 16,
@@ -166,7 +166,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-eye',
 		rarity: 1,
 		condition: (data) =>
-			data.gameType === 'pedantix' && data.won && data.attempts !== undefined && data.attempts < 10
+			data.type === 'pedantix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 10
 	},
 	{
 		id: 17,
@@ -174,7 +174,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie de motix en 2 coups',
 		icon: 'fa-bullseye',
 		rarity: 1,
-		condition: (data) => data.gameType === 'motix' && data.won && data.attempts === 2
+		condition: (data) => data.type === 'motix' && (data.won ?? false) && data.attempts === 2
 	},
 	{
 		id: 18,
@@ -183,7 +183,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-handshake',
 		rarity: 0,
 		condition: (data) =>
-			data.gameType === 'cemantix' && data.won && data.attempts !== undefined && data.attempts < 30
+			data.type === 'cemantix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 30
 	},
 	{
 		id: 19,
@@ -192,7 +192,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-seedling',
 		rarity: 1,
 		condition: (data) =>
-			data.gameType === 'cemantix' && data.won && data.attempts !== undefined && data.attempts < 15
+			data.type === 'cemantix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 15
 	},
 	{
 		id: 20,
@@ -201,7 +201,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-key',
 		rarity: 0,
 		condition: (data) =>
-			data.gameType === 'correlix' && data.won && data.attempts !== undefined && data.attempts < 3
+			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 3
 	},
 	{
 		id: 21,
@@ -210,6 +210,6 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-heart',
 		rarity: 1,
 		condition: (data) =>
-			data.gameType === 'correlix' && data.won && data.attempts !== undefined && data.attempts < 10
+			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 10
 	}
 ];

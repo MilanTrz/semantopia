@@ -104,7 +104,7 @@
 		wordToFind = data.wordToFind;
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
-			gameType: 'lettix',
+			type: 'lettix',
 			won: nbAnagramsFind > 0,
 			attempts: nbAnagramsFind
 		};

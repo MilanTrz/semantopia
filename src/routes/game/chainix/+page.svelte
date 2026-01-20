@@ -126,7 +126,7 @@
 
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
-			gameType: 'chainix',
+			type: 'chainix',
 			won: nbWordCreate > 0,
 			score: nbWordCreate
 		};

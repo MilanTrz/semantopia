@@ -112,7 +112,7 @@
 
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
-			gameType: 'panix',
+			type: 'panix',
 			won: nbWordCreate > 0,
 			score: nbWordCreate
 		};

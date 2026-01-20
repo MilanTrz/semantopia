@@ -216,7 +216,7 @@
 				
 				const eventData: GameEventData = {
 					userId: $sessionStore?.id ?? 0,
-					gameType: 'correlix',
+					type: 'correlix',
 					won: true,
 					attempts: attempts
 				};
