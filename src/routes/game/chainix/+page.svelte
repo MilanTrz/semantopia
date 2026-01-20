@@ -1,8 +1,11 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
+	import OtherGames from '$lib/OtherGames.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
-	import OtherGames from '$lib/OtherGames.svelte';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
+
 
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
@@ -121,6 +124,15 @@
 				score: chainWords.length - 1
 			})
 		});
+
+		// Émettre l'événement de fin de partie
+		const eventData: GameEventData = {
+			userId: idUser ?? 0,
+			gameType: 'chainix',
+			won: nbWordCreate > 0,
+			score: nbWordCreate
+		};
+		emitGameEvent(eventData);
 	}
 
 	function triggerTimeAnimation(value: number) {

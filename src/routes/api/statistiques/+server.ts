@@ -77,21 +77,56 @@ export async function GET({ url }: RequestEvent) {
 		const [rows_game] = (await pool.query(
 			`
     SELECT
-    COUNT(ID) AS NB_PARTIES_JOUES,
-    SUM(WIN) / COUNT(ID) AS TAUX_REUSSITE
+      COUNT(ID) AS NB_PARTIES_JOUES,
+      SUM(WIN) / NULLIF(COUNT(ID), 0) AS TAUX_REUSSITE
     FROM GAME_SESSION
-    WHERE USER_ID = ? 	
-    ORDER BY USER_ID, TYPE;
+    WHERE USER_ID = ?;
     `,
 			[userId]
 		)) as [Array<{ NB_PARTIES_JOUES: number; TAUX_REUSSITE: number }>, unknown];
-		const nbParties = rows_game.reduce((acc, r) => acc + r.NB_PARTIES_JOUES, 0);
-		const tauxReussite =
-			rows_game.map((r) => Number(r.TAUX_REUSSITE)).reduce((a, b) => a + b, 0) / rows_game.length;
+
+		const [rows_gameTypes] = (await pool.query(
+			`SELECT COUNT(DISTINCT TYPE) AS NB_GAME_TYPES FROM GAME_SESSION WHERE USER_ID = ?;`,
+			[userId]
+		)) as [Array<{ NB_GAME_TYPES: number }>, unknown];
+
+		// Récupérer les statistiques par jeu
+		const [rows_byGame] = (await pool.query(
+			`
+    SELECT
+      TYPE,
+      COUNT(ID) AS NB_PARTIES,
+      SUM(WIN) AS WINS,
+      MAX(NOMBRE_ESSAI) AS MAX_SCORE
+    FROM GAME_SESSION
+    WHERE USER_ID = ?
+    GROUP BY TYPE;
+    `,
+			[userId]
+		)) as [Array<{ TYPE: string; NB_PARTIES: number; WINS: number; MAX_SCORE: number }>, unknown];
+
+		const nbParties = rows_game[0]?.NB_PARTIES_JOUES ?? 0;
+		const tauxReussiteRaw = rows_game[0]?.TAUX_REUSSITE ?? 0;
+		const tauxReussite = Number.isFinite(tauxReussiteRaw) ? Number(tauxReussiteRaw) : 0;
+		const totalGameTypes = rows_gameTypes[0]?.NB_GAME_TYPES ?? 0;
+
+		// Construire l'objet games par type
+		const games: Record<string, { parties?: number; wins?: number; maxScore?: number }> = {};
+		rows_byGame.forEach((row) => {
+			const gameType = row.TYPE.toLowerCase();
+			games[gameType] = {
+				parties: row.NB_PARTIES,
+				wins: row.WINS ?? 0,
+				maxScore: row.MAX_SCORE ?? 0
+			};
+		});
+
 		return new Response(
 			JSON.stringify({
 				nbParties,
-				tauxReussite
+				tauxReussite,
+				totalGameTypes,
+				games
 			}),
 			{ status: 201 }
 		);

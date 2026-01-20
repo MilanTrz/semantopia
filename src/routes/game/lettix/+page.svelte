@@ -2,6 +2,8 @@
 	import Header from '$lib/header.svelte';
 	import { onMount } from 'svelte';
 	import { sessionStore } from '$lib/store/sessionStore';
+	import { emitGameEvent } from '$lib/store/gameEventStore';
+	import type { GameEventData } from '$lib/models/achievements';
 	import OtherGames from '$lib/OtherGames.svelte';
 	let nbAnagramsFind: number = 0;
 	let isLoading: boolean = true;
@@ -100,6 +102,15 @@
 		});
 		const data = await response.json();
 		wordToFind = data.wordToFind;
+
+		// Émettre l'événement de fin de partie
+		const eventData: GameEventData = {
+			userId: idUser ?? 0,
+			gameType: 'lettix',
+			won: nbAnagramsFind > 0,
+			attempts: nbAnagramsFind
+		};
+		emitGameEvent(eventData);
 	}
 
 	function triggerTimeAnimation(value: number) {
