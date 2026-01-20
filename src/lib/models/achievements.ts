@@ -197,19 +197,19 @@ export const ACHIEVEMENTS: Achievement[] = [
 	{
 		id: 20,
 		title: 'La clé du succès',
-		description: 'Gagner une partie sur corrélix en moins de 3 étapes',
+		description: 'Gagner une partie sur corrélix en moins de 10 étapes',
 		icon: 'fa-key',
 		rarity: 0,
 		condition: (data) =>
-			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 3
+			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 10
 	},
 	{
 		id: 21,
 		title: 'Sérieux dévouement',
-		description: 'Gagner une partie sur corrélix en moins de 10 essais',
+		description: 'Gagner une partie sur corrélix en 3 étapes',
 		icon: 'fa-heart',
 		rarity: 1,
 		condition: (data) =>
-			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts < 10
+			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts == 3
 	}
 ];

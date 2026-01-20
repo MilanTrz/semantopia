@@ -472,7 +472,7 @@
 					<p class="mt-2 text-3xl font-bold text-amber-600">{targetWord || '...'}</p>
 				</div>
 				<div class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm">
-					<p class="text-sm tracking-wide text-gray-500 uppercase">Essais</p>
+					<p class="text-sm tracking-wide text-gray-500 uppercase">Étapes</p>
 					<p class="mt-2 text-3xl font-bold text-gray-800">{attempts}</p>
 					<p class="text-xs text-gray-500">Lien minimal {minSimilarity}%</p>
 				</div>
@@ -687,7 +687,7 @@
 						</div>
 						<div class="text-center">
 							<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
-							<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
+							<p class="mt-1 text-sm text-gray-600">Étapes moyennes</p>
 						</div>
 						<div class="text-center">
 							<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
