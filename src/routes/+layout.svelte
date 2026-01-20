@@ -31,6 +31,8 @@
 
 	onMount(() => {
 		let userAchievements: number[] = [];
+		let achievementsLoaded = false;
+		let achievementsInitPromise: Promise<void> | null = null;
 		let lastEventTime = 0;
 
 		// Initialiser la détection du code Konami
@@ -68,7 +70,18 @@
 			const userId = session?.id ?? 0;
 			if (userId) {
 				userAchievements = await getUserAchievements(userId);
+				achievementsLoaded = true;
 			}
+		};
+
+		const ensureAchievementsLoaded = async () => {
+			if (achievementsLoaded) return;
+			if (!achievementsInitPromise) {
+				achievementsInitPromise = initializeAchievements().finally(() => {
+					achievementsInitPromise = null;
+				});
+			}
+			await achievementsInitPromise;
 		};
 
 		// Écouter les événements de jeu globalement
@@ -78,6 +91,8 @@
 
 				const userId = session?.id ?? 0;
 				if (!userId) return;
+
+				await ensureAchievementsLoaded();
 
 				// Éviter les appels trop rapides
 				const now = Date.now();
