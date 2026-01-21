@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
 	import OtherGames from '$lib/OtherGames.svelte';
-	import { triggerConfettiAnimation } from '$lib';
+	import { triggerConfettiAnimation, GameInput, GameActions, GameStats, CemantixRules, LoadingState, GameMessage } from '$lib';
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
 	import { sessionStore } from '$lib/store/sessionStore';
@@ -227,42 +227,32 @@
 			</div>
 
 			{#if message}
-				<div
-					class="mb-6 rounded-lg border-2 {gameWon
-						? 'border-green-400 bg-green-50'
-						: 'border-blue-400 bg-blue-50'} p-4"
-				>
-					<p class="font-medium {gameWon ? 'text-green-800' : 'text-blue-800'}">{message}</p>
-				</div>
-			{/if}
+			<GameMessage
+				type={gameWon ? 'victory' : 'info'}
+				message={message}
+			/>
+		{/if}
 
-			{#if !gameWon}
-				<div class="mb-8">
-					<form on:submit|preventDefault={sendGuess} class="flex gap-3">
-						<input
-							type="text"
-							bind:value={userGuess}
-							placeholder="Entrez votre proposition..."
-							class="flex-1 rounded-lg border-2 border-gray-300 px-6 py-4 text-lg text-gray-900 placeholder-gray-400 transition focus:border-pink-500 focus:ring-4 focus:ring-pink-200 focus:outline-none"
-							disabled={gameWon || gameSurrendered || wordLength === 0}
-						/>
-						<button
-							type="submit"
-							class="rounded-lg bg-gradient-to-r from-pink-600 via-rose-500 to-orange-400 px-8 py-4 font-bold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-							disabled={gameWon || gameSurrendered || wordLength === 0}
-						>
-							Valider
-						</button>
-					</form>
-				</div>
-			{/if}
+		{#if !gameWon}
+			<div class="mb-8">
+				<GameInput
+					bind:value={userGuess}
+					placeholder="Entrez votre proposition..."
+					disabled={gameWon || gameSurrendered || wordLength === 0}
+					gradient="from-pink-600 via-rose-500 to-orange-400"
+					buttonText="Valider"
+					onsubmit={sendGuess}
+					oninput={(value) => (userGuess = value)}
+				/>
+			</div>
+		{/if}
 
-			{#if guesses.length > 0}
-				<div class="mb-8 rounded-xl bg-white p-6 shadow-sm">
-					<h2 class="mb-4 text-2xl font-bold text-gray-800">
-						Vos propositions ({guesses.length})
-					</h2>
-					<div class="space-y-2">
+		{#if guesses.length > 0}
+			<div class="mb-8 rounded-xl bg-white p-6 shadow-sm">
+				<h2 class="mb-4 text-2xl font-bold text-gray-800">
+					Vos propositions ({guesses.length})
+				</h2>
+				<div class="space-y-2">
 						{#each guesses as guess, index}
 							{#if typeof guess.similarity === 'number'}
 								<div
@@ -303,7 +293,7 @@
 			{/if}
 
 			<div class="flex gap-4">
-				{#if !gameWon && !gameSurrendered}
+				{#if !gameWon}
 					<button
 						on:click={surrenderGame}
 						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
@@ -311,17 +301,13 @@
 						🏳️ Abandonner
 					</button>
 				{:else}
-					<button
-						on:click={newGame}
-						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-					>
-						🔄 Nouvelle partie
-					</button>
-					<button
-						class="flex-1 rounded-lg bg-gradient-to-r from-pink-600 via-rose-500 to-orange-400 px-6 py-4 font-bold text-white transition hover:shadow-lg"
-					>
-						📤 Partager résultat
-					</button>
+					<GameActions
+						isGameOver={gameWon || gameSurrendered}
+						gradient="from-pink-600 via-rose-500 to-orange-400"
+						onNewGame={newGame}
+						onSurrender={surrenderGame}
+						surrenderDisabled={true}
+					/>
 				{/if}
 			</div>
 		</div>
@@ -329,87 +315,16 @@
 		<!-- Sidebar droite -->
 		<div class="w-80 shrink-0 space-y-6">
 			<!-- Règles -->
-			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
-				<ol class="space-y-3 text-sm text-gray-700">
-					<li class="flex gap-3">
-						<span class="font-bold text-pink-600">1.</span>
-						<p>Trouvez le mot mystère en proposant des mots un par un</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-pink-600">2.</span>
-						<p>Chaque proposition reçoit un score de proximité sémantique</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-pink-600">3.</span>
-						<p>Le pourcentage peut être négatif si les mots sont très éloignés sémantiquement</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-pink-600">4.</span>
-						<p>Plus votre mot est proche sémantiquement, plus le score est élevé</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-pink-600">5.</span>
-						<p>Vos propositions sont triées par proximité pour vous guider</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-pink-600">6.</span>
-						<p>Continuez jusqu'à trouver le mot exact !</p>
-					</li>
-				</ol>
-
-				<div class="mt-6 grid grid-cols-2 gap-2 text-center text-xs">
-					<div class="rounded-lg border-2 border-blue-400 bg-blue-100 p-2">
-						<p class="font-bold text-blue-800">🧊 Négatif</p>
-						<p class="text-blue-600">Glacial</p>
-					</div>
-					<div class="rounded-lg border-2 border-red-400 bg-red-100 p-2">
-						<p class="font-bold text-red-800">❄️ 0-10°C</p>
-						<p class="text-red-600">Très froid</p>
-					</div>
-					<div class="rounded-lg border-2 border-orange-400 bg-orange-100 p-2">
-						<p class="font-bold text-orange-800">😐 10-20°C</p>
-						<p class="text-orange-600">Froid</p>
-					</div>
-					<div class="rounded-lg border-2 border-yellow-400 bg-yellow-100 p-2">
-						<p class="font-bold text-yellow-800">🤔 20-35°C</p>
-						<p class="text-yellow-600">Tiède</p>
-					</div>
-					<div class="rounded-lg border-2 border-lime-400 bg-lime-100 p-2">
-						<p class="font-bold text-lime-800">😊 35-50°C</p>
-						<p class="text-lime-600">Chaud</p>
-					</div>
-					<div class="rounded-lg border-2 border-green-400 bg-green-100 p-2">
-						<p class="font-bold text-green-800">🔥 50°C+</p>
-						<p class="text-green-600">Brûlant !</p>
-					</div>
-				</div>
-			</div>
-
-		{#if idUser}
-				<div class="rounded-lg bg-white p-6 shadow-sm">
-					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-						📊 Vos statistiques
-					</h4>
-					<div class="grid grid-cols-2 gap-6">
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
-							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
-							<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
-							<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
-							<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
-						</div>
-					</div>
-				</div>
+			<CemantixRules />
+			{#if idUser}
+				<GameStats
+					stats={[
+						{ label: 'Parties jouées', value: partiesJouees, color: 'text-blue-700' },
+						{ label: 'Taux de réussite', value: `${Math.round(tauxReussite * 100)}%`, color: 'text-green-600' },
+						{ label: 'Essais moyen', value: `${Math.round(essaisMoyen * 100) / 100}`, color: 'text-cyan-600' },
+						{ label: 'Série actuelle', value: serieActuelle, color: 'text-blue-500' }
+					]}
+				/>
 			{/if}
 			<OtherGames exclude="cemantix" />
 		</div>
