@@ -94,7 +94,7 @@
 					placeholder="Votre pseudo"
 					class="w-full rounded-lg border border-gray-300 px-4 py-3 transition outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500"
 					minlength="4"
-					maxlength="12"
+					maxlength="20"
 				/>
 			</div>
 
@@ -123,7 +123,7 @@
 						placeholder="••••••••"
 						class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 transition outline-none focus:border-transparent focus:ring-2 focus:ring-indigo-500"
 						minlength="4"
-						maxlength="30"
+						maxlength="35"
 					/>
 				</div>
 			</div>

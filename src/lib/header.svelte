@@ -27,7 +27,6 @@
 	<div>
 		<ul class="flex items-center gap-6">
 			{#if pseudo}
-				<li><a href="/profil" class="text-gray-600 transition hover:text-purple-600">Profil</a></li>
 				<li>
 					<a href="/achievements" class="text-gray-600 transition hover:text-purple-600">Badges</a>
 				</li>
@@ -36,7 +35,7 @@
 						>Classement</a
 					>
 				</li>
-				<li><p>{pseudo}</p></li>
+				<li><a href="/profil"><p>{pseudo}</p></a></li>
 				<img src={avatar} alt="photo_profil" class="rounded-lg" width="40" height="40" />
 				<button
 					class="rounded-lg bg-purple-600 px-4 py-2 text-white transition hover:bg-purple-700"

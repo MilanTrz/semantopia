@@ -35,10 +35,21 @@ export async function GET({ url }: RequestEvent) {
 	}
 }
 export async function POST({ request }: RequestEvent) {
-	const { userGuess, sessionId } = await request.json();
+	const { userGuess, sessionId, action } = await request.json();
 	const session = activeSessions.get(sessionId);
 	if (!session) {
 		return new Response(JSON.stringify({ message: 'Session introuvable.' }), { status: 400 });
+	}
+	if (action === 'skipLetters') {
+		const newWord: string = await randomWord();
+		const newWordShuffle: string = shuffleWord(newWord);
+		activeSessions.set(sessionId, {
+			wordToFind: newWord,
+			shuffleWordToFind: newWordShuffle
+		});
+		return new Response(JSON.stringify({ message: 'Anagrammme Changer', newWordShuffle }), {
+			status: 200
+		});
 	}
 	const { wordToFind } = session;
 	let isWin: boolean = false;
