@@ -200,31 +200,23 @@
 				</div>
 			{/if}
 			<div class="row relative mb-6">
-				<form on:submit|preventDefault={sendGuess} class="row flex">
+				<form on:submit|preventDefault={sendGuess} class="row flex gap-3">
 					<input
 						id="guess"
 						type="text"
 						bind:value={userGuess}
 						placeholder="Tapez votre proposition..."
-						class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+						class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 focus:outline-none"
 						disabled={isSurrender}
 					/>
 					<button
-						class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						class="rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-300 px-6 py-3 font-medium text-white transition hover:shadow-lg"
 						type="submit"
 						disabled={isSurrender}
 					>
 						Envoyer
 					</button>
 				</form>
-				<button
-					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					type="submit"
-					disabled={!disabledButton}
-					on:click={skipLetters}
-				>
-					Changer de lettres
-				</button>
 			</div>
 			<div class="mb-6 rounded-lg p-6">
 				<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800"></p>
@@ -251,22 +243,37 @@
 			</div>
 
 			<div class="flex gap-4">
-				<button
-					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					disabled={disabledButton}
-					on:click={newGame}
-				>
-					🔄 Nouvelle partie
-				</button>
-				<button
-					class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
-					disabled={disabledButton}
-				>
-					📤 Partager résultat
-				</button>
+				{#if !isGameOver}
+					<button
+						class="rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-300 px-6 py-3 font-medium text-white transition hover:shadow-lg"
+						disabled={!disabledButton}
+						on:click={skipLetters}
+					>
+						🔄 Changer de lettres
+					</button>
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						on:click={() => {isSurrender = true; gameOver();}}
+						disabled={disabledButton}
+					>
+						🏳️ Abandonner
+					</button>
+				{:else}
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						on:click={newGame}
+					>
+						🔄 Nouvelle partie
+					</button>
+					<button
+						class="flex-1 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-300 px-6 py-3 font-medium text-white transition hover:shadow-lg"
+					>
+						📤 Partager résultat
+					</button>
+				{/if}
 			</div>
 		</div>
-		<div class="w-80 space-y-6">
+		<div class="w-80 shrink-0 space-y-6">
 			<div class="rounded-lg bg-white p-6 shadow-sm">
 				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
 				<ul class="space-y-3 text-sm text-gray-600">

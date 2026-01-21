@@ -317,17 +317,17 @@
 			{/if}
 
 			<div class="row relative mb-6">
-				<form on:submit|preventDefault={sendGuess} class="row flex">
+				<form on:submit|preventDefault={sendGuess} class="row flex gap-3">
 					<input
 						id="guess"
 						type="text"
 						bind:value={userGuess}
 						placeholder="Tapez votre proposition..."
-						class="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
+						class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
 						disabled={isVictory || isSurrender}
 					/>
 					<button
-						class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						class="rounded-lg bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-400 px-6 py-3 font-medium text-white transition hover:shadow-lg"
 						type="submit"
 						disabled={isVictory || isSurrender}
 					>
@@ -472,26 +472,26 @@
 			</div>
 
 			<div class="flex gap-4">
-				{#if isSurrender || isVictory}
+				{#if !isSurrender && !isVictory}
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						on:click={surrenderGame}
+					>
+						🏳️ Abandonner
+					</button>
+				{:else}
 					<button
 						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
 						on:click={newGame}
 					>
 						🔄 Nouvelle partie
 					</button>
-				{:else}
 					<button
-						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-						on:click={surrenderGame}
+						class="flex-1 rounded-lg bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-400 px-6 py-3 font-medium text-white transition hover:shadow-lg"
 					>
-						🔄 Abandonner la Partie
+						📤 Partager résultat
 					</button>
 				{/if}
-				<button
-					class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
-				>
-					📤 Partager résultat
-				</button>
 			</div>
 		</div>
 		<div class="w-80 shrink-0 space-y-6">

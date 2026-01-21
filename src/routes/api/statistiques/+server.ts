@@ -1,15 +1,5 @@
 import pool from '$lib/server/db';
 import type { RequestEvent } from '@sveltejs/kit';
-import type { RowDataPacket } from 'mysql2';
-
-interface GameStats extends RowDataPacket {
-	USER_ID: number;
-	TYPE: string;
-	NB_PARTIES_JOUES: number;
-	NB_ESSAI_MOYEN: number;
-	TAUX_REUSSITE: number;
-	SERIE_ACTUELLE?: number;
-}
 
 export async function POST({ request }: RequestEvent) {
 	const { userId, gameType } = await request.json();

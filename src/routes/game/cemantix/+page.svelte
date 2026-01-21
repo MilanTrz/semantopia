@@ -16,6 +16,7 @@
 	}[] = [];
 	let nbEssai = 0;
 	let gameWon = false;
+	let gameSurrendered = false;
 	let targetWord = '';
 	let wordLength = 0;
 	let message = '';
@@ -41,6 +42,7 @@
 		nbEssai = 0;
 		guesses = [];
 		gameWon = false;
+		gameSurrendered = false;
 		targetWord = '';
 		userGuess = '';
 		message = '';
@@ -64,6 +66,13 @@
 			message = 'Erreur lors de la création de la partie.';
 			console.error(error);
 		}
+	}
+
+	async function surrenderGame() {
+		gameSurrendered = true;
+		gameWon = false;
+		// Révéler la réponse
+		message = `Partie abandonnée. Le mot mystère était "${targetWord || 'inconnu'}".`;
 	}
 
 	async function sendGuess() {
@@ -235,12 +244,12 @@
 							bind:value={userGuess}
 							placeholder="Entrez votre proposition..."
 							class="flex-1 rounded-lg border-2 border-gray-300 px-6 py-4 text-lg text-gray-900 placeholder-gray-400 transition focus:border-pink-500 focus:ring-4 focus:ring-pink-200 focus:outline-none"
-							disabled={gameWon || wordLength === 0}
+							disabled={gameWon || gameSurrendered || wordLength === 0}
 						/>
 						<button
 							type="submit"
 							class="rounded-lg bg-gradient-to-r from-pink-600 via-rose-500 to-orange-400 px-8 py-4 font-bold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-							disabled={gameWon || wordLength === 0}
+							disabled={gameWon || gameSurrendered || wordLength === 0}
 						>
 							Valider
 						</button>
@@ -294,15 +303,22 @@
 			{/if}
 
 			<div class="flex gap-4">
-				<button
-					on:click={newGame}
-					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-				>
-					🔄 Nouvelle partie
-				</button>
-				{#if gameWon}
+				{#if !gameWon && !gameSurrendered}
 					<button
-						class="flex-1 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 font-bold text-white transition hover:from-green-700 hover:to-emerald-700"
+						on:click={surrenderGame}
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+					>
+						🏳️ Abandonner
+					</button>
+				{:else}
+					<button
+						on:click={newGame}
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-4 font-bold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
+					>
+						🔄 Nouvelle partie
+					</button>
+					<button
+						class="flex-1 rounded-lg bg-gradient-to-r from-pink-600 via-rose-500 to-orange-400 px-6 py-4 font-bold text-white transition hover:shadow-lg"
 					>
 						📤 Partager résultat
 					</button>

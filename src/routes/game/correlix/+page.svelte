@@ -66,6 +66,7 @@
 	let activeIndex = 0;
 	let canSubmit = false;
 	let sessionId = '';
+	let gameSurrendered = false;
 
 	const GRAPH_TOP = 10;
 	const GRAPH_BOTTOM = 50;
@@ -113,6 +114,7 @@
 		initializing = true;
 		isLoading = false;
 		gameWon = false;
+		gameSurrendered = false;
 		errorType = null;
 		userWord = '';
 		message = '';
@@ -147,6 +149,12 @@
 		}
 	}
 
+	async function surrenderGame() {
+		gameSurrendered = true;
+		gameWon = false;
+		message = `Partie abandonnée. Le chemin était: ${path.map((p) => p.word).join(' → ')}`;
+	}
+
 	async function sendGuess() {
 		const trimmedGuess = userWord.trim();
 		if (!trimmedGuess) {
@@ -158,7 +166,7 @@
 			return;
 		}
 
-		if (gameWon || isLoading || initializing || !path.length) {
+		if (gameWon || isLoading || initializing || !path.length || gameSurrendered) {
 			return;
 		}
 
@@ -493,14 +501,14 @@
 							bind:value={userWord}
 							placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
 							autocomplete="off"
-							disabled={gameWon || isLoading || initializing}
+							disabled={gameWon || gameSurrendered || isLoading || initializing}
 						/>
 						<button
 							type="submit"
 							class={`rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:shadow-lg ${
-								canSubmit ? '' : 'cursor-not-allowed opacity-60'
+								canSubmit && !gameSurrendered ? '' : 'cursor-not-allowed opacity-60'
 							}`}
-							disabled={!canSubmit}
+							disabled={!canSubmit || gameSurrendered}
 						>
 							{isLoading ? 'Vérification...' : 'Valider'}
 						</button>
@@ -632,18 +640,26 @@
 			{/if}
 
 			<div class="flex flex-col gap-4 md:flex-row">
-				<button
-					on:click={newGame}
-					class="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
-				>
-					🔄 Nouvelle partie
-				</button>
-				<button
-					class="flex-1 rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-6 py-4 font-semibold text-white shadow-sm transition hover:shadow-lg"
-					disabled={!gameWon}
-				>
-					📤 Partager le pont
-				</button>
+				{#if !gameWon && !gameSurrendered}
+					<button
+						on:click={surrenderGame}
+						class="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+					>
+						🏳️ Abandonner
+					</button>
+				{:else}
+					<button
+						on:click={newGame}
+						class="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+					>
+						🔄 Nouvelle partie
+					</button>
+					<button
+						class="flex-1 rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-6 py-4 font-semibold text-white shadow-sm transition hover:shadow-lg"
+					>
+						📤 Partager le pont
+					</button>
+				{/if}
 			</div>
 		</div>
 

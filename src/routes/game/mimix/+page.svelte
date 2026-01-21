@@ -150,7 +150,7 @@
 							{#each tabShuffleWord as word}
 								<button
 									onclick={() => sendGuess(word)}
-									class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+									class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-rose-700 via-red-500 to-orange-300 p-6 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
 									disabled={isGameOver || isGuessing}
 								>
 									<div
@@ -165,19 +165,27 @@
 			</div>
 
 			<div class="flex gap-4">
-				<button
-					class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-					disabled={disabledButton}
-					onclick={() => newGame()}
-				>
-					🔄 Nouvelle partie
-				</button>
-				<button
-					disabled={disabledButton}
-					class="flex-1 rounded-lg bg-purple-600 px-6 py-3 font-medium text-white transition hover:bg-purple-700"
-				>
-					📤 Partager résultat
-				</button>
+				{#if !isGameOver}
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						onclick={() => {isGameOver = true; gameOver();}}
+						disabled={isGameOver}
+					>
+						🏳️ Abandonner
+					</button>
+				{:else}
+					<button
+						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+						onclick={() => newGame()}
+					>
+						🔄 Nouvelle partie
+					</button>
+					<button
+						class="flex-1 rounded-lg bg-gradient-to-r from-rose-700 via-red-500 to-orange-300 px-6 py-3 font-medium text-white transition hover:shadow-lg"
+					>
+						📤 Partager résultat
+					</button>
+				{/if}
 			</div>
 		</div>
 
