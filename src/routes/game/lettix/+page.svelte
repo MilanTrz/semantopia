@@ -218,29 +218,24 @@
 					</button>
 				</form>
 			</div>
-			<div class="mb-6 rounded-lg p-6">
-				<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800"></p>
-			</div>
 
-			<div>
-				{#if tabAnagramsFind.length > 0}
-					<div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
-						<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-							✅ Anagrammes trouvés ({tabAnagramsFind.length})
-						</h4>
-						<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-							{#each tabAnagramsFind as word, index}
-								<div
-									class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2"
-								>
-									<span class="text-sm font-medium text-green-700">#{index + 1}</span>
-									<span class="font-semibold text-green-900">{word}</span>
-								</div>
-							{/each}
-						</div>
+			{#if tabAnagramsFind.length > 0}
+				<div class="mb-6 rounded-lg bg-white p-6 shadow-sm">
+					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
+						✅ Anagrammes trouvés ({tabAnagramsFind.length})
+					</h4>
+					<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+						{#each tabAnagramsFind as word, index}
+							<div
+								class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2"
+							>
+								<span class="text-sm font-medium text-green-700">#{index + 1}</span>
+								<span class="font-semibold text-green-900">{word}</span>
+							</div>
+						{/each}
 					</div>
-				{/if}
-			</div>
+				</div>
+			{/if}
 
 			<div class="flex gap-4">
 				{#if !isGameOver}
