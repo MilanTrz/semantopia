@@ -458,18 +458,20 @@
 					{/each}
 				</p>
 			</div>
-			<div
-				class="mb-6 rounded-lg border-2 border-blue-400 bg-gradient-to-br from-purple-50 to-pink-50 p-6"
-			>
-				<div class="grid grid-cols-2 gap-x-8 gap-y-2">
-					{#each tabguess as guess, index}
-						<li class="text-gray-700">
-							<span class="font-medium">{index + 1}.</span>
-							{guess}
-						</li>
-					{/each}
+			{#if tabguess.length > 0}
+				<div
+					class="mb-6 rounded-lg border-2 border-blue-400 bg-gradient-to-br from-purple-50 to-pink-50 p-6"
+				>
+					<div class="grid grid-cols-2 gap-x-8 gap-y-2">
+						{#each tabguess as guess, index}
+							<li class="text-gray-700">
+								<span class="font-medium">{index + 1}.</span>
+								{guess}
+							</li>
+						{/each}
+					</div>
 				</div>
-			</div>
+			{/if}
 
 			<div class="flex gap-4">
 				{#if !isSurrender && !isVictory}
