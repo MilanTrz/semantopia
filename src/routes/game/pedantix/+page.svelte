@@ -2,7 +2,7 @@
 	import Header from '$lib/header.svelte';
 	import OtherGames from '$lib/OtherGames.svelte';
 	import { onMount } from 'svelte';
-	import { triggerConfettiAnimation } from '$lib';
+	import { triggerConfettiAnimation, GameInput, GameActions, GameStats, GameRules, LoadingState, GameMessage } from '$lib';
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
@@ -317,23 +317,15 @@
 			{/if}
 
 			<div class="row relative mb-6">
-				<form on:submit|preventDefault={sendGuess} class="row flex gap-3">
-					<input
-						id="guess"
-						type="text"
-						bind:value={userGuess}
-						placeholder="Tapez votre proposition..."
-						class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-						disabled={isVictory || isSurrender}
-					/>
-					<button
-						class="rounded-lg bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-400 px-6 py-3 font-medium text-white transition hover:shadow-lg"
-						type="submit"
-						disabled={isVictory || isSurrender}
-					>
-						Envoyer
-					</button>
-				</form>
+				<GameInput
+					bind:value={userGuess}
+					placeholder="Tapez votre proposition..."
+					disabled={isVictory || isSurrender}
+					gradient="from-blue-700 via-blue-500 to-cyan-400"
+					buttonText="Envoyer"
+					onsubmit={sendGuess}
+					oninput={(value) => (userGuess = value)}
+				/>
 			</div>
 			<div class="mb-6 rounded-lg p-6">
 				<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800">
@@ -473,51 +465,24 @@
 				</div>
 			{/if}
 
-			<div class="flex gap-4">
-				{#if !isSurrender && !isVictory}
-					<button
-						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-						on:click={surrenderGame}
-					>
-						🏳️ Abandonner
-					</button>
-				{:else}
-					<button
-						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-						on:click={newGame}
-					>
-						🔄 Nouvelle partie
-					</button>
-					<button
-						class="flex-1 rounded-lg bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-400 px-6 py-3 font-medium text-white transition hover:shadow-lg"
-					>
-						📤 Partager résultat
-					</button>
-				{/if}
-			</div>
+			<GameActions
+				isGameOver={isSurrender || isVictory}
+				gradient="from-blue-700 via-blue-500 to-cyan-400"
+				onNewGame={newGame}
+				onSurrender={surrenderGame}
+				surrenderDisabled={false}
+			/>
 		</div>
 		<div class="w-80 shrink-0 space-y-6">
-			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
-				<ul class="space-y-3 text-sm text-gray-600">
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Trouvez le mot mystère en vous aidant de la proximité sémantique</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Plus votre proposition est proche du mot, plus le pourcentage est élevé</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Chaque bonne proposition révèle des mots dans l'extrait Wikipedia</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Utilisez les indices pour vous rapprocher du mot cible</p>
-					</li>
-				</ul>
-			</div>
+			<GameRules
+				rules={[
+					'Trouvez le mot mystère en vous aidant de la proximité sémantique',
+					'Plus votre proposition est proche du mot, plus le pourcentage est élevé',
+					'Chaque bonne proposition révèle des mots dans l\'extrait Wikipedia',
+					'Utilisez les indices pour vous rapprocher du mot cible'
+				]}
+			/>
+
 			<div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-6">
 				<div class="w-full max-w-md">
 					<div class="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
@@ -568,29 +533,14 @@
 				</div>
 			</div>
 			{#if idUser}
-				<div class="rounded-lg bg-white p-6 shadow-sm">
-					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-						📊 Vos statistiques
-					</h4>
-					<div class="grid grid-cols-2 gap-6">
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
-							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
-							<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
-							<p class="mt-1 text-sm text-gray-600">Essais moyen</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
-							<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
-						</div>
-					</div>
-				</div>
+				<GameStats
+					stats={[
+						{ label: 'Parties jouées', value: partiesJouees, color: 'text-blue-700' },
+						{ label: 'Taux de réussite', value: `${Math.round(tauxReussite * 100)}%`, color: 'text-green-600' },
+						{ label: 'Essais moyen', value: `${Math.round(essaisMoyen * 100) / 100}`, color: 'text-cyan-600' },
+						{ label: 'Série actuelle', value: serieActuelle, color: 'text-blue-500' }
+					]}
+				/>
 			{/if}
 			<OtherGames exclude="pedantix" />
 		</div>
