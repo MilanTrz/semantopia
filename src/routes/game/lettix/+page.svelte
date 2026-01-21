@@ -105,7 +105,6 @@
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			type: 'lettix',
-			won: nbAnagramsFind > 0,
 			attempts: nbAnagramsFind
 		};
 		emitGameEvent(eventData);

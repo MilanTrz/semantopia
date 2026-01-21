@@ -12,10 +12,10 @@ export interface Achievement {
 export interface GameEventData {
 	userId: number;
 	type:
-		| 'pedantix'
 		| 'cemantix'
-		| 'correlix'
+		| 'pedantix'
 		| 'motix'
+		| 'correlix'
 		| 'lettix'
 		| 'mimix'
 		| 'panix'
@@ -174,7 +174,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 		description: 'Gagner une partie de motix en 2 coups',
 		icon: 'fa-bullseye',
 		rarity: 1,
-		condition: (data) => data.type === 'motix' && (data.won ?? false) && data.attempts === 2
+		condition: (data) => data.type === 'motix' && (data.won ?? false)  && data.attempts !== undefined && data.attempts <= 2
 	},
 	{
 		id: 18,
@@ -210,6 +210,6 @@ export const ACHIEVEMENTS: Achievement[] = [
 		icon: 'fa-heart',
 		rarity: 1,
 		condition: (data) =>
-			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts == 3
+			data.type === 'correlix' && (data.won ?? false) && data.attempts !== undefined && data.attempts <= 3
 	}
 ];

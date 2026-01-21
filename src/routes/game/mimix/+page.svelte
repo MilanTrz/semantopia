@@ -82,7 +82,6 @@
 		const eventData: GameEventData = {
 			userId: idUser ?? 0,
 			type: 'mimix',
-			won: nbIntruderFind > 0,
 			score: nbIntruderFind
 		};
 		emitGameEvent(eventData);
