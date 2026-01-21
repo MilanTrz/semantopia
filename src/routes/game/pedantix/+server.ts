@@ -128,7 +128,7 @@ export async function GET({ url }: RequestEvent) {
 		titleWikiPage = await getRandomTitlePage();
 		hints = await getHints(titleWikiPage);
 		titleWikiPageSplit = titleWikiPage
-			.split(/(\s+|[.,!?;:()[\]{}"'«»])/g)
+			.split(/(\s+|[.,!?;:()[\]{}"'«»\-–—])/g)
 			.filter((s) => s.trim() !== '');
 		contentsplice = await getContentPage(titleWikiPage);
 	} while (contentsplice.length == 0);

@@ -134,6 +134,20 @@
 			findMaxAnagrams = data.scoreMax ?? 0;
 		}
 	}
+	async function skipLetters() {
+		const response = await fetch('/game/lettix', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				sessionId,
+				action: 'skipLetters'
+			})
+		});
+		const data = await response.json();
+		wordShuffleFind = data.newWordShuffle;
+		count -= 5;
+		triggerTimeAnimation(-5);
+	}
 
 	onMount(() => {
 		newGame();
@@ -204,6 +218,14 @@
 						Envoyer
 					</button>
 				</form>
+				<button
+					class="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+					type="submit"
+					disabled={!disabledButton}
+					on:click={skipLetters}
+				>
+					Changer de lettres
+				</button>
 			</div>
 			<div class="mb-6 rounded-lg p-6">
 				<p class="mb-4 flex flex-wrap items-baseline gap-y-2 text-base leading-7 text-gray-800"></p>

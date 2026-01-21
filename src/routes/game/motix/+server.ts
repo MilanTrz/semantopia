@@ -7,7 +7,7 @@ export async function POST({ request }: RequestEvent) {
 		const data = await getRandomWord(sizeWord);
 		const findWord = data.name;
 		const findCategorie = data.categorie;
-		const similarWord = normalize(await getSimilarWord(findWord));
+		const similarWord = await getSimilarWord(findWord);
 	
 		const tabWord = findWord
 			.normalize('NFD')
@@ -59,6 +59,12 @@ async function getSimilarWord(word: string) {
 		})
 	});
 	const data = await response.json();
+	for (const item of data.similar_words) {
+		const candidat = item.word;
+		if (normalize(candidat) !== normalize(word)) {
+			return item.word;
+		}
+	}
 	return data.similar_words[0].word;
 }
 
@@ -67,6 +73,7 @@ function normalize(str: string): string {
 		.toLowerCase()
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/(s|x|z|e)$/g, '')
 		.trim()
 		
 }

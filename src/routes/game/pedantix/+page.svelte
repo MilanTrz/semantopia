@@ -142,7 +142,19 @@
 
 	const maskedSquares = (length: number) => '■'.repeat(length);
 
-	const needsSpaceBefore = (token: MaskToken, index: number) => index > 0 && !isPunctuation(token);
+	const needsSpaceBefore = (token: MaskToken, index: number, array: MaskToken[]) => {
+	if (index === 0) return false;
+	
+	const prevToken = array[index - 1];
+	
+	// Pas d'espace si le token actuel est de la ponctuation
+	if (isPunctuation(token)) return false;
+	
+	// Pas d'espace si le token précédent est un tiret
+	if (typeof prevToken === 'string' && /^[\-–—]$/.test(prevToken)) return false;
+	
+	return true;
+};
 
 	const nearTextColor = (score?: number) => {
 		const safe = Math.min(Math.max(score ?? 0, 0), 1);
@@ -329,7 +341,7 @@
 						{#if typeof item === 'string'}
 							<span
 								class="inline-block"
-								class:ml-1={needsSpaceBefore(item, i)}
+								class:ml-1={needsSpaceBefore(item, i,tabTitle)}
 								class:text-green-600={isNewlyFoundTitle(i)}
 								class:bg-green-100={isNewlyFoundTitle(i)}
 								class:border-2={isNewlyFoundTitle(i)}
@@ -342,7 +354,7 @@
 						{:else if isNearMatch(item)}
 							<span
 								class="group relative inline-flex items-center justify-center"
-								class:ml-1={needsSpaceBefore(item, i)}
+								class:ml-1={needsSpaceBefore(item, i,tabTitle)}
 								title="Proche, mais pas révélé"
 								style={`min-width: ${Math.max(item.length, item.word.length)}ch; min-height: 2.6em; padding-right: 0.1em;`}
 							>
@@ -367,7 +379,7 @@
 						{:else}
 							<span
 								class="group relative inline-flex items-center justify-center"
-								class:ml-1={needsSpaceBefore(item, i)}
+								class:ml-1={needsSpaceBefore(item, i,tabTitle)}
 								style="min-height: 2.6em; padding-right: 0.1em;"
 							>
 								<span
@@ -390,7 +402,7 @@
 						{#if typeof item === 'string'}
 							<span
 								class="inline-block"
-								class:ml-1={needsSpaceBefore(item, i)}
+								class:ml-1={needsSpaceBefore(item, i,tabContent)}
 								class:text-green-600={isNewlyFoundContent(i)}
 								class:bg-green-100={isNewlyFoundContent(i)}
 								class:border-2={isNewlyFoundContent(i)}
@@ -403,7 +415,7 @@
 						{:else if isNearMatch(item)}
 							<span
 								class="group relative inline-flex items-center justify-center"
-								class:ml-1={needsSpaceBefore(item, i)}
+								class:ml-1={needsSpaceBefore(item, i,tabContent)}
 								title="Proche, mais pas révélé"
 								style={`min-width: ${Math.max(item.length, item.word.length)}ch; padding-right: 0.1em;`}
 							>
@@ -428,7 +440,7 @@
 						{:else}
 							<span
 								class="group relative inline-flex items-center"
-								class:ml-1={needsSpaceBefore(item, i)}
+								class:ml-1={needsSpaceBefore(item, i,tabContent)}
 							>
 								<span
 									class="inline-block font-mono tracking-tight text-black"
