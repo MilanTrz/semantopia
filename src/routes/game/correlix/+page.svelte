@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Header from '$lib/header.svelte';
 	import OtherGames from '$lib/OtherGames.svelte';
-	import { triggerConfettiAnimation } from '$lib';
+	import { triggerConfettiAnimation, GameInput, GameActions, GameStats, GameRules, LoadingState, GameMessage } from '$lib';
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
 	import { sessionStore } from '$lib/store/sessionStore';
@@ -487,38 +487,24 @@
 			</div>
 
 			{#if initializing}
-				<div class="flex items-center justify-center py-16">
-					<div
-						class="h-12 w-12 animate-spin rounded-full border-4 border-orange-200 border-t-orange-600"
-					></div>
-				</div>
+				<LoadingState color="orange" message="Lancement du pont lexical..." />
 			{:else}
 				<div class="mb-8">
-					<form class="flex flex-col gap-3 md:flex-row" on:submit|preventDefault={sendGuess}>
-						<input
-							class="w-full rounded-xl border border-gray-200 px-6 py-4 text-lg text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-orange-500 focus:ring-4 focus:ring-orange-200 focus:outline-none"
-							type="text"
-							bind:value={userWord}
-							placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
-							autocomplete="off"
-							disabled={gameWon || gameSurrendered || isLoading || initializing}
-						/>
-						<button
-							type="submit"
-							class={`rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-8 py-4 text-lg font-semibold text-white shadow-sm transition hover:shadow-lg ${
-								canSubmit && !gameSurrendered ? '' : 'cursor-not-allowed opacity-60'
-							}`}
-							disabled={!canSubmit || gameSurrendered}
-						>
-							{isLoading ? 'Vérification...' : 'Valider'}
-						</button>
-					</form>
-				</div>
+					<GameInput
+						bind:value={userWord}
+						placeholder={`Proposez un mot (>= ${minSimilarity}% avec le précédent)`}
+						disabled={gameWon || gameSurrendered || isLoading || initializing}
+						gradient="from-orange-600 via-amber-500 to-yellow-400"
+						onsubmit={sendGuess}
+					oninput={(value) => (userWord = value)}
+				/>
+			</div>
 
-				{#if path.length > 0}
-					<div class="mb-10 space-y-4">
-						{#each path as step, index}
-							<div
+			{#if path.length > 0}
+				<div class="mb-10 space-y-4">
+					{#each path as step, index}
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
+						<div
 								class={`cursor-pointer rounded-xl border bg-white p-5 shadow-sm transition ${
 									index === activeIndex
 										? 'border-orange-400 ring-2 ring-orange-100'
@@ -633,84 +619,39 @@
 				{/if}
 
 				{#if message}
-					<div class={`mb-8 rounded-xl border-2 p-5 shadow-sm ${getMessageStyle()}`}>
-						<p class="text-base font-medium">{message}</p>
-					</div>
+					<GameMessage type="info" message={message} />
 				{/if}
 			{/if}
 
-			<div class="flex flex-col gap-4 md:flex-row">
-				{#if !gameWon && !gameSurrendered}
-					<button
-						on:click={surrenderGame}
-						class="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
-					>
-						🏳️ Abandonner
-					</button>
-				{:else}
-					<button
-						on:click={newGame}
-						class="flex-1 rounded-xl border border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
-					>
-						🔄 Nouvelle partie
-					</button>
-					<button
-						class="flex-1 rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 px-6 py-4 font-semibold text-white shadow-sm transition hover:shadow-lg"
-					>
-						📤 Partager le pont
-					</button>
-				{/if}
-			</div>
+			<GameActions
+				isGameOver={gameWon || gameSurrendered}
+				gradient="from-orange-600 via-amber-500 to-yellow-400"
+				onNewGame={newGame}
+				onSurrender={surrenderGame}
+				surrenderDisabled={false}
+			/>
 		</div>
 
 		<!-- Sidebar droite -->
 		<div class="w-80 shrink-0 space-y-6">
 			<!-- Règles -->
-			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
-				<ul class="space-y-3 text-sm text-gray-700">
-					<li class="flex gap-3">
-						<span class="font-bold text-orange-600">1.</span>
-						<p>Chaque nouveau mot doit être à au moins {minSimilarity}% du précédent.</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-orange-600">2.</span>
-						<p>Vous pouvez cliquer sur n'importe quelle étape pour repartir de là.</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-orange-600">3.</span>
-						<p>Les mots inconnus du modèle ne sont pas acceptés.</p>
-					</li>
-					<li class="flex gap-3">
-						<span class="font-bold text-orange-600">4.</span>
-						<p>Atteignez le mot objectif pour compléter le pont lexical.</p>
-					</li>
-				</ul>
-			</div>
+			<GameRules
+				rules={[
+					`Chaque nouveau mot doit être à au moins ${minSimilarity}% du précédent.`,
+					'Vous pouvez cliquer sur n\'importe quelle étape pour repartir de là.',
+					'Les mots inconnus du modèle ne sont pas acceptés.',
+					'Atteignez le mot objectif pour compléter le pont lexical.'
+				]}
+			/>
 			{#if idUser}
-				<div class="rounded-lg bg-white p-6 shadow-sm">
-					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-						📊 Vos statistiques
-					</h4>
-					<div class="grid grid-cols-2 gap-6">
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-700">{partiesJouees}</p>
-							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-green-600">{Math.round(tauxReussite * 100)}%</p>
-							<p class="mt-1 text-sm text-gray-600">Taux de réussite</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-cyan-600">{Math.round(essaisMoyen * 100) / 100}</p>
-							<p class="mt-1 text-sm text-gray-600">Étapes moyennes</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-500">{serieActuelle}</p>
-							<p class="mt-1 text-sm text-gray-600">Série actuelle</p>
-						</div>
-					</div>
-				</div>
+				<GameStats
+					stats={[
+						{ label: 'Parties jouées', value: partiesJouees, color: 'text-blue-700' },
+						{ label: 'Taux de réussite', value: `${Math.round(tauxReussite * 100)}%`, color: 'text-green-600' },
+						{ label: 'Étapes moyennes', value: `${Math.round(essaisMoyen * 100) / 100}`, color: 'text-cyan-600' },
+						{ label: 'Série actuelle', value: serieActuelle, color: 'text-blue-500' }
+					]}
+				/>
 			{/if}
 			<OtherGames exclude="correlix" />
 		</div>
