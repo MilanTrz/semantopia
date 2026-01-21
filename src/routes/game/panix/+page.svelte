@@ -5,6 +5,7 @@
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
 	import OtherGames from '$lib/OtherGames.svelte';
+	import { GameInput, GameActions, GameStats, GameRules, LoadingState, TimeAnimation, GameMessage } from '$lib';
 
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
@@ -24,7 +25,7 @@
 	let totalGamePlayed: number = 0;
 	let wordCreateAverage: number = 0;
 	let wordCreateMax: number = 0;
-	let disabledButton: boolean = true;
+	let disabledButton: boolean = false;
 
 	async function newGame() {
 		userGuess = '';
@@ -33,7 +34,7 @@
 		isLoading = true;
 		isGameOver = false;
 		isSurrender = false;
-		disabledButton = true;
+		disabledButton = false;
 		tabCreateWord = [];
 		showTimeAnimation = false;
 		if (interval !== null) {
@@ -99,7 +100,7 @@
 	async function gameOver() {
 		isGameOver = true;
 		isSurrender = true;
-		disabledButton = false;
+		disabledButton = true;
 		await fetch('/game/panix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -193,40 +194,19 @@
 				</div>
 			</div>
 			{#if isLoading}
-				<div class="flex flex-col items-center justify-center py-12">
-					<div
-						class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
-					></div>
-					<p class="font-medium text-gray-600">Chargement de la partie...</p>
-				</div>
+				<LoadingState color="lime" />
 			{/if}
 			{#if isGameOver}
-				<div
-					class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
-				>
-					<p class="text-3xl font-bold text-red-700">
-						Partie terminée, vous avez créer {nbWordCreate} mots valides.
-					</p>
-				</div>
+				<GameMessage message="Partie terminée, vous avez créer {nbWordCreate} mots valides." />
 			{/if}
 			<div class="row relative mb-6">
-				<form on:submit|preventDefault={sendGuess} class="row flex gap-3">
-					<input
-						id="guess"
-						type="text"
-						bind:value={userGuess}
-						placeholder="Tapez votre proposition..."
-						class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-lime-500 focus:ring-2 focus:ring-lime-200 focus:outline-none"
-						disabled={isSurrender}
-					/>
-					<button
-						class="rounded-lg bg-gradient-to-r from-lime-600 via-lime-400 to-green-300 px-6 py-3 font-medium text-white transition hover:shadow-lg"
-						type="submit"
-						disabled={isSurrender}
-					>
-						Envoyer
-					</button>
-				</form>
+				<GameInput 
+					bind:value={userGuess}
+					disabled={isSurrender}
+					gradient="from-lime-600 via-lime-400 to-green-300"
+					onsubmit={sendGuess}
+					oninput={(val) => userGuess = val}
+				/>
 			</div>
 
 			<div>
