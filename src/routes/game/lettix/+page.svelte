@@ -244,7 +244,7 @@
 						disabled={!disabledButton}
 						on:click={skipLetters}
 					>
-						🔄 Changer de lettres
+						🔄 Changer d'anagrammes
 					</button>
 					<button
 						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
