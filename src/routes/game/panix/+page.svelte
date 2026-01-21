@@ -238,10 +238,10 @@
 						<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
 							{#each tabCreateWord as word, index}
 								<div
-									class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2"
+									class="flex items-center gap-2 rounded-lg border border-lime-200 bg-lime-50 px-4 py-2"
 								>
-									<span class="text-sm font-medium text-green-700">#{index + 1}</span>
-									<span class="font-semibold text-green-900">{word}</span>
+									<span class="text-sm font-medium text-lime-700">#{index + 1}</span>
+									<span class="font-semibold text-lime-900">{word}</span>
 								</div>
 							{/each}
 						</div>

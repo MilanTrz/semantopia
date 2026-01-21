@@ -242,12 +242,12 @@
 							{#each chainWords as word, index}
 								<div class="flex items-center gap-2">
 									<div
-										class="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 font-semibold text-purple-900"
+										class="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 font-semibold text-teal-900"
 									>
 										{word}
 									</div>
 									{#if index < chainWords.length - 1}
-										<span class="text-lg font-bold text-purple-600">→</span>
+										<span class="text-lg font-bold text-teal-600">→</span>
 									{/if}
 								</div>
 							{/each}
