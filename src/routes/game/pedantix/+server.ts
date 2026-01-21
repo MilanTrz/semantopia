@@ -140,6 +140,7 @@ export async function GET({ url }: RequestEvent) {
 	const tabHiddenContent = contentsplice.map((str) =>
 		/^[.,!?;:()[\]{}"'«»\-–—]$/.test(str) ? str : str.length
 	);
+	console.log(titleWikiPage)
 
 	activeSessions.set(sessionId, {
 		titleWikiPage,

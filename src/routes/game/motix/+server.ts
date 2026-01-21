@@ -50,6 +50,7 @@ async function getRandomWord(sizeWord: number): Promise<{ name: string; categori
 	return data[0];
 }
 async function getSimilarWord(word: string) {
+	const normWord = normalize(word);
 	const response = await fetch('http://localhost:5000/api/most-similar', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -60,8 +61,9 @@ async function getSimilarWord(word: string) {
 	});
 	const data = await response.json();
 	for (const item of data.similar_words) {
-		const candidat = item.word;
-		if (normalize(candidat) !== normalize(word)) {
+		const candidat = item.word;	
+		const normCandidat = normalize(candidat);
+		if (!normCandidat.includes(normalize(word)) && (await checkWord( normCandidat))){
 			return item.word;
 		}
 	}
@@ -73,7 +75,28 @@ function normalize(str: string): string {
 		.toLowerCase()
 		.normalize('NFD')
 		.replace(/[\u0300-\u036f]/g, '')
-		.replace(/(s|x|z|e)$/g, '')
+		.replace(/(s|x|z|à)$/g, '')
 		.trim()
 		
+}
+async function checkWord(word: string) {
+	let isWordExist = true;
+	try {
+		const response = await globalThis.fetch('http://localhost:5000/api/check-word', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				word: word
+			})
+		});
+		const data = await response.json();
+		if (!data.exists) {
+			isWordExist = false;
+			return isWordExist;
+		}
+		return isWordExist;
+	} catch (error) {
+		console.error('Erreur lors de la vérification du mot:', error);
+		return false;
+	}
 }
