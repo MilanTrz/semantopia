@@ -5,6 +5,7 @@
 	import { sessionStore } from '$lib/store/sessionStore';
 	import { emitGameEvent } from '$lib/store/gameEventStore';
 	import type { GameEventData } from '$lib/models/achievements';
+	import { GameInput, GameActions, GameStats, GameRules, LoadingState, TimeAnimation, GameMessage } from '$lib';
 
 	let nbWordCreate: number = 0;
 	let isLoading: boolean = true;
@@ -25,7 +26,7 @@
 	let totalGamePlayed: number = 0;
 	let wordCreateAverage: number = 0;
 	let wordCreateMax: number = 0;
-	let disabledButton: boolean = true;
+	let disabledButton: boolean = false;
 
 	async function newGame() {
 		userGuess = '';
@@ -34,7 +35,7 @@
 		isLoading = true;
 		isGameOver = false;
 		isSurrender = false;
-		disabledButton = true;
+		disabledButton = false;
 		chainWords = [];
 		guessedWords = new Set();
 		showTimeAnimation = false;
@@ -113,7 +114,7 @@
 	async function gameOver() {
 		isGameOver = true;
 		isSurrender = true;
-		disabledButton = false;
+		disabledButton = true;
 		await fetch('/game/chainix', {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
@@ -196,40 +197,19 @@
 				</div>
 			</div>
 			{#if isLoading}
-				<div class="flex flex-col items-center justify-center py-12">
-					<div
-						class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600"
-					></div>
-					<p class="font-medium text-gray-600">Chargement de la partie...</p>
-				</div>
+				<LoadingState color="teal" />
 			{/if}
 			{#if isGameOver}
-				<div
-					class="flex h-40 items-center justify-center rounded-lg border-2 border-red-500 bg-red-100 p-6"
-				>
-					<p class="text-3xl font-bold text-red-700">
-						Partie terminée, chaîne de {chainWords.length - 1} mots.
-					</p>
-				</div>
+				<GameMessage message="Partie terminée, chaîne de {chainWords.length - 1} mots." />
 			{/if}
 			<div class="row relative mb-6">
-				<form on:submit|preventDefault={sendGuess} class="row flex gap-3">
-					<input
-						id="guess"
-						type="text"
-						bind:value={userGuess}
-						placeholder="Tapez votre proposition..."
-						class="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 focus:outline-none"
-						disabled={isSurrender}
-					/>
-					<button
-						class="rounded-lg bg-gradient-to-r from-teal-600 via-cyan-500 to-sky-400 px-6 py-3 font-medium text-white transition hover:shadow-lg"
-						type="submit"
-						disabled={isSurrender}
-					>
-						Envoyer
-					</button>
-				</form>
+				<GameInput 
+					bind:value={userGuess}
+					disabled={isSurrender}
+					gradient="from-teal-600 via-cyan-500 to-sky-400"
+					onsubmit={sendGuess}
+					oninput={(val) => userGuess = val}
+				/>
 			</div>
 
 			<div>
@@ -256,89 +236,35 @@
 				{/if}
 			</div>
 
-			<div class="flex gap-4">
-				{#if !isGameOver}
-					<button
-						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-						on:click={() => {isSurrender = true; gameOver();}}
-						disabled={disabledButton}
-					>
-						🏳️ Abandonner
-					</button>
-				{:else}
-					<button
-						class="flex-1 rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-						on:click={newGame}
-					>
-						🔄 Nouvelle partie
-					</button>
-					<button
-						class="flex-1 rounded-lg bg-gradient-to-r from-teal-600 via-cyan-500 to-sky-400 px-6 py-3 font-medium text-white transition hover:shadow-lg"
-					>
-						📤 Partager résultat
-					</button>
-				{/if}
-			</div>
+			<GameActions 
+				isGameOver={isGameOver}
+				gradient="from-teal-600 via-cyan-500 to-sky-400"
+				onNewGame={newGame}
+				onSurrender={() => {isSurrender = true; gameOver();}}
+				surrenderDisabled={disabledButton}
+			/>
 		</div>
 		<div class="w-80 shrink-0 space-y-6">
-			<div class="rounded-lg bg-white p-6 shadow-sm">
-				<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">📖 Règles du jeu</h4>
-				<ul class="space-y-3 text-sm text-gray-600">
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Créer la plus longue chaîne de mots en 60 secondes</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Chaque mot doit commencer par les 2 ou 3 dernières lettres du mot précédent</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Les mots doivent exister dans le dictionnaire</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Vous gagnez du temps (2-4s) pour chaque mot trouvé</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Vous perdez 5 secondes pour chaque mot invalide</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Vous ne pouvez pas utiliser deux fois le même mot</p>
-					</li>
-					<li class="flex items-start">
-						<span class="mr-2">•</span>
-						<p>Chaque partie démarre avec un nouveau mot de départ</p>
-					</li>
-				</ul>
-			</div>
+<GameRules 
+			rules={[
+				'Créer la plus longue chaîne de mots en 60 secondes',
+				'Chaque mot doit commencer par les 2 ou 3 dernières lettres du mot précédent',
+				'Les mots doivent exister dans le dictionnaire',
+				'Vous gagnez du temps (2-4s) pour chaque mot trouvé',
+				'Vous perdez 5 secondes pour chaque mot invalide',
+				'Vous ne pouvez pas utiliser deux fois le même mot',
+				'Chaque partie démarre avec un nouveau mot de départ'
+			]}
+		/>
 
-			{#if idUser}
-				<div class="rounded-lg bg-white p-6 shadow-sm">
-					<h4 class="mb-4 flex items-center text-lg font-semibold text-gray-900">
-						📊 Vos statistiques
-					</h4>
-					<div class="grid grid-cols-2 gap-6">
-						<div class="text-center">
-							<p class="text-4xl font-bold text-purple-600">{totalGamePlayed}</p>
-							<p class="mt-1 text-sm text-gray-600">Parties jouées</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-600">
-								{Math.round(wordCreateAverage * 100) / 100}
-							</p>
-							<p class="mt-1 text-sm text-gray-600">Longueur moyenne de la chaîne</p>
-						</div>
-						<div class="text-center">
-							<p class="text-4xl font-bold text-blue-600">
-								{wordCreateMax}
-							</p>
-							<p class="mt-1 text-sm text-gray-600">Longueur maximale d'une chaîne crée</p>
-						</div>
-					</div>
-				</div>
+		{#if idUser}
+			<GameStats 
+				stats={[
+					{ label: 'Parties jouées', value: totalGamePlayed, color: 'text-purple-600' },
+					{ label: 'Longueur moyenne de la chaîne', value: Math.round(wordCreateAverage * 100) / 100, color: 'text-blue-600' },
+					{ label: 'Longueur maximale d\'une chaîne créé', value: wordCreateMax, color: 'text-blue-600' }
+				]}
+			/>
 			{/if}
 
 			<OtherGames exclude="chainix" />
