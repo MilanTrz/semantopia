@@ -51,6 +51,8 @@
 
 	let isWordInGame: boolean = true;
 
+	let wordIsInTabGuess: boolean = false;
+
 	function toggleReveal(index: number) {
 		revealedIndice[index] = !revealedIndice[index];
 	}
@@ -64,6 +66,7 @@
 		tabguess = [];
 		isLoading = true;
 		isVictory = false;
+		wordIsInTabGuess = false;
 		nbEssai = 0;
 		userGuess = '';
 		tabTitle = [];
@@ -95,10 +98,15 @@
 	}
 
 	async function sendGuess() {
+		if (tabguess.includes(userGuess)){
+			wordIsInTabGuess = true;
+			userGuess = '';
+			return null;
+		}
+		wordIsInTabGuess = false;
 		isWordInGame = true;
-		nbEssai++;
-		tabguess.push(userGuess);
-		tabguess = tabguess;
+		
+		
 		const response = await fetch('/game/pedantix/', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -116,6 +124,11 @@
 			isWordInGame = repbody.isWordInGame;
 		}
 		isWordInGame = repbody.isWordInGame;
+		if (isWordInGame){
+			nbEssai++;
+			tabguess.push(userGuess);
+			tabguess = tabguess;
+		}
 		if (tabTitle.every((item) => typeof item === 'string')) {
 			triggerVictory();
 		}
@@ -147,10 +160,8 @@
 	
 	const prevToken = array[index - 1];
 	
-	// Pas d'espace si le token actuel est de la ponctuation
 	if (isPunctuation(token)) return false;
 	
-	// Pas d'espace si le token précédent est un tiret
 	if (typeof prevToken === 'string' && /^[\-–—]$/.test(prevToken)) return false;
 	
 	return true;
@@ -313,6 +324,15 @@
 							Ce mot n'existe pas dans notre vocabulaire ou n'est pas présent dans le jeu
 						</p>
 					</div>
+				</div>
+			{/if}
+			{#if wordIsInTabGuess}
+				<div
+					class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 p-6"
+				>
+					<p class="text-sm text-amber-700">
+						Vous avez deja essayer ce mot !
+					</p>
 				</div>
 			{/if}
 
